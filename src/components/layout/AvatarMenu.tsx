@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react"
-import { User, LogOut } from "lucide-react"
+import { User, LogOut, MessageSquareHeart } from "lucide-react"
 import { useAuth } from "@/lib/supabase/auth"
 import type { Screen } from "@/App"
+import FeedbackDialog from "@/components/ui/FeedbackDialog"
 
 interface AvatarMenuProps {
   onNavigate: (screen: Screen) => void
@@ -32,6 +33,7 @@ function getAvatarColor(name: string): string {
 export default function AvatarMenu({ onNavigate }: AvatarMenuProps) {
   const { user, signOut } = useAuth()
   const [open, setOpen] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -74,7 +76,7 @@ export default function AvatarMenu({ onNavigate }: AvatarMenuProps) {
 
       {open && (
         <div
-          className="absolute top-full right-0 mt-2 w-44 rounded-xl py-1.5 z-50"
+          className="absolute top-full right-0 mt-2 w-48 rounded-xl py-1.5 z-50"
           style={{
             background: "#1A1A23",
             border: "1px solid rgba(255,255,255,0.08)",
@@ -101,6 +103,17 @@ export default function AvatarMenu({ onNavigate }: AvatarMenuProps) {
             Profile
           </button>
 
+          <button
+            onClick={() => {
+              setOpen(false)
+              setFeedbackOpen(true)
+            }}
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-white/70 hover:text-white transition-colors hover:bg-[rgba(255,255,255,0.05)]"
+          >
+            <MessageSquareHeart size={15} />
+            Give feedback
+          </button>
+
           <div className="h-px mx-2 my-1" style={{ background: "rgba(255,255,255,0.06)" }} />
 
           <button
@@ -114,6 +127,13 @@ export default function AvatarMenu({ onNavigate }: AvatarMenuProps) {
             Log out
           </button>
         </div>
+      )}
+
+      {feedbackOpen && (
+        <FeedbackDialog
+          target={{ kind: "general", page: window.location.hash.replace(/^#\/?/, "").split("/")[0] || "dashboard" }}
+          onClose={() => setFeedbackOpen(false)}
+        />
       )}
     </div>
   )

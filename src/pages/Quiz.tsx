@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
-import { ChevronLeft, CheckCircle, XCircle, ArrowRight, RotateCcw, BookOpen, Brain, Target, Zap, Sparkles, Loader2 } from "lucide-react"
+import { ChevronLeft, CheckCircle, XCircle, ArrowRight, RotateCcw, BookOpen, Brain, Target, Zap, Sparkles, Loader2, Flag } from "lucide-react"
 import { useAuth } from "@/lib/supabase/auth"
 import {
   fetchCourses,
@@ -9,7 +9,7 @@ import {
   recordQuizAnswer,
   recordQuizAttempt,
 } from "@/lib/api"
-import { findCorrectIndex, pickSession, prepareQuestions, SESSION_SIZE } from "@/lib/utils/quiz"
+import { findCorrectIndex, pickSession, prepareQuestions } from "@/lib/utils/quiz"
 import { callGenerateFunction } from "@/lib/supabase/functions"
 import ErrorState from "@/components/ui/ErrorState"
 import SaveWarning from "@/components/ui/SaveWarning"
@@ -17,6 +17,9 @@ import { BackButton, EmptyState, LoadingState, primaryButton, secondaryButton } 
 import CoursePicker from "@/components/study/CoursePicker"
 import ScoreRing from "@/components/study/ScoreRing"
 import Confetti from "@/components/study/Confetti"
+import FeedbackDialog, { type FeedbackTarget } from "@/components/ui/FeedbackDialog"
+import QuizLengthPicker from "@/components/study/QuizLengthPicker"
+import { useQuizLength } from "@/hooks/useQuizLength"
 import type { CourseSummary, QuizQuestion } from "@/lib/types"
 
 interface CourseWithCount extends CourseSummary {
@@ -42,6 +45,7 @@ export default function Quiz({
   initialCourseId?: string
 }) {
   const { user } = useAuth()
+  const [quizLength, setQuizLength] = useQuizLength()
   const [courses, setCourses] = useState<CourseWithCount[]>([])
   const [selectedCourse, setSelectedCourse] = useState<CourseWithCount | null>(null)
   // Every question of the course, and the ones of the current session
@@ -54,6 +58,7 @@ export default function Quiz({
   const [generateMsg, setGenerateMsg] = useState<string | null>(null)
   const [moreError, setMoreError] = useState<string | null>(null)
   const [added, setAdded] = useState<number | null>(null)
+  const [reporting, setReporting] = useState<FeedbackTarget | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadingQuiz, setLoadingQuiz] = useState(false)
 
@@ -119,7 +124,7 @@ export default function Quiz({
 
     try {
       const { all, last } = await loadPool(course.id)
-      beginSession(pickSession(all, last))
+      beginSession(pickSession(all, last, quizLength))
     } catch (err) {
       setSelectedCourse(null)
       setLoadError((err as Error).message)
@@ -161,7 +166,7 @@ export default function Quiz({
   /** A new session: never-played questions first, then the missed ones. */
   const playAgain = () => {
     setAdded(null)
-    beginSession(pickSession(pool, lastCorrect))
+    beginSession(pickSession(pool, lastCorrect, quizLength))
   }
 
   /** Asks Kwizo for a new set of questions, then plays them. */
@@ -185,7 +190,7 @@ export default function Quiz({
       setCourses((list) =>
         list.map((c) => (c.id === selectedCourse.id ? { ...c, quiz_count: all.length } : c))
       )
-      beginSession(fresh.length ? pickSession(fresh, {}) : pickSession(all, last))
+      beginSession(fresh.length ? pickSession(fresh, {}, quizLength) : pickSession(all, last, quizLength))
     } catch (err) {
       setMoreError((err as Error).message)
     } finally {
@@ -248,7 +253,9 @@ export default function Quiz({
           count={(c) => c.quiz_count}
           unit="question"
           onPick={startQuiz}
-        />
+        >
+          <QuizLengthPicker value={quizLength} onChange={setQuizLength} />
+        </CoursePicker>
       </div>
     )
   }
@@ -310,10 +317,13 @@ export default function Quiz({
           </div>
         </div>
 
+        <div className="mb-4">
+          <QuizLengthPicker value={quizLength} onChange={setQuizLength} disabled={generating} />
+        </div>
         <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 mb-6">
           <button onClick={playAgain} className={primaryButton} disabled={generating}>
             <RotateCcw size={15} />
-            {unseen > 0 ? `Play again · ${Math.min(unseen, SESSION_SIZE)} new` : "Play again"}
+            {unseen > 0 ? `Play again · ${Math.min(unseen, quizLength)} new` : "Play again"}
           </button>
           {mistakes.length > 0 && (
             <button
@@ -380,7 +390,17 @@ export default function Quiz({
                   style={{ animationDelay: `${i * 60}ms` }}
                   className="animate-rise p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08]"
                 >
-                  <p className="text-sm font-semibold text-white mb-3">{question.question}</p>
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <p className="text-sm font-semibold text-white">{question.question}</p>
+                    <button
+                      onClick={() => setReporting({ kind: "question", id: question.id, text: question.question })}
+                      aria-label="Report this question"
+                      title="Report this question"
+                      className="shrink-0 p-1 rounded-lg text-white/30 hover:text-white/80 hover:bg-white/5 transition-colors"
+                    >
+                      <Flag size={13} />
+                    </button>
+                  </div>
                   <p className="flex items-start gap-2 text-xs mb-1.5 text-[#FCA5A5]">
                     <XCircle size={14} className="shrink-0 mt-px" />
                     {picked}
@@ -399,6 +419,7 @@ export default function Quiz({
             </div>
           </div>
         )}
+        {reporting && <FeedbackDialog target={reporting} onClose={() => setReporting(null)} />}
       </div>
     )
   }
@@ -510,9 +531,18 @@ export default function Quiz({
           className={`animate-rise p-4 rounded-2xl mb-5 border ${gotIt ? "bg-ok/[0.07] border-ok/25" : "bg-ko/[0.07] border-ko/25"}`}
           role="status"
         >
-          <p className={`text-sm font-bold mb-1 ${gotIt ? "text-ok" : "text-ko"}`}>
-            {gotIt ? "Correct! +1" : `Not quite. The answer is ${LETTERS[correctIndex]?.key ?? "?"}.`}
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <p className={`text-sm font-bold mb-1 ${gotIt ? "text-ok" : "text-ko"}`}>
+              {gotIt ? "Correct! +1" : `Not quite. The answer is ${LETTERS[correctIndex]?.key ?? "?"}.`}
+            </p>
+            <button
+              onClick={() => setReporting({ kind: "question", id: q.id, text: q.question })}
+              className="shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold text-white/35 hover:text-white/80 transition-colors"
+            >
+              <Flag size={12} />
+              Report
+            </button>
+          </div>
           {q.explication && <p className="text-sm leading-relaxed text-white/65">{q.explication}</p>}
         </div>
       )}
@@ -528,6 +558,7 @@ export default function Quiz({
           Press 1-4 or A-D to answer
         </p>
       )}
+      {reporting && <FeedbackDialog target={reporting} onClose={() => setReporting(null)} />}
     </div>
   )
 }
