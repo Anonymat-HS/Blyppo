@@ -15,7 +15,7 @@ import Progress from "@/pages/Progress"
 import Profile from "@/pages/Profile"
 import Sidebar from "@/components/layout/Sidebar"
 import AvatarMenu from "@/components/layout/AvatarMenu"
-import { Logo } from "@/components/ui/Logo"
+import { Logo, LogoMark } from "@/components/ui/Logo"
 
 export type Screen =
   | "landing"
@@ -76,7 +76,7 @@ function AppContent() {
         className="min-h-screen flex items-center justify-center"
         style={{ background: "#0F0F12" }}
       >
-        <div className="w-8 h-8 rounded-xl animate-pulse" style={{ background: "#7C5CFF" }} />
+        <LogoMark size={44} className="animate-pulse" />
       </div>
     )
   }
@@ -155,7 +155,7 @@ function AppContent() {
             <Dashboard onNavigate={setScreen} />
           )}
           {screen === "upload" && (
-            <Upload onBack={() => setScreen("dashboard")} />
+            <Upload onBack={() => setScreen("dashboard")} onNavigate={setScreen} />
           )}
           {screen === "quiz" && (
             <Quiz key={route.courseId} initialCourseId={route.courseId} onBack={() => setScreen("dashboard")} />

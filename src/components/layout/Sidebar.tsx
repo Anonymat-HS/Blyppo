@@ -2,12 +2,15 @@ import {
   LayoutDashboard,
   Upload,
   Brain,
-  CreditCard,
+  Layers,
   TrendingUp,
+  Flame,
   X,
 } from "lucide-react"
 import type { Screen } from "@/App"
 import { Logo } from "@/components/ui/Logo"
+import { useAuth } from "@/lib/supabase/auth"
+import { useStreak } from "@/hooks/useStreak"
 
 interface SidebarProps {
   screen: Screen
@@ -20,7 +23,7 @@ const navItems: { id: Screen; label: string; icon: React.ElementType }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "upload", label: "Upload Course", icon: Upload },
   { id: "quiz", label: "Quiz", icon: Brain },
-  { id: "flashcards", label: "Flashcards", icon: CreditCard },
+  { id: "flashcards", label: "Flashcards", icon: Layers },
   { id: "progress", label: "Progress", icon: TrendingUp },
 ]
 
@@ -30,6 +33,10 @@ export default function Sidebar({
   isOpen,
   onToggle,
 }: SidebarProps) {
+  const { user } = useAuth()
+  // Reloaded on every screen change, so a finished quiz shows up right away
+  const streak = useStreak(user?.id, screen)
+
   return (
     <>
       {isOpen && (
@@ -78,13 +85,15 @@ export default function Sidebar({
                   onNavigate(id)
                   if (isOpen) onToggle()
                 }}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 border ${
+                aria-current={active ? "page" : undefined}
+                className={`relative w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 border ${
                   active
-                    ? "bg-[rgba(124,92,255,0.14)] border-[rgba(124,92,255,0.22)] text-[#A78BFA]"
-                    : "border-transparent text-[rgba(255,255,255,0.45)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[rgba(255,255,255,0.9)]"
+                    ? "bg-brand/15 border-brand/25 text-white"
+                    : "border-transparent text-white/45 hover:bg-white/5 hover:text-white/90"
                 }`}
               >
-                <Icon size={17} />
+                {active && <span className="absolute -left-3 top-2 bottom-2 w-1 rounded-r-full bg-spark" aria-hidden="true" />}
+                <Icon size={17} className={active ? "text-brand-soft" : ""} />
                 {label}
               </button>
             )
@@ -96,18 +105,31 @@ export default function Sidebar({
           className="px-3 py-4"
           style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
         >
-          <div
-            className="mx-0.5 p-3 rounded-xl"
-            style={{
-              background: "rgba(124,92,255,0.08)",
-              border: "1px solid rgba(124,92,255,0.18)",
-            }}
-          >
-            <p className="text-xs font-bold text-violet-300 mb-1">Beta</p>
-            <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>
-              Free while in beta
-            </p>
-          </div>
+          {streak === null ? (
+            <div className="mx-0.5 h-[62px] rounded-xl bg-white/[0.03]" aria-hidden="true" />
+          ) : (
+            <div
+              className={`mx-0.5 p-3 rounded-xl flex items-center gap-3 border ${
+                streak > 0 ? "bg-spark/[0.08] border-spark/25" : "bg-white/[0.03] border-white/[0.07]"
+              }`}
+            >
+              <div
+                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                  streak > 0 ? "bg-spark/15 text-spark" : "bg-white/5 text-white/30"
+                }`}
+              >
+                <Flame size={18} />
+              </div>
+              <div className="min-w-0">
+                <p className={`text-sm font-black ${streak > 0 ? "text-spark" : "text-white/70"}`}>
+                  {streak}-day streak
+                </p>
+                <p className="text-[11px] text-white/35">
+                  {streak > 0 ? "Study every day to grow it" : "Answer a question to start one"}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </aside>
     </>
