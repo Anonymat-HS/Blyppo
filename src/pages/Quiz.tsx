@@ -139,6 +139,8 @@ export default function Quiz({
       if (key.length === 1 && idx >= 0 && idx < 4) {
         handleSelect(idx)
       } else if ((key === "enter" || key === " ") && selected !== null) {
+        // Let the focused control handle its own Enter/Space
+        if ((e.target as HTMLElement).closest("button, a, input, select")) return
         e.preventDefault()
         handleNext()
       }
@@ -169,10 +171,7 @@ export default function Quiz({
       <div className="p-6 md:p-8 max-w-2xl mx-auto">
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150"
-          style={{ color: "rgba(255,255,255,0.38)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.38)")}
+          className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150 text-[rgba(255,255,255,0.38)] hover:text-[rgba(255,255,255,0.8)]"
         >
           <ChevronLeft size={15} />
           Back
@@ -200,10 +199,7 @@ export default function Quiz({
       <div className="p-6 md:p-8 max-w-2xl mx-auto">
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150"
-          style={{ color: "rgba(255,255,255,0.38)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.38)")}
+          className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150 text-[rgba(255,255,255,0.38)] hover:text-[rgba(255,255,255,0.8)]"
         >
           <ChevronLeft size={15} />
           Back
@@ -219,19 +215,7 @@ export default function Quiz({
             <button
               key={course.id}
               onClick={() => startQuiz(course)}
-              className="w-full p-4 rounded-xl text-left transition-all duration-200"
-              style={{
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.07)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.06)"
-                e.currentTarget.style.borderColor = "rgba(124,92,255,0.3)"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.03)"
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"
-              }}
+              className="w-full p-4 rounded-xl text-left transition-all duration-200 bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.07)] hover:bg-[rgba(255,255,255,0.06)] hover:border-[rgba(124,92,255,0.3)]"
             >
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-sm text-white">{course.titre}</span>
@@ -271,10 +255,7 @@ export default function Quiz({
       <div className="p-6 md:p-8 max-w-2xl mx-auto">
         <button
           onClick={() => setSelectedCourse(null)}
-          className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150"
-          style={{ color: "rgba(255,255,255,0.38)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.38)")}
+          className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150 text-[rgba(255,255,255,0.38)] hover:text-[rgba(255,255,255,0.8)]"
         >
           <ChevronLeft size={15} />
           Back to courses
@@ -374,29 +355,14 @@ export default function Quiz({
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={reset}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200"
-            style={{ background: "#7C5CFF" }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#8B6BFF")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "#7C5CFF")}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 bg-[#7C5CFF] hover:bg-[#8B6BFF]"
           >
             <RotateCcw size={14} />
             Retry quiz
           </button>
           <button
             onClick={() => setSelectedCourse(null)}
-            className="px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
-            style={{
-              border: "1px solid rgba(255,255,255,0.08)",
-              color: "rgba(255,255,255,0.6)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.05)"
-              e.currentTarget.style.color = "rgba(255,255,255,0.9)"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent"
-              e.currentTarget.style.color = "rgba(255,255,255,0.6)"
-            }}
+            className="px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 border border-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.6)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[rgba(255,255,255,0.9)]"
           >
             Choose another course
           </button>
@@ -409,10 +375,7 @@ export default function Quiz({
     <div className="p-6 md:p-8 max-w-2xl mx-auto">
       <button
         onClick={() => setSelectedCourse(null)}
-        className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150"
-        style={{ color: "rgba(255,255,255,0.38)" }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.38)")}
+        className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150 text-[rgba(255,255,255,0.38)] hover:text-[rgba(255,255,255,0.8)]"
       >
         <ChevronLeft size={15} />
         Exit quiz
@@ -490,24 +453,12 @@ export default function Quiz({
               key={idx}
               onClick={() => handleSelect(idx)}
               disabled={revealed}
-              className="w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl text-left transition-all duration-200"
+              className="w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl text-left transition-all duration-200 enabled:hover:bg-[rgba(255,255,255,0.06)]! enabled:hover:border-[rgba(255,255,255,0.18)]!"
               style={{
                 background: bg,
                 border: `1px solid ${border}`,
                 color,
                 cursor: revealed ? "default" : "pointer",
-              }}
-              onMouseEnter={(e) => {
-                if (!revealed) {
-                  e.currentTarget.style.background = "rgba(255,255,255,0.06)"
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)"
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!revealed) {
-                  e.currentTarget.style.background = "rgba(255,255,255,0.03)"
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.09)"
-                }
               }}
             >
               <span
@@ -551,16 +502,7 @@ export default function Quiz({
       {selected !== null && (
         <button
           onClick={handleNext}
-          className="group w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-white transition-all duration-200"
-          style={{ background: "#7C5CFF" }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#8B6BFF"
-            e.currentTarget.style.boxShadow = "0 0 24px rgba(124,92,255,0.35)"
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "#7C5CFF"
-            e.currentTarget.style.boxShadow = "none"
-          }}
+          className="group w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-white transition-all duration-200 bg-[#7C5CFF] hover:bg-[#8B6BFF] hover:shadow-[0_0_24px_rgba(124,92,255,0.35)]"
         >
           {current + 1 >= total ? "See results" : "Next question"}
           <span className="hidden sm:inline text-xs font-normal text-white/60">(Enter)</span>

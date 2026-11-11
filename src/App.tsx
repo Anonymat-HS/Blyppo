@@ -130,14 +130,8 @@ function AppContent() {
         >
           <button
             onClick={() => setSidebarOpen((o) => !o)}
-            className="transition-colors duration-150"
-            style={{ color: "rgba(255,255,255,0.45)" }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.color = "rgba(255,255,255,0.9)")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.color = "rgba(255,255,255,0.45)")
-            }
+            aria-label="Open menu"
+            className="transition-colors duration-150 text-[rgba(255,255,255,0.45)] hover:text-[rgba(255,255,255,0.9)]"
           >
             <Menu size={20} />
           </button>

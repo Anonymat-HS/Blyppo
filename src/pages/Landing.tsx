@@ -38,29 +38,13 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
         <div className="flex items-center gap-3">
           <button
             onClick={onEnter}
-            className="hidden sm:block text-sm transition-colors duration-150"
-            style={{ color: "rgba(255,255,255,0.5)" }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.color = "rgba(255,255,255,0.9)")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.color = "rgba(255,255,255,0.5)")
-            }
+            className="hidden sm:block text-sm transition-colors duration-150 text-[rgba(255,255,255,0.5)] hover:text-[rgba(255,255,255,0.9)]"
           >
             Sign in
           </button>
           <button
             onClick={onEnter}
-            className="px-4 py-2 text-sm font-semibold rounded-xl text-white transition-all duration-200"
-            style={{ background: "#7C5CFF" }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#8B6BFF"
-              e.currentTarget.style.boxShadow = "0 0 20px rgba(124,92,255,0.4)"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "#7C5CFF"
-              e.currentTarget.style.boxShadow = "none"
-            }}
+            className="px-4 py-2 text-sm font-semibold rounded-xl text-white transition-all duration-200 bg-[#7C5CFF] hover:bg-[#8B6BFF] hover:shadow-[0_0_20px_rgba(124,92,255,0.4)]"
           >
             Get started free
           </button>
@@ -120,17 +104,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-5">
             <button
               onClick={onEnter}
-              className="group flex items-center gap-2 px-8 py-3.5 rounded-2xl font-semibold text-white transition-all duration-200"
-              style={{ background: "#7C5CFF" }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "#8B6BFF"
-                e.currentTarget.style.boxShadow =
-                  "0 0 36px rgba(124,92,255,0.45)"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "#7C5CFF"
-                e.currentTarget.style.boxShadow = "none"
-              }}
+              className="group flex items-center gap-2 px-8 py-3.5 rounded-2xl font-semibold text-white transition-all duration-200 bg-[#7C5CFF] hover:bg-[#8B6BFF] hover:shadow-[0_0_36px_rgba(124,92,255,0.45)]"
             >
               Start for free
               <ArrowRight
@@ -140,21 +114,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
             </button>
             <button
               onClick={onEnter}
-              className="flex items-center gap-2 px-8 py-3.5 rounded-2xl font-medium transition-all duration-200"
-              style={{
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: "rgba(255,255,255,0.6)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)"
-                e.currentTarget.style.color = "rgba(255,255,255,0.9)"
-                e.currentTarget.style.background = "rgba(255,255,255,0.04)"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"
-                e.currentTarget.style.color = "rgba(255,255,255,0.6)"
-                e.currentTarget.style.background = "transparent"
-              }}
+              className="flex items-center gap-2 px-8 py-3.5 rounded-2xl font-medium transition-all duration-200 border border-[rgba(255,255,255,0.1)] text-[rgba(255,255,255,0.6)] hover:border-[rgba(255,255,255,0.22)] hover:text-[rgba(255,255,255,0.9)] hover:bg-[rgba(255,255,255,0.04)]"
             >
               See how it works
             </button>
@@ -308,17 +268,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
           ].map(({ step, icon: Icon, title, desc, color }) => (
             <div
               key={step}
-              className="relative p-6 rounded-2xl transition-all duration-200 group"
-              style={{
-                background: "rgba(255,255,255,0.025)",
-                border: "1px solid rgba(255,255,255,0.07)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.045)"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.025)"
-              }}
+              className="relative p-6 rounded-2xl transition-all duration-200 group bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.07)] hover:bg-[rgba(255,255,255,0.045)]"
             >
               <div className="flex items-start gap-4 mb-4">
                 <div
@@ -391,16 +341,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
           </p>
           <button
             onClick={onEnter}
-            className="group inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl font-semibold text-white transition-all duration-200"
-            style={{ background: "#7C5CFF" }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#8B6BFF"
-              e.currentTarget.style.boxShadow = "0 0 36px rgba(124,92,255,0.45)"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "#7C5CFF"
-              e.currentTarget.style.boxShadow = "none"
-            }}
+            className="group inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl font-semibold text-white transition-all duration-200 bg-[#7C5CFF] hover:bg-[#8B6BFF] hover:shadow-[0_0_36px_rgba(124,92,255,0.45)]"
           >
             Start for free
             <ArrowRight size={17} className="group-hover:translate-x-0.5 transition-transform" />
@@ -425,17 +366,6 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.18)" }}>
             Crafted with care by <span style={{ color: "rgba(124,92,255,0.5)" }}>H.S Company</span>
           </p>
-          <div className="flex gap-6 text-sm" style={{ color: "rgba(255,255,255,0.28)" }}>
-            {["Privacy", "Terms", "Contact"].map((l) => (
-              <a
-                key={l}
-                href="#"
-                className="hover:text-white transition-colors duration-150"
-              >
-                {l}
-              </a>
-            ))}
-          </div>
         </div>
       </footer>
     </div>

@@ -78,3 +78,52 @@ export async function deleteAccount(): Promise<void> {
   // The account no longer exists server-side: only the local session is left to clear
   await supabase.auth.signOut({ scope: "local" })
 }
+
+/**
+ * Sends a course file to the extract-course function and returns the new course id.
+ * `onProgress` receives the real upload progress (0 to 100); text extraction
+ * happens server-side afterwards and has no measurable progress.
+ */
+export async function uploadCourseFile(
+  file: File,
+  title: string,
+  onProgress: (percent: number) => void,
+  timeoutMs = 120_000
+): Promise<string> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error("Not authenticated")
+
+  const formData = new FormData()
+  formData.append("file", file)
+  formData.append("titre", title)
+
+  // XMLHttpRequest, because fetch cannot report upload progress
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open("POST", `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-course`)
+    xhr.setRequestHeader("Authorization", `Bearer ${session.access_token}`)
+    xhr.setRequestHeader("apikey", import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY)
+    xhr.responseType = "json"
+    xhr.timeout = timeoutMs
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100))
+    }
+    xhr.upload.onload = () => onProgress(100)
+
+    xhr.onload = () => {
+      const body = (xhr.response ?? {}) as { error?: string; course?: { id?: string } }
+      if (xhr.status < 200 || xhr.status >= 300) {
+        reject(new Error(body.error || `Upload failed (error ${xhr.status})`))
+      } else if (!body.course?.id) {
+        reject(new Error("No course ID returned"))
+      } else {
+        resolve(body.course.id)
+      }
+    }
+    xhr.onerror = () => reject(new Error("Could not reach the server. Check your connection and try again."))
+    xhr.ontimeout = () => reject(new Error("Upload timed out. Please try again."))
+
+    xhr.send(formData)
+  })
+}

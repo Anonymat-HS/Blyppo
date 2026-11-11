@@ -145,10 +145,7 @@ export default function Profile({ onBack }: { onBack: () => void }) {
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={onBack}
-          className="p-2 rounded-xl transition-colors"
-          style={{ color: "rgba(255,255,255,0.4)" }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.9)" }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "rgba(255,255,255,0.4)" }}
+          className="p-2 rounded-xl transition-colors text-[rgba(255,255,255,0.4)] hover:bg-[rgba(255,255,255,0.06)] hover:text-[rgba(255,255,255,0.9)]"
         >
           <ArrowLeft size={18} />
         </button>
@@ -179,13 +176,8 @@ export default function Profile({ onBack }: { onBack: () => void }) {
           </div>
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center border-2 border-bg transition-colors"
-            style={{
-              background: "#7C5CFF",
-              borderColor: "#0F0F12",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "#8B6BFF" }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "#7C5CFF" }}
+            aria-label="Change profile photo"
+            className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center border-2 border-bg transition-colors bg-[#7C5CFF] hover:bg-[#8B6BFF]"
           >
             {uploading ? (
               <div className="w-3 h-3 border border-t-transparent rounded-full animate-spin" style={{ borderColor: "white", borderTopColor: "transparent" }} />

@@ -70,34 +70,23 @@ export default function Login({
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.5)" }}>
+              <label htmlFor="login-email" className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.5)" }}>
                 Email
               </label>
               <input
+                id="login-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 rounded-xl text-sm text-white outline-none transition-all duration-150"
-                style={{
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(124,92,255,0.5)"
-                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(124,92,255,0.1)"
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"
-                  e.currentTarget.style.boxShadow = "none"
-                }}
+                className="w-full px-4 py-2.5 rounded-xl text-sm text-white outline-none transition-all duration-150 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] focus:border-[rgba(124,92,255,0.5)] focus:shadow-[0_0_0_3px_rgba(124,92,255,0.1)]"
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-semibold" style={{ color: "rgba(255,255,255,0.5)" }}>
+                <label htmlFor="login-password" className="block text-xs font-semibold" style={{ color: "rgba(255,255,255,0.5)" }}>
                   Password
                 </label>
                 <button
@@ -110,32 +99,19 @@ export default function Login({
               </div>
               <div className="relative">
                 <input
+                id="login-password"
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-2.5 pr-10 rounded-xl text-sm text-white outline-none transition-all duration-150"
-                  style={{
-                    background: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(124,92,255,0.5)"
-                    e.currentTarget.style.boxShadow = "0 0 0 3px rgba(124,92,255,0.1)"
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"
-                    e.currentTarget.style.boxShadow = "none"
-                  }}
+                  className="w-full px-4 py-2.5 pr-10 rounded-xl text-sm text-white outline-none transition-all duration-150 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] focus:border-[rgba(124,92,255,0.5)] focus:shadow-[0_0_0_3px_rgba(124,92,255,0.1)]"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
-                  style={{ color: "rgba(255,255,255,0.3)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.7)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors text-[rgba(255,255,255,0.3)] hover:text-[rgba(255,255,255,0.7)]"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -145,18 +121,7 @@ export default function Login({
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 disabled:opacity-50"
-              style={{ background: "#7C5CFF" }}
-              onMouseEnter={(e) => {
-                if (!loading) {
-                  e.currentTarget.style.background = "#8B6BFF"
-                  e.currentTarget.style.boxShadow = "0 0 20px rgba(124,92,255,0.4)"
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "#7C5CFF"
-                e.currentTarget.style.boxShadow = "none"
-              }}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 disabled:opacity-50 bg-[#7C5CFF] enabled:hover:bg-[#8B6BFF] enabled:hover:shadow-[0_0_20px_rgba(124,92,255,0.4)]"
             >
               {loading ? "Signing in..." : "Sign in"}
             </button>
@@ -167,10 +132,7 @@ export default function Login({
           Don't have an account?{" "}
           <button
             onClick={onSwitchToSignup}
-            className="font-semibold transition-colors duration-150"
-            style={{ color: "#A78BFA" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#C4B5FD")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "#A78BFA")}
+            className="font-semibold transition-colors duration-150 text-[#A78BFA] hover:text-[#C4B5FD]"
           >
             Sign up
           </button>

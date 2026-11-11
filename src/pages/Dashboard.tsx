@@ -1,4 +1,4 @@
-import { Upload, Brain, CreditCard, Flame, ArrowRight, Quote, BookOpen, AlertCircle, RefreshCw, Trash2 } from "lucide-react"
+import { Upload, Brain, CreditCard, Flame, ArrowRight, Quote, BookOpen, AlertCircle, RefreshCw, Trash2, Search } from "lucide-react"
 import { getRandomQuote } from "@/lib/utils/quotes"
 import type { Navigate, Screen } from "@/App"
 import { useState, useEffect } from "react"
@@ -20,6 +20,8 @@ export default function Dashboard({
   const [retryingCourse, setRetryingCourse] = useState<{ id: string; type: "quiz" | "flashcard" } | null>(null)
   const [retryError, setRetryError] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [query, setQuery] = useState("")
+  const [sort, setSort] = useState<"recent" | "name">("recent")
   // Course whose deletion is awaiting confirmation, and course being deleted
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null)
   const [deletingCourse, setDeletingCourse] = useState<string | null>(null)
@@ -86,6 +88,15 @@ export default function Dashboard({
       setConfirmingDelete(null)
     }
   }
+
+  const search = query.trim().toLowerCase()
+  const visibleCourses = courses
+    .filter((c) => c.titre.toLowerCase().includes(search))
+    .sort((a, b) =>
+      sort === "name"
+        ? a.titre.localeCompare(b.titre)
+        : b.created_at.localeCompare(a.created_at)
+    )
 
   const totalQuizzes = courses.reduce((s, c) => s + c.quiz_count, 0)
   const totalFlashcards = courses.reduce((s, c) => s + c.flashcard_count, 0)
@@ -178,16 +189,7 @@ export default function Dashboard({
       <div className="flex flex-wrap gap-2.5 mb-8">
         <button
           onClick={() => onNavigate("upload")}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200"
-          style={{ background: "#7C5CFF" }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#8B6BFF"
-            e.currentTarget.style.boxShadow = "0 0 20px rgba(124,92,255,0.35)"
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "#7C5CFF"
-            e.currentTarget.style.boxShadow = "none"
-          }}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 bg-[#7C5CFF] hover:bg-[#8B6BFF] hover:shadow-[0_0_20px_rgba(124,92,255,0.35)]"
         >
           <Upload size={15} />
           Upload new course
@@ -199,21 +201,7 @@ export default function Dashboard({
           <button
             key={screen}
             onClick={() => onNavigate(screen)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
-            style={{
-              border: "1px solid rgba(255,255,255,0.08)",
-              color: "rgba(255,255,255,0.6)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.05)"
-              e.currentTarget.style.color = "rgba(255,255,255,0.9)"
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent"
-              e.currentTarget.style.color = "rgba(255,255,255,0.6)"
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"
-            }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 border border-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.6)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[rgba(255,255,255,0.9)] hover:border-[rgba(255,255,255,0.15)]"
           >
             <Icon size={15} />
             {label}
@@ -263,12 +251,40 @@ export default function Dashboard({
         <>
           {/* Recent courses */}
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold">Recent Courses</h2>
+            <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+              <h2 className="text-base font-bold">Your courses</h2>
+              {courses.length > 1 && (
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+                    <input
+                      type="search"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Search courses"
+                      aria-label="Search courses"
+                      className="w-44 sm:w-56 pl-8 pr-3 py-1.5 rounded-lg text-sm text-white outline-none bg-white/5 border border-white/10 focus:border-[#7C5CFF]/50 placeholder:text-white/30"
+                    />
+                  </div>
+                  <select
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value as "recent" | "name")}
+                    aria-label="Sort courses"
+                    className="px-2.5 py-1.5 rounded-lg text-sm text-white/80 outline-none bg-[#1A1A23] border border-white/10 focus:border-[#7C5CFF]/50"
+                  >
+                    <option value="recent">Most recent</option>
+                    <option value="name">Name (A-Z)</option>
+                  </select>
+                </div>
+              )}
             </div>
 
+            {visibleCourses.length === 0 && (
+              <p className="text-sm text-white/40">No course matches "{query.trim()}".</p>
+            )}
+
             <div className="grid md:grid-cols-2 gap-4">
-              {courses.map((course) => {
+              {visibleCourses.map((course) => {
                 const needsQuiz = course.quiz_count === 0
                 const needsFlashcard = course.flashcard_count === 0
                 const isRetryingQuiz = retryingCourse?.id === course.id && retryingCourse?.type === "quiz"
@@ -277,19 +293,7 @@ export default function Dashboard({
                 return (
                   <div
                     key={course.id}
-                    className="group p-5 rounded-2xl transition-all duration-200"
-                    style={{
-                      background: "rgba(255,255,255,0.03)",
-                      border: "1px solid rgba(255,255,255,0.07)",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = "rgba(255,255,255,0.05)"
-                      e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = "rgba(255,255,255,0.03)"
-                      e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"
-                    }}
+                    className="group p-5 rounded-2xl transition-all duration-200 bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.07)] hover:bg-[rgba(255,255,255,0.05)] hover:border-[rgba(255,255,255,0.12)]"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
@@ -357,18 +361,7 @@ export default function Dashboard({
                       {needsQuiz && !isRetryingQuiz ? (
                         <button
                           onClick={() => handleRetry(course.id, "quiz")}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all"
-                          style={{
-                            background: "rgba(239,68,68,0.1)",
-                            border: "1px solid rgba(239,68,68,0.2)",
-                            color: "#FCA5A5",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "rgba(239,68,68,0.18)"
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "rgba(239,68,68,0.1)"
-                          }}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all bg-[rgba(239,68,68,0.1)] border border-[rgba(239,68,68,0.2)] text-[#FCA5A5] hover:bg-[rgba(239,68,68,0.18)]"
                         >
                           <RefreshCw size={11} />
                           Retry quiz
@@ -389,18 +382,7 @@ export default function Dashboard({
                       {needsFlashcard && !isRetryingFlashcard ? (
                         <button
                           onClick={() => handleRetry(course.id, "flashcard")}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all"
-                          style={{
-                            background: "rgba(239,68,68,0.1)",
-                            border: "1px solid rgba(239,68,68,0.2)",
-                            color: "#FCA5A5",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "rgba(239,68,68,0.18)"
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "rgba(239,68,68,0.1)"
-                          }}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all bg-[rgba(239,68,68,0.1)] border border-[rgba(239,68,68,0.2)] text-[#FCA5A5] hover:bg-[rgba(239,68,68,0.18)]"
                         >
                           <RefreshCw size={11} />
                           Retry flashcards
@@ -462,18 +444,7 @@ export default function Dashboard({
               </div>
               <button
                 onClick={() => onNavigate("quiz", courses.find((c) => c.quiz_count > 0)?.id)}
-                className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-200"
-                style={{
-                  background: "rgba(124,92,255,0.2)",
-                  border: "1px solid rgba(124,92,255,0.3)",
-                  color: "#C4B5FD",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(124,92,255,0.3)"
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(124,92,255,0.2)"
-                }}
+                className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-200 bg-[rgba(124,92,255,0.2)] border border-[rgba(124,92,255,0.3)] text-[#C4B5FD] hover:bg-[rgba(124,92,255,0.3)]"
               >
                 Resume
                 <ArrowRight size={13} />

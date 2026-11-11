@@ -29,3 +29,19 @@ html, body {
 *::-webkit-scrollbar-track { background: transparent; }
 *::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 *::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* Keyboard focus is always visible (mouse clicks do not trigger it) */
+:focus-visible {
+  outline: 2px solid #A78BFA;
+  outline-offset: 2px;
+}
+input:focus-visible {
+  outline: none; /* inputs show their own focus border */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
