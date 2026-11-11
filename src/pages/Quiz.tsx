@@ -20,6 +20,7 @@ import Confetti from "@/components/study/Confetti"
 import FeedbackDialog, { type FeedbackTarget } from "@/components/ui/FeedbackDialog"
 import QuizLengthPicker from "@/components/study/QuizLengthPicker"
 import { useQuizLength } from "@/hooks/useQuizLength"
+import { useT } from "@/lib/i18n"
 import type { CourseSummary, QuizQuestion } from "@/lib/types"
 
 interface CourseWithCount extends CourseSummary {
@@ -45,6 +46,7 @@ export default function Quiz({
   initialCourseId?: string
 }) {
   const { user } = useAuth()
+  const { t } = useT()
   const [quizLength, setQuizLength] = useQuizLength()
   const [courses, setCourses] = useState<CourseWithCount[]>([])
   const [selectedCourse, setSelectedCourse] = useState<CourseWithCount | null>(null)
@@ -225,7 +227,7 @@ export default function Quiz({
   }
 
   if (loading) {
-    return <LoadingState label="Loading courses..." />
+    return <LoadingState label={t("Loading courses...")} />
   }
 
   if (courses.length === 0) {
@@ -234,8 +236,8 @@ export default function Quiz({
         <BackButton onClick={onBack} />
         <EmptyState
           icon={BookOpen}
-          title="No courses yet"
-          text="Upload a course first, then Kwizo writes a quiz from it."
+          title={t("No courses yet")}
+          text={t("Upload a course first, then Kwizo writes a quiz from it.")}
         />
       </div>
     )
@@ -246,12 +248,13 @@ export default function Quiz({
       <div className="p-6 md:p-8 max-w-2xl mx-auto">
         <BackButton onClick={onBack} />
         <CoursePicker
-          title="Pick a quiz"
-          subtitle="Which course do you want to be quizzed on?"
+          title={t("Pick a quiz")}
+          subtitle={t("Which course do you want to be quizzed on?")}
           icon={Brain}
           courses={courses}
           count={(c) => c.quiz_count}
-          unit="question"
+          countLabel={(n) => (n === 1 ? t("{n} question", { n }) : t("{n} questions", { n }))}
+          emptyLabel={t("No questions yet")}
           onPick={startQuiz}
         >
           <QuizLengthPicker value={quizLength} onChange={setQuizLength} />
@@ -261,18 +264,18 @@ export default function Quiz({
   }
 
   if (loadingQuiz) {
-    return <LoadingState label="Getting your quiz ready..." />
+    return <LoadingState label={t("Getting your quiz ready...")} />
   }
 
   if (questions.length === 0) {
     return (
       <div className="p-6 md:p-8 max-w-2xl mx-auto">
-        <BackButton onClick={() => setSelectedCourse(null)} label="Back to courses" />
+        <BackButton onClick={() => setSelectedCourse(null)} label={t("Back to courses")} />
         <EmptyState
           icon={BookOpen}
           tone="spark"
-          title="No quiz questions yet"
-          text="Generate the quiz for this course from the Dashboard first."
+          title={t("No quiz questions yet")}
+          text={t("Generate the quiz for this course from the Dashboard first.")}
         />
       </div>
     )
@@ -286,10 +289,10 @@ export default function Quiz({
       .filter(({ question, picked }) => picked !== undefined && picked !== question.bonne_reponse)
     const grade =
       pct >= 80
-        ? { label: "Brilliant!", emoji: "🏆", color: "#4ADE80", line: "You know this course." }
+        ? { label: t("Brilliant!"), emoji: "🏆", color: "#4ADE80", line: t("You know this course.") }
         : pct >= 60
-          ? { label: "Nice work!", emoji: "💪", color: "#FFC83D", line: "A few more rounds and it's yours." }
-          : { label: "Keep going!", emoji: "🌱", color: "#F87171", line: "Every miss is something you'll remember next time." }
+          ? { label: t("Nice work!"), emoji: "💪", color: "#FFC83D", line: t("A few more rounds and it's yours.") }
+          : { label: t("Keep going!"), emoji: "🌱", color: "#F87171", line: t("Every miss is something you'll remember next time.") }
 
     return (
       <div className="relative p-6 md:p-8 max-w-2xl mx-auto flex flex-col items-center text-center pt-10 sm:pt-14">
@@ -304,16 +307,16 @@ export default function Quiz({
         <p className="text-white/45 mb-1">{grade.line}</p>
         <p className="text-sm text-white/30 mb-8">{selectedCourse.titre}</p>
 
-        {saveFailed && <SaveWarning message={SAVE_WARNING} />}
+        {saveFailed && <SaveWarning message={t(SAVE_WARNING)} />}
 
         <div className="grid grid-cols-2 gap-3 w-full max-w-xs mb-10">
           <div className="p-3.5 rounded-2xl bg-ok/10 border border-ok/20">
             <p className="text-2xl font-black text-ok">{score}</p>
-            <p className="text-xs text-white/40">Correct</p>
+            <p className="text-xs text-white/40">{t("Correct")}</p>
           </div>
           <div className="p-3.5 rounded-2xl bg-ko/10 border border-ko/20">
             <p className="text-2xl font-black text-ko">{total - score}</p>
-            <p className="text-xs text-white/40">Missed</p>
+            <p className="text-xs text-white/40">{t("Missed")}</p>
           </div>
         </div>
 
@@ -323,7 +326,7 @@ export default function Quiz({
         <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 mb-6">
           <button onClick={playAgain} className={primaryButton} disabled={generating}>
             <RotateCcw size={15} />
-            {unseen > 0 ? `Play again · ${Math.min(unseen, quizLength)} new` : "Play again"}
+            {unseen > 0 ? t("Play again · {n} new", { n: Math.min(unseen, quizLength) }) : t("Play again")}
           </button>
           {mistakes.length > 0 && (
             <button
@@ -332,11 +335,13 @@ export default function Quiz({
               disabled={generating}
             >
               <Target size={15} />
-              Retry my {mistakes.length} miss{mistakes.length !== 1 ? "es" : ""}
+              {mistakes.length === 1
+                ? t("Retry my {n} miss", { n: mistakes.length })
+                : t("Retry my {n} misses", { n: mistakes.length })}
             </button>
           )}
           <button onClick={() => setSelectedCourse(null)} className={secondaryButton} disabled={generating}>
-            Choose another course
+            {t("Choose another course")}
           </button>
         </div>
 
@@ -348,12 +353,17 @@ export default function Quiz({
             </div>
             <div className="flex-1 min-w-[12rem]">
               <p className="font-bold text-white text-sm">
-                {unseen > 0 ? "Want even more questions?" : "You have played every question"}
+                {unseen > 0 ? t("Want even more questions?") : t("You have played every question")}
               </p>
               <p className="text-xs text-white/50 mt-0.5">
-                {pool.length} question{pool.length !== 1 ? "s" : ""} in this course
-                {unseen > 0 ? ` · ${unseen} not played yet` : ""}. Kwizo can write 10 new ones, different
-                from the ones you already have.
+                {pool.length === 1
+                  ? unseen > 0
+                    ? t("{total} question in this course · {n} not played yet.", { total: pool.length, n: unseen })
+                    : t("{n} question in this course.", { n: pool.length })
+                  : unseen > 0
+                    ? t("{total} questions in this course · {n} not played yet.", { total: pool.length, n: unseen })
+                    : t("{n} questions in this course.", { n: pool.length })}{" "}
+                {t("Kwizo can write 10 new ones, different from the ones you already have.")}
               </p>
             </div>
             <button
@@ -362,12 +372,12 @@ export default function Quiz({
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all bg-spark text-[#16161D] hover:bg-spark-soft disabled:opacity-60"
             >
               {generating ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
-              {generating ? "Writing new questions..." : "New questions"}
+              {generating ? t("Writing new questions...") : t("New questions")}
             </button>
           </div>
           {generating && (
             <p className="text-xs text-white/40 mt-3" role="status">
-              {generateMsg ?? "This takes about 10 to 20 seconds."}
+              {generateMsg ?? t("This takes about 10 to 20 seconds.")}
             </p>
           )}
           {moreError && (
@@ -381,7 +391,7 @@ export default function Quiz({
           <div className="w-full text-left">
             <h3 className="flex items-center gap-2 text-sm font-bold text-white mb-3">
               <Target size={15} className="text-spark" />
-              Learn from your misses ({mistakes.length})
+              {t("Learn from your misses ({n})", { n: mistakes.length })}
             </h3>
             <div className="space-y-3">
               {mistakes.map(({ question, picked }, i) => (
@@ -394,8 +404,8 @@ export default function Quiz({
                     <p className="text-sm font-semibold text-white">{question.question}</p>
                     <button
                       onClick={() => setReporting({ kind: "question", id: question.id, text: question.question })}
-                      aria-label="Report this question"
-                      title="Report this question"
+                      aria-label={t("Report this question")}
+                      title={t("Report this question")}
                       className="shrink-0 p-1 rounded-lg text-white/30 hover:text-white/80 hover:bg-white/5 transition-colors"
                     >
                       <Flag size={13} />
@@ -426,6 +436,8 @@ export default function Quiz({
 
   const revealed = selected !== null
   const gotIt = revealed && selected === correctIndex
+  // The question number stays bold: split the sentence around its placeholder
+  const [counterBefore, counterAfter = ""] = t("Question {current} of {total}", { total }).split("{current}")
 
   return (
     <div className="p-6 md:p-8 max-w-2xl mx-auto">
@@ -435,11 +447,11 @@ export default function Quiz({
           className="inline-flex items-center gap-1.5 text-sm transition-colors duration-150 text-white/40 hover:text-white/85"
         >
           <ChevronLeft size={15} />
-          Exit
+          {t("Exit")}
         </button>
         <div
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold bg-spark/10 border border-spark/25 text-spark"
-          aria-label={`Score: ${score}`}
+          aria-label={t("Score: {n}", { n: score })}
         >
           <Zap size={14} />
           {score}
@@ -450,7 +462,9 @@ export default function Quiz({
         {selectedCourse.titre.toUpperCase()}
       </p>
       <p className="text-sm text-white/55 mb-3">
-        Question <span className="font-bold text-white">{current + 1}</span> of {total}
+        {counterBefore}
+        <span className="font-bold text-white">{current + 1}</span>
+        {counterAfter}
       </p>
 
       {/* One segment per question: green when right, red when missed */}
@@ -469,14 +483,16 @@ export default function Quiz({
         })}
       </div>
 
-      {saveFailed && <SaveWarning message={SAVE_WARNING} />}
+      {saveFailed && <SaveWarning message={t(SAVE_WARNING)} />}
 
       {added !== null && current === 0 && selected === null && (
         <div className="animate-rise mb-5 px-4 py-3 rounded-xl text-sm flex items-center gap-2 bg-spark/10 border border-spark/25 text-spark" role="status">
           <Sparkles size={15} className="shrink-0" />
           {added > 0
-            ? `${added} new question${added !== 1 ? "s" : ""} added. Here they are!`
-            : "No new question this time: here is a fresh mix instead."}
+            ? added === 1
+              ? t("{n} new question added. Here they are!", { n: added })
+              : t("{n} new questions added. Here they are!", { n: added })
+            : t("No new question this time: here is a fresh mix instead.")}
         </div>
       )}
 
@@ -533,14 +549,14 @@ export default function Quiz({
         >
           <div className="flex items-start justify-between gap-3">
             <p className={`text-sm font-bold mb-1 ${gotIt ? "text-ok" : "text-ko"}`}>
-              {gotIt ? "Correct! +1" : `Not quite. The answer is ${LETTERS[correctIndex]?.key ?? "?"}.`}
+              {gotIt ? t("Correct! +1") : t("Not quite. The answer is {letter}.", { letter: LETTERS[correctIndex]?.key ?? "?" })}
             </p>
             <button
               onClick={() => setReporting({ kind: "question", id: q.id, text: q.question })}
               className="shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold text-white/35 hover:text-white/80 transition-colors"
             >
               <Flag size={12} />
-              Report
+              {t("Report")}
             </button>
           </div>
           {q.explication && <p className="text-sm leading-relaxed text-white/65">{q.explication}</p>}
@@ -549,13 +565,13 @@ export default function Quiz({
 
       {revealed ? (
         <button onClick={handleNext} className={`group w-full ${primaryButton} py-3.5`}>
-          {current + 1 >= total ? "See my score" : "Next question"}
-          <span className="hidden sm:inline text-xs font-normal text-white/60">(Enter)</span>
+          {current + 1 >= total ? t("See my score") : t("Next question")}
+          <span className="hidden sm:inline text-xs font-normal text-white/60">{t("(Enter)")}</span>
           <ArrowRight size={17} className="group-hover:translate-x-0.5 transition-transform" />
         </button>
       ) : (
         <p className="hidden sm:block text-center text-xs text-white/25">
-          Press 1-4 or A-D to answer
+          {t("Press 1-4 or A-D to answer")}
         </p>
       )}
       {reporting && <FeedbackDialog target={reporting} onClose={() => setReporting(null)} />}

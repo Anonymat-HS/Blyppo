@@ -11,6 +11,7 @@ import type { Screen } from "@/App"
 import { Logo } from "@/components/ui/Logo"
 import { useAuth } from "@/lib/supabase/auth"
 import { useStreak } from "@/hooks/useStreak"
+import { useT } from "@/lib/i18n"
 
 interface SidebarProps {
   screen: Screen
@@ -34,6 +35,7 @@ export default function Sidebar({
   onToggle,
 }: SidebarProps) {
   const { user } = useAuth()
+  const { t } = useT()
   // Reloaded on every screen change, so a finished quiz shows up right away
   const streak = useStreak(user?.id, screen)
 
@@ -67,7 +69,7 @@ export default function Sidebar({
           <Logo size="md" byline />
           <button
             onClick={onToggle}
-            aria-label="Close menu"
+            aria-label={t("Close menu")}
             className="ml-auto lg:hidden text-white/30 hover:text-white transition-colors"
           >
             <X size={18} />
@@ -94,7 +96,7 @@ export default function Sidebar({
               >
                 {active && <span className="absolute -left-3 top-2 bottom-2 w-1 rounded-r-full bg-spark" aria-hidden="true" />}
                 <Icon size={17} className={active ? "text-brand-soft" : ""} />
-                {label}
+                {t(label)}
               </button>
             )
           })}
@@ -122,10 +124,10 @@ export default function Sidebar({
               </div>
               <div className="min-w-0">
                 <p className={`text-sm font-black ${streak > 0 ? "text-spark" : "text-white/70"}`}>
-                  {streak}-day streak
+                  {streak === 1 ? t("1-day streak") : t("{n}-day streak", { n: streak })}
                 </p>
                 <p className="text-[11px] text-white/35">
-                  {streak > 0 ? "Study every day to grow it" : "Answer a question to start one"}
+                  {streak > 0 ? t("Study every day to grow it") : t("Answer a question to start one")}
                 </p>
               </div>
             </div>

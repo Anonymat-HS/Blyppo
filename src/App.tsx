@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { Menu } from "lucide-react"
 import { AuthProvider, useAuth } from "@/lib/supabase/auth"
+import { I18nProvider, useT } from "@/lib/i18n"
 import Landing from "@/pages/Landing"
 import Login from "@/pages/Login"
 import Signup from "@/pages/Signup"
@@ -64,6 +65,7 @@ function useHashRoute(): [Route, Navigate] {
 
 function AppContent() {
   const { user, loading, refreshUser, recoveringPassword } = useAuth()
+  const { t } = useT()
   const [route, setScreen] = useHashRoute()
   // A signed-in user never lands on the marketing page
   const screen: Screen = user && route.screen === "landing" ? "dashboard" : route.screen
@@ -131,7 +133,7 @@ function AppContent() {
         >
           <button
             onClick={() => setSidebarOpen((o) => !o)}
-            aria-label="Open menu"
+            aria-label={t("Open menu")}
             className="transition-colors duration-150 text-[rgba(255,255,255,0.45)] hover:text-[rgba(255,255,255,0.9)]"
           >
             <Menu size={20} />
@@ -175,8 +177,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <I18nProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </I18nProvider>
   )
 }

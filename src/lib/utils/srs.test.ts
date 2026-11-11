@@ -65,3 +65,13 @@ describe("formatInterval", () => {
     expect(formatInterval(730)).toBe("2y")
   })
 })
+
+describe("formatInterval in French", () => {
+  it("uses French units", () => {
+    expect(formatInterval(0, "fr")).toBe("< 1 min")
+    expect(formatInterval(4, "fr")).toBe("4 j")
+    expect(formatInterval(60, "fr")).toBe("2 mois")
+    expect(formatInterval(365, "fr")).toBe("1 an")
+    expect(formatInterval(730, "fr")).toBe("2 ans")
+  })
+})

@@ -16,10 +16,12 @@ import type { CourseSummary, PlanLimits } from "@/lib/types"
 import type { Navigate } from "@/App"
 import CourseBadge from "@/components/study/CourseBadge"
 import { primaryButton, secondaryButton } from "@/components/ui/PageStates"
+import { useT } from "@/lib/i18n"
 
 type UploadState = "idle" | "dragover" | "processing" | "generating" | "done" | "error"
 
 export default function Upload({ onBack, onNavigate }: { onBack: () => void; onNavigate: Navigate }) {
+  const { t, locale } = useT()
   const [state, setState] = useState<UploadState>("idle")
   const [progress, setProgress] = useState(0)
   const [filename, setFilename] = useState("")
@@ -62,7 +64,7 @@ export default function Upload({ onBack, onNavigate }: { onBack: () => void; onN
     }
 
     // Wait 4 seconds before generating flashcards to let rate limit cool down
-    setRetryingMsg("Pausing between generations...")
+    setRetryingMsg(t("Pausing between generations..."))
     await new Promise((r) => setTimeout(r, 4000))
     setRetryingMsg(null)
 
@@ -76,23 +78,23 @@ export default function Upload({ onBack, onNavigate }: { onBack: () => void; onN
     setRetryingMsg(null)
     setState("done")
     loadRecentCourses()
-  }, [loadRecentCourses])
+  }, [loadRecentCourses, t])
 
   const handleUpload = useCallback(async (file: File, title: string) => {
     if (!title.trim()) {
-      setErrorMessage("Please enter a course title before uploading.")
+      setErrorMessage(t("Please enter a course title before uploading."))
       setState("error")
       return
     }
 
     if (file.size > maxFileMb * 1024 * 1024) {
-      setErrorMessage(`File exceeds the ${maxFileMb} MB limit of your plan.`)
+      setErrorMessage(t("File exceeds the {mb} MB limit of your plan.", { mb: maxFileMb }))
       setState("error")
       return
     }
 
     if (!/\.(pdf|txt|md)$/i.test(file.name)) {
-      setErrorMessage("Unsupported file type. Please upload a PDF, TXT, or MD file.")
+      setErrorMessage(t("Unsupported file type. Please upload a PDF, TXT, or MD file."))
       setState("error")
       return
     }
@@ -111,7 +113,7 @@ export default function Upload({ onBack, onNavigate }: { onBack: () => void; onN
       setErrorMessage((err as Error).message)
       setState("error")
     }
-  }, [maxFileMb, generateContent])
+  }, [maxFileMb, generateContent, t])
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -129,8 +131,8 @@ export default function Upload({ onBack, onNavigate }: { onBack: () => void; onN
   // The upload is measured; extraction runs server-side and is only known to be in progress
   const uploaded = progress >= 100
   const processingSteps = [
-    { label: "Uploading document", done: uploaded },
-    { label: "Extracting text and saving to your library", done: false },
+    { label: t("Uploading document"), done: uploaded },
+    { label: t("Extracting text and saving to your library"), done: false },
   ]
 
   return (
@@ -140,14 +142,14 @@ export default function Upload({ onBack, onNavigate }: { onBack: () => void; onN
         className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150 text-[rgba(255,255,255,0.38)] hover:text-[rgba(255,255,255,0.8)]"
       >
         <ChevronLeft size={15} />
-        Back to Dashboard
+        {t("Back to Dashboard")}
       </button>
 
       <h1 className="text-2xl md:text-3xl font-black text-white mb-1.5">
-        New quiz from your notes
+        {t("New quiz from your notes")}
       </h1>
       <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.38)" }}>
-        Upload a course and Kwizo writes a quiz and a flashcard deck from it
+        {t("Upload a course and Kwizo writes a quiz and a flashcard deck from it")}
       </p>
 
       {(state === "idle" || state === "dragover") && (
@@ -155,14 +157,14 @@ export default function Upload({ onBack, onNavigate }: { onBack: () => void; onN
           {/* Title input */}
           <div className="mb-4">
             <label htmlFor="upload-course-title" className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.5)" }}>
-              Course title
+              {t("Course title")}
             </label>
             <input
                 id="upload-course-title"
               type="text"
               value={titre}
               onChange={(e) => setTitre(e.target.value)}
-              placeholder="e.g. Introduction to Algorithms - Chapter 1-4"
+              placeholder={t("e.g. Introduction to Algorithms - Chapter 1-4")}
               className="w-full px-4 py-2.5 rounded-xl text-sm text-white outline-none transition-all duration-150 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] focus:border-[rgba(124,92,255,0.5)] focus:shadow-[0_0_0_3px_rgba(124,92,255,0.1)]"
             />
           </div>
@@ -202,16 +204,19 @@ export default function Upload({ onBack, onNavigate }: { onBack: () => void; onN
               <div>
                 <p className="font-bold text-lg text-white">
                   {state === "dragover"
-                    ? "Drop it here!"
-                    : "Drop your file here"}
+                    ? t("Drop it here!")
+                    : t("Drop your file here")}
                 </p>
                 <p
                   className="text-sm mt-1"
                   style={{ color: "rgba(255,255,255,0.38)" }}
                 >
-                  or{" "}
-                  <span style={{ color: "#A78BFA" }}>click to browse</span>{" "}
-                  your files
+                  {t("or {browse} your files").split("{browse}").map((part, i) => (
+                    <span key={i}>
+                      {i > 0 && <span style={{ color: "#A78BFA" }}>{t("click to browse")}</span>}
+                      {part}
+                    </span>
+                  ))}
                 </p>
               </div>
               <div className="flex gap-2 mt-1 flex-wrap justify-center">
@@ -233,13 +238,18 @@ export default function Upload({ onBack, onNavigate }: { onBack: () => void; onN
                 className="text-xs text-center"
                 style={{ color: "rgba(255,255,255,0.22)" }}
               >
-                Max {maxFileMb} MB · text only, no scanned PDFs
+                {t("Max {mb} MB · text only, no scanned PDFs", { mb: maxFileMb })}
               </p>
               <p className="text-xs text-center" style={{ color: "rgba(255,255,255,0.22)" }}>
-                <span className="capitalize">{plan?.id ?? "free"}</span> plan ·{" "}
+                {t("{plan} plan").split("{plan}").map((part, i) => (
+                  <span key={i}>
+                    {i > 0 && <span className="capitalize">{plan?.id ?? "free"}</span>}
+                    {part}
+                  </span>
+                ))} ·{" "}
                 {quota
-                  ? `${Math.max(0, quota.limit - quota.used)} of ${quota.limit} uploads left today`
-                  : `up to ${plan?.daily_courses ?? 10} uploads per 24 h`}
+                  ? t("{left} of {limit} uploads left today", { left: Math.max(0, quota.limit - quota.used), limit: quota.limit })
+                  : t("up to {n} uploads per 24 h", { n: plan?.daily_courses ?? 10 })}
               </p>
             </div>
             <input
@@ -266,7 +276,7 @@ export default function Upload({ onBack, onNavigate }: { onBack: () => void; onN
                 className="text-xs font-semibold mb-3 tracking-wider"
                 style={{ color: "rgba(255,255,255,0.3)" }}
               >
-                RECENT COURSES
+                {t("RECENT COURSES")}
               </p>
               {recentCourses.map((course) => (
                 <button
@@ -281,11 +291,11 @@ export default function Upload({ onBack, onNavigate }: { onBack: () => void; onN
                       className="text-xs mt-0.5"
                       style={{ color: "rgba(255,255,255,0.3)" }}
                     >
-                      {new Date(course.created_at).toLocaleDateString()}
+                      {new Date(course.created_at).toLocaleDateString(locale)}
                     </p>
                   </div>
                   <span className="inline-flex items-center gap-1 text-xs font-semibold shrink-0 text-ok group-hover:text-white transition-colors">
-                    Play
+                    {t("Play")}
                     <ArrowRight size={13} />
                   </span>
                 </button>
@@ -315,7 +325,7 @@ export default function Upload({ onBack, onNavigate }: { onBack: () => void; onN
             </div>
             <div className="min-w-0">
               <p className="font-bold text-white">
-                Processing your material...
+                {t("Processing your material...")}
               </p>
               <p
                 className="text-xs mt-0.5 truncate"
@@ -329,7 +339,7 @@ export default function Upload({ onBack, onNavigate }: { onBack: () => void; onN
           <div className="mb-6">
             <div className="flex justify-between text-sm mb-2">
               <span style={{ color: "rgba(255,255,255,0.4)" }}>
-                {uploaded ? "Extracting text…" : "Uploading"}
+                {uploaded ? t("Extracting text…") : t("Uploading")}
               </span>
               <span className="font-bold" style={{ color: "#C4B5FD" }}>
                 {Math.round(progress)}%
@@ -411,9 +421,9 @@ export default function Upload({ onBack, onNavigate }: { onBack: () => void; onN
               <Sparkles size={17} style={{ color: "#00D9FF" }} className="animate-pulse" />
             </div>
             <div>
-              <p className="font-bold text-white">Generating study materials...</p>
+              <p className="font-bold text-white">{t("Generating study materials...")}</p>
               <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
-                This may take a few seconds
+                {t("This may take a few seconds")}
               </p>
             </div>
           </div>
@@ -422,13 +432,13 @@ export default function Upload({ onBack, onNavigate }: { onBack: () => void; onN
             <div className="flex items-center gap-3">
               <Brain size={16} style={{ color: "#7C5CFF" }} className="animate-pulse" />
               <span className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>
-                Creating quiz questions...
+                {t("Creating quiz questions...")}
               </span>
             </div>
             <div className="flex items-center gap-3">
               <Layers size={16} style={{ color: "#FFC83D" }} className="animate-pulse" />
               <span className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>
-                Generating flashcards...
+                {t("Generating flashcards...")}
               </span>
             </div>
             {retryingMsg && (
@@ -461,7 +471,7 @@ export default function Upload({ onBack, onNavigate }: { onBack: () => void; onN
             <CheckCircle size={26} style={{ color: "#4ADE80" }} />
           </div>
           <h3 className="text-xl font-black text-white mb-1.5">
-            Course ready!
+            {t("Course ready!")}
           </h3>
           <p
             className="text-sm mb-4 truncate max-w-xs mx-auto"
@@ -475,13 +485,13 @@ export default function Upload({ onBack, onNavigate }: { onBack: () => void; onN
             <div className="flex items-center justify-center gap-2">
               <Brain size={14} style={{ color: quizError ? "#F87171" : "#4ADE80" }} />
               <span className="text-xs" style={{ color: quizError ? "#FCA5A5" : "#86EFAC" }}>
-                {quizError ? `Quiz: ${quizError}` : "Quiz generated"}
+                {quizError ? t("Quiz: {error}", { error: quizError }) : t("Quiz generated")}
               </span>
             </div>
             <div className="flex items-center justify-center gap-2">
               <Layers size={14} style={{ color: flashcardError ? "#F87171" : "#4ADE80" }} />
               <span className="text-xs" style={{ color: flashcardError ? "#FCA5A5" : "#86EFAC" }}>
-                {flashcardError ? `Flashcards: ${flashcardError}` : "Flashcards generated"}
+                {flashcardError ? t("Flashcards: {error}", { error: flashcardError }) : t("Flashcards generated")}
               </span>
             </div>
           </div>
@@ -490,17 +500,17 @@ export default function Upload({ onBack, onNavigate }: { onBack: () => void; onN
             {newCourseId && !quizError ? (
               <button onClick={() => onNavigate("quiz", newCourseId)} className={primaryButton}>
                 <Play size={15} className="fill-current" />
-                Play the quiz now
+                {t("Play the quiz now")}
               </button>
             ) : (
               <button onClick={onBack} className={primaryButton}>
-                Back to Dashboard
+                {t("Back to Dashboard")}
               </button>
             )}
             {newCourseId && !flashcardError && (
               <button onClick={() => onNavigate("flashcards", newCourseId)} className={secondaryButton}>
                 <Layers size={15} />
-                Flashcards
+                {t("Flashcards")}
               </button>
             )}
             <button
@@ -516,7 +526,7 @@ export default function Upload({ onBack, onNavigate }: { onBack: () => void; onN
               }}
               className={secondaryButton}
             >
-              Upload another
+              {t("Upload another")}
             </button>
           </div>
         </div>
@@ -540,7 +550,7 @@ export default function Upload({ onBack, onNavigate }: { onBack: () => void; onN
             <AlertCircle size={26} style={{ color: "#F87171" }} />
           </div>
           <h3 className="text-xl font-black text-white mb-1.5">
-            Upload failed
+            {t("Upload failed")}
           </h3>
           <p
             className="text-sm mb-7 max-w-xs mx-auto"
@@ -557,7 +567,7 @@ export default function Upload({ onBack, onNavigate }: { onBack: () => void; onN
             }}
             className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 bg-[#7C5CFF] hover:bg-[#8B6BFF]"
           >
-            Try again
+            {t("Try again")}
           </button>
         </div>
       )}

@@ -1,7 +1,10 @@
 import { ArrowRight, Upload, Sparkles, Brain, CheckCircle, Zap, CalendarClock, Target, Flame, Keyboard } from "lucide-react"
 import { CompanyBadge, Logo } from "@/components/ui/Logo"
+import LanguageSwitch from "@/components/ui/LanguageSwitch"
+import { useT } from "@/lib/i18n"
 
 export default function Landing({ onEnter }: { onEnter: () => void }) {
+  const { t } = useT()
   return (
     <div
       className="min-h-screen text-white overflow-x-hidden"
@@ -19,28 +22,30 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
             href="#features"
             className="hover:text-white transition-colors duration-150"
           >
-            Features
+            {t("Features")}
           </a>
           <a
             href="#pricing"
             className="hover:text-white transition-colors duration-150"
           >
-            Pricing
+            {t("Pricing")}
           </a>
         </div>
 
         <div className="flex items-center gap-3">
+          <LanguageSwitch />
           <button
             onClick={onEnter}
             className="hidden sm:block text-sm transition-colors duration-150 text-[rgba(255,255,255,0.5)] hover:text-[rgba(255,255,255,0.9)]"
           >
-            Sign in
+            {t("Sign in")}
           </button>
           <button
             onClick={onEnter}
-            className="px-4 py-2 text-sm font-semibold rounded-xl text-white transition-all duration-200 bg-[#7C5CFF] hover:bg-[#8B6BFF] hover:shadow-[0_0_20px_rgba(124,92,255,0.4)]"
+            className="whitespace-nowrap px-3 sm:px-4 py-2 text-sm font-semibold rounded-xl text-white transition-all duration-200 bg-[#7C5CFF] hover:bg-[#8B6BFF] hover:shadow-[0_0_20px_rgba(124,92,255,0.4)]"
           >
-            Get started free
+            <span className="sm:hidden">{t("Start")}</span>
+            <span className="hidden sm:inline">{t("Get started free")}</span>
           </button>
         </div>
       </nav>
@@ -67,11 +72,11 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
             }}
           >
             <Zap size={13} />
-            Your notes in, a quiz out
+            {t("Your notes in, a quiz out")}
           </div>
 
           <h1 className="text-3xl sm:text-5xl md:text-[72px] font-black leading-[1.0] tracking-tighter mb-6">
-            Quiz yourself.
+            {t("Quiz yourself.")}
             <br />
             <span
               style={{
@@ -82,7 +87,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
                 backgroundClip: "text",
               }}
             >
-              Ace the exam.
+              {t("Ace the exam.")}
             </span>
           </h1>
 
@@ -90,9 +95,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
             className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-10"
             style={{ color: "rgba(255,255,255,0.48)" }}
           >
-            Kwizo turns your PDFs and lecture notes into quizzes and
-            flashcards. Answer, see what you missed, and come back tomorrow
-            to keep your streak alive.
+            {t("Kwizo turns your PDFs and lecture notes into quizzes and flashcards. Answer, see what you missed, and come back tomorrow to keep your streak alive.")}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-5">
@@ -100,7 +103,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
               onClick={onEnter}
               className="group flex items-center gap-2 px-8 py-3.5 rounded-2xl font-semibold text-white transition-all duration-200 bg-[#7C5CFF] hover:bg-[#8B6BFF] hover:shadow-[0_0_36px_rgba(124,92,255,0.45)]"
             >
-              Start my first quiz
+              {t("Start my first quiz")}
               <ArrowRight
                 size={17}
                 className="group-hover:translate-x-0.5 transition-transform"
@@ -110,12 +113,12 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
               href="#features"
               className="flex items-center gap-2 px-8 py-3.5 rounded-2xl font-medium transition-all duration-200 border border-[rgba(255,255,255,0.1)] text-[rgba(255,255,255,0.6)] hover:border-[rgba(255,255,255,0.22)] hover:text-[rgba(255,255,255,0.9)] hover:bg-[rgba(255,255,255,0.04)]"
             >
-              See how it works
+              {t("See how it works")}
             </a>
           </div>
 
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>
-            No credit card required · Free during beta
+            {t("No credit card required · Free during beta")}
           </p>
         </div>
 
@@ -144,7 +147,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
                 style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
               >
                 <p className="text-[10px] font-semibold mb-3" style={{ color: "rgba(255,255,255,0.3)", letterSpacing: "0.08em" }}>
-                  MY COURSES
+                  {t("MY COURSES")}
                 </p>
                 {[
                   { name: "Algorithms", color: "#7C5CFF", pct: 78 },
@@ -155,7 +158,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
                     <div className="flex items-center gap-2 mb-1.5">
                       <div className="w-5 h-5 rounded-md" style={{ background: color + "25", border: `1px solid ${color}35` }} />
                       <span className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>
-                        {name}
+                        {t(name)}
                       </span>
                     </div>
                     <div className="h-1 rounded-full" style={{ background: "rgba(255,255,255,0.07)" }}>
@@ -172,7 +175,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
               >
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-[10px] font-semibold" style={{ color: "rgba(255,255,255,0.3)", letterSpacing: "0.08em" }}>
-                    AI-GENERATED QUIZ · ALGORITHMS
+                    {t("AI-GENERATED QUIZ · ALGORITHMS")}
                   </p>
                   <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.25)" }}>
                     3 / 5
@@ -182,7 +185,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
                   <div className="h-full rounded-full w-3/5" style={{ background: "#7C5CFF" }} />
                 </div>
                 <p className="text-sm font-semibold mb-3" style={{ color: "rgba(255,255,255,0.85)" }}>
-                  What is the average-case complexity of quicksort?
+                  {t("What is the average-case complexity of quicksort?")}
                 </p>
                 <div className="space-y-2">
                   {[
@@ -220,7 +223,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
             }}
           >
             <Flame size={13} />
-            5-day streak · keep it going
+            {t("5-day streak · keep it going")}
           </div>
         </div>
       </section>
@@ -229,10 +232,10 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
       <section id="features" className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
         <div className="text-center mb-14">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight mb-3">
-            How it works
+            {t("How it works")}
           </h2>
           <p className="text-base sm:text-lg" style={{ color: "rgba(255,255,255,0.38)" }}>
-            From raw notes to exam-ready in three steps
+            {t("From raw notes to exam-ready in three steps")}
           </p>
         </div>
 
@@ -278,12 +281,12 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
                   {step}
                 </span>
               </div>
-              <h3 className="text-base font-bold mb-2">{title}</h3>
+              <h3 className="text-base font-bold mb-2">{t(title)}</h3>
               <p
                 className="text-sm leading-relaxed"
                 style={{ color: "rgba(255,255,255,0.4)" }}
               >
-                {desc}
+                {t(desc)}
               </p>
             </div>
           ))}
@@ -294,11 +297,10 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-8">
         <div className="text-center mb-12">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight mb-3">
-            Why a quiz beats re-reading
+            {t("Why a quiz beats re-reading")}
           </h2>
           <p className="text-base sm:text-lg max-w-2xl mx-auto" style={{ color: "rgba(255,255,255,0.38)" }}>
-            Highlighting feels productive, but memory is built by pulling answers out of your head.
-            That is exactly what a quiz does.
+            {t("Highlighting feels productive, but memory is built by pulling answers out of your head. That is exactly what a quiz does.")}
           </p>
         </div>
         <div className="grid sm:grid-cols-3 gap-5">
@@ -329,8 +331,8 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
               >
                 <Icon size={18} style={{ color }} />
               </div>
-              <h3 className="text-base font-bold mb-2">{title}</h3>
-              <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.4)" }}>{desc}</p>
+              <h3 className="text-base font-bold mb-2">{t(title)}</h3>
+              <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.4)" }}>{t(desc)}</p>
             </div>
           ))}
         </div>
@@ -353,13 +355,13 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
               color: "#4ADE80",
             }}
           >
-            Free during beta
+            {t("Free during beta")}
           </div>
           <h2 className="text-2xl sm:text-3xl font-black mb-3">
-            Kwizo is free right now
+            {t("Kwizo is free right now")}
           </h2>
           <p style={{ color: "rgba(255,255,255,0.45)" }}>
-            No credit card, no hidden fees. We're building this for students first — pricing details coming soon.
+            {t("No credit card, no hidden fees. We're building this for students first — pricing details coming soon.")}
           </p>
         </div>
       </section>
@@ -374,16 +376,16 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
           }}
         >
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-black mb-3">
-            Your first quiz is one upload away
+            {t("Your first quiz is one upload away")}
           </h2>
           <p className="mb-8" style={{ color: "rgba(255,255,255,0.45)" }}>
-            Upload your first course and get a quiz and flashcards in minutes.
+            {t("Upload your first course and get a quiz and flashcards in minutes.")}
           </p>
           <button
             onClick={onEnter}
             className="group inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl font-semibold text-white transition-all duration-200 bg-[#7C5CFF] hover:bg-[#8B6BFF] hover:shadow-[0_0_36px_rgba(124,92,255,0.45)]"
           >
-            Start for free
+            {t("Start for free")}
             <ArrowRight size={17} className="group-hover:translate-x-0.5 transition-transform" />
           </button>
         </div>
@@ -395,7 +397,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
           <Logo size="md" byline />
           <CompanyBadge label="Designed and built by" />
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
-            © 2026 Kwizo, a product of H.S Company. All rights reserved.
+            {t("© 2026 Kwizo, a product of H.S Company. All rights reserved.")}
           </p>
         </div>
       </footer>

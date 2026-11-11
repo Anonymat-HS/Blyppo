@@ -1,11 +1,13 @@
 import { useState } from "react"
 import { Trash2 } from "lucide-react"
 import { deleteAccount } from "@/lib/supabase/functions"
+import { useT } from "@/lib/i18n"
 
 const CONFIRM_WORD = "DELETE"
 
 /** "Danger zone" card: deletes the account after the user types a confirmation word. */
 export default function DeleteAccount() {
+  const { t } = useT()
   const [open, setOpen] = useState(false)
   const [typed, setTyped] = useState("")
   const [deleting, setDeleting] = useState(false)
@@ -25,9 +27,9 @@ export default function DeleteAccount() {
 
   return (
     <div className="p-6 rounded-2xl mt-6 bg-red-500/[0.04] border border-red-500/20">
-      <h2 className="font-bold text-white mb-1">Delete account</h2>
+      <h2 className="font-bold text-white mb-1">{t("Delete account")}</h2>
       <p className="text-xs mb-4 text-white/40">
-        Permanently deletes your account, courses, quizzes, flashcards and progress. This cannot be undone.
+        {t("Permanently deletes your account, courses, quizzes, flashcards and progress. This cannot be undone.")}
       </p>
 
       {!open ? (
@@ -36,12 +38,17 @@ export default function DeleteAccount() {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-[#FCA5A5] border border-red-500/30 hover:bg-red-500/10 transition-colors duration-150"
         >
           <Trash2 size={14} />
-          Delete my account
+          {t("Delete my account")}
         </button>
       ) : (
         <div className="space-y-3">
           <label htmlFor="confirm-delete" className="block text-xs text-white/50">
-            Type <strong className="text-white">{CONFIRM_WORD}</strong> to confirm
+            {t("Type {word} to confirm").split("{word}").map((part, i) => (
+              <span key={i}>
+                {i > 0 && <strong className="text-white">{CONFIRM_WORD}</strong>}
+                {part}
+              </span>
+            ))}
           </label>
           <input
             id="confirm-delete"
@@ -58,7 +65,7 @@ export default function DeleteAccount() {
               disabled={typed !== CONFIRM_WORD || deleting}
               className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:hover:bg-red-600 transition-colors duration-150"
             >
-              {deleting ? "Deleting..." : "Delete permanently"}
+              {deleting ? t("Deleting...") : t("Delete permanently")}
             </button>
             <button
               onClick={() => {
@@ -69,7 +76,7 @@ export default function DeleteAccount() {
               disabled={deleting}
               className="px-4 py-2 rounded-xl text-sm font-medium text-white/60 border border-white/[0.08] hover:bg-white/5 transition-colors duration-150"
             >
-              Cancel
+              {t("Cancel")}
             </button>
           </div>
         </div>

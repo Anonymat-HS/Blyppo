@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/supabase/auth"
 import { useUserStats } from "@/hooks/useUserStats"
 import ErrorState from "@/components/ui/ErrorState"
 import DeleteAccount from "@/components/ui/DeleteAccount"
+import { useT } from "@/lib/i18n"
 
 const MAX_AVATAR_MB = 2
 
@@ -30,6 +31,7 @@ function getAvatarColor(name: string): string {
 
 export default function Profile({ onBack }: { onBack: () => void }) {
   const { user, updateFullName } = useAuth()
+  const { t, locale } = useT()
   const [editingName, setEditingName] = useState(false)
   const [nameDraft, setNameDraft] = useState("")
   const [savingName, setSavingName] = useState(false)
@@ -66,7 +68,7 @@ export default function Profile({ onBack }: { onBack: () => void }) {
     e.preventDefault()
     const next = nameDraft.trim()
     if (!next) {
-      setNameError("Please enter your name")
+      setNameError(t("Please enter your name"))
       return
     }
     setSavingName(true)
@@ -84,11 +86,11 @@ export default function Profile({ onBack }: { onBack: () => void }) {
     setAvatarError(null)
 
     if (!["image/png", "image/jpeg", "image/webp", "image/gif"].includes(file.type)) {
-      setAvatarError("Please choose a PNG, JPEG, WebP or GIF image.")
+      setAvatarError(t("Please choose a PNG, JPEG, WebP or GIF image."))
       return
     }
     if (file.size > MAX_AVATAR_MB * 1024 * 1024) {
-      setAvatarError(`Image exceeds the ${MAX_AVATAR_MB} MB limit.`)
+      setAvatarError(t("Image exceeds the {mb} MB limit.", { mb: MAX_AVATAR_MB }))
       return
     }
 
@@ -110,14 +112,14 @@ export default function Profile({ onBack }: { onBack: () => void }) {
       })
       if (updateError) throw updateError
     } catch (err) {
-      setAvatarError(`Could not update your photo: ${(err as Error).message}`)
+      setAvatarError(t("Could not update your photo: {message}", { message: (err as Error).message }))
     } finally {
       setUploading(false)
     }
   }
 
   const createdDate = createdAt
-    ? new Date(createdAt).toLocaleDateString("en-US", {
+    ? new Date(createdAt).toLocaleDateString(locale, {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -133,7 +135,7 @@ export default function Profile({ onBack }: { onBack: () => void }) {
       <div className="p-6 md:p-8 max-w-5xl mx-auto flex items-center justify-center" style={{ minHeight: "60vh" }}>
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto" style={{ borderColor: "#7C5CFF", borderTopColor: "transparent" }} />
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.38)" }}>Loading profile…</p>
+          <p className="text-sm" style={{ color: "rgba(255,255,255,0.38)" }}>{t("Loading profile…")}</p>
         </div>
       </div>
     )
@@ -149,7 +151,7 @@ export default function Profile({ onBack }: { onBack: () => void }) {
         >
           <ArrowLeft size={18} />
         </button>
-        <h1 className="text-2xl font-black text-white">Profile</h1>
+        <h1 className="text-2xl font-black text-white">{t("Profile")}</h1>
       </div>
 
       {/* Profile card */}
@@ -176,7 +178,7 @@ export default function Profile({ onBack }: { onBack: () => void }) {
           </div>
           <button
             onClick={() => fileInputRef.current?.click()}
-            aria-label="Change profile photo"
+            aria-label={t("Change profile photo")}
             className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center border-2 border-bg transition-colors bg-[#7C5CFF] hover:bg-[#8B6BFF]"
           >
             {uploading ? (
@@ -200,7 +202,7 @@ export default function Profile({ onBack }: { onBack: () => void }) {
                 type="text"
                 value={nameDraft}
                 onChange={(e) => setNameDraft(e.target.value)}
-                aria-label="Full name"
+                aria-label={t("Full name")}
                 maxLength={80}
                 autoFocus
                 className="px-3 py-1.5 rounded-lg text-sm text-white outline-none bg-white/5 border border-white/10 focus:border-[#7C5CFF]/50"
@@ -210,7 +212,7 @@ export default function Profile({ onBack }: { onBack: () => void }) {
                 disabled={savingName}
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#7C5CFF] hover:bg-[#8B6BFF] disabled:opacity-50 transition-colors"
               >
-                {savingName ? "Saving..." : "Save"}
+                {savingName ? t("Saving...") : t("Save")}
               </button>
               <button
                 type="button"
@@ -218,7 +220,7 @@ export default function Profile({ onBack }: { onBack: () => void }) {
                 disabled={savingName}
                 className="px-3 py-1.5 rounded-lg text-xs text-white/60 border border-white/10 hover:bg-white/5 transition-colors"
               >
-                Cancel
+                {t("Cancel")}
               </button>
             </form>
           ) : (
@@ -230,8 +232,8 @@ export default function Profile({ onBack }: { onBack: () => void }) {
                   setNameError(null)
                   setEditingName(true)
                 }}
-                aria-label="Edit name"
-                title="Edit name"
+                aria-label={t("Edit name")}
+                title={t("Edit name")}
                 className="shrink-0 p-1 rounded-md text-white/30 hover:text-white hover:bg-white/5 transition-colors"
               >
                 <Pencil size={13} />
@@ -241,7 +243,7 @@ export default function Profile({ onBack }: { onBack: () => void }) {
           {nameError && <p className="text-xs mt-1 text-[#FCA5A5]">{nameError}</p>}
           <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>{email}</p>
           <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.25)" }}>
-            Member since {createdDate}
+            {t("Member since {date}", { date: createdDate })}
           </p>
           {avatarError && (
             <p className="text-xs mt-2" style={{ color: "#FCA5A5" }}>
@@ -270,13 +272,13 @@ export default function Profile({ onBack }: { onBack: () => void }) {
             <div className="flex items-center gap-1.5 mb-2">
               <Icon size={13} style={{ color }} />
               <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.35)" }}>
-                {label}
+                {t(label)}
               </p>
             </div>
             <p className="text-2xl font-black" style={{ color }}>{value}</p>
             {label === "Avg score" && (
               <p className="text-[11px] mt-1" style={{ color: "rgba(255,255,255,0.25)" }}>
-                Across all courses
+                {t("Across all courses")}
               </p>
             )}
           </div>
@@ -293,17 +295,21 @@ export default function Profile({ onBack }: { onBack: () => void }) {
       >
         <div className="flex items-center gap-1.5 mb-0.5">
           <Target size={14} style={{ color: "#4ADE80" }} />
-          <h2 className="font-bold text-white">Average Score</h2>
+          <h2 className="font-bold text-white">{t("Average Score")}</h2>
         </div>
         <p className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.38)" }}>
-          Latest answer to each question
+          {t("Latest answer to each question")}
         </p>
         <div className="flex items-end gap-3">
           <span className="text-4xl font-black" style={{ color: "#4ADE80" }}>
             {avgScore}%
           </span>
           <span className="text-sm mb-1" style={{ color: "rgba(255,255,255,0.3)" }}>
-            {answeredCount > 0 ? `based on ${answeredCount} question${answeredCount !== 1 ? "s" : ""}` : "No data yet"}
+            {answeredCount > 0
+              ? answeredCount === 1
+                ? t("based on {n} question", { n: answeredCount })
+                : t("based on {n} questions", { n: answeredCount })
+              : t("No data yet")}
           </span>
         </div>
         <div
@@ -328,11 +334,11 @@ export default function Profile({ onBack }: { onBack: () => void }) {
           border: "1px solid rgba(255,255,255,0.07)",
         }}
       >
-        <h2 className="font-bold text-white mb-4">Course Progress</h2>
+        <h2 className="font-bold text-white mb-4">{t("Course Progress")}</h2>
         {courseStats.length === 0 ? (
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
             <Upload size={14} className="inline mr-1" />
-            Upload your first course to get started.
+            {t("Upload your first course to get started.")}
           </p>
         ) : (
           <div className="space-y-4">
@@ -359,7 +365,7 @@ export default function Profile({ onBack }: { onBack: () => void }) {
                   />
                 </div>
                 <p className="text-[11px] mt-1" style={{ color: "rgba(255,255,255,0.25)" }}>
-                  {c.correctCount}/{c.quizCount} correct
+                  {t("{x}/{y} correct", { x: c.correctCount, y: c.quizCount })}
                 </p>
               </div>
             ))}

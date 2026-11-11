@@ -7,9 +7,11 @@ import AuthCard, {
   authInputClass,
   authLinkClass,
 } from "@/components/ui/AuthCard"
+import { useT } from "@/lib/i18n"
 
 export default function ForgotPassword({ onBackToLogin }: { onBackToLogin: () => void }) {
   const { requestPasswordReset } = useAuth()
+  const { t } = useT()
   const [email, setEmail] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -27,22 +29,23 @@ export default function ForgotPassword({ onBackToLogin }: { onBackToLogin: () =>
 
   const backLink = (
     <button onClick={onBackToLogin} className={authLinkClass}>
-      Back to sign in
+      {t("Back to sign in")}
     </button>
   )
 
   if (sent) {
     return (
       <AuthCard
-        title="Check your email"
-        subtitle="If an account exists for this address, a reset link is on its way."
+        title={t("Check your email")}
+        subtitle={t("If an account exists for this address, a reset link is on its way.")}
         footer={backLink}
       >
         <div className="flex items-start gap-3 text-sm text-white/60">
           <CheckCircle size={18} className="shrink-0 mt-0.5 text-green-400" />
           <p>
-            Open the link sent to <strong className="text-white">{email.trim()}</strong> on this
-            device to choose a new password. Check your spam folder if you cannot find it.
+            {t("Open the link sent to")} <strong className="text-white">{email.trim()}</strong>{" "}
+            {t("on this device to choose a new password.")}{" "}
+            {t("Check your spam folder if you cannot find it.")}
           </p>
         </div>
       </AuthCard>
@@ -51,8 +54,8 @@ export default function ForgotPassword({ onBackToLogin }: { onBackToLogin: () =>
 
   return (
     <AuthCard
-      title="Reset your password"
-      subtitle="Enter your email and we will send you a reset link"
+      title={t("Reset your password")}
+      subtitle={t("Enter your email and we will send you a reset link")}
       footer={backLink}
     >
       {error && <AuthError message={error} />}
@@ -60,7 +63,7 @@ export default function ForgotPassword({ onBackToLogin }: { onBackToLogin: () =>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="reset-email" className="block text-xs font-semibold mb-1.5 text-white/50">
-            Email
+            {t("Email")}
           </label>
           <input
             id="reset-email"
@@ -75,7 +78,7 @@ export default function ForgotPassword({ onBackToLogin }: { onBackToLogin: () =>
         </div>
 
         <button type="submit" disabled={loading} className={authButtonClass}>
-          {loading ? "Sending..." : "Send reset link"}
+          {loading ? t("Sending...") : t("Send reset link")}
         </button>
       </form>
     </AuthCard>

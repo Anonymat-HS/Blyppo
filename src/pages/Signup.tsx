@@ -2,6 +2,8 @@ import { useState } from "react"
 import { Eye, EyeOff, CheckCircle } from "lucide-react"
 import { useAuth } from "@/lib/supabase/auth"
 import { CompanyBadge, Logo } from "@/components/ui/Logo"
+import LanguageSwitch from "@/components/ui/LanguageSwitch"
+import { useT } from "@/lib/i18n"
 
 function getPasswordStrength(pw: string): { label: string; color: string; width: string } {
   let score = 0
@@ -23,6 +25,7 @@ export default function Signup({
   onSwitchToLogin: () => void
 }) {
   const { signUp } = useAuth()
+  const { t } = useT()
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -39,7 +42,7 @@ export default function Signup({
     setMessage("")
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters")
+      setError(t("Password must be at least {n} characters", { n: 8 }))
       return
     }
 
@@ -53,9 +56,10 @@ export default function Signup({
   if (message) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center px-4"
+        className="relative min-h-screen flex items-center justify-center px-4"
         style={{ background: "#0F0F12" }}
       >
+        <LanguageSwitch className="absolute top-4 right-4" />
         <div className="w-full max-w-md text-center">
           <div
             className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
@@ -66,16 +70,16 @@ export default function Signup({
           >
             <CheckCircle size={28} className="text-green-400" />
           </div>
-          <h1 className="text-xl font-bold text-white mb-2">Check your email</h1>
+          <h1 className="text-xl font-bold text-white mb-2">{t("Check your email")}</h1>
           <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.45)" }}>
-            We sent a confirmation link to <strong className="text-white">{email}</strong>.
-            Click it to activate your account.
+            {t("We sent a confirmation link to")} <strong className="text-white">{email}</strong>.{" "}
+            {t("Click it to activate your account.")}
           </p>
           <button
             onClick={onSwitchToLogin}
             className="text-sm font-semibold transition-colors duration-150 text-[#A78BFA] hover:text-[#C4B5FD]"
           >
-            Back to sign in
+            {t("Back to sign in")}
           </button>
         </div>
       </div>
@@ -84,9 +88,10 @@ export default function Signup({
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4"
+      className="relative min-h-screen flex items-center justify-center px-4"
       style={{ background: "#0F0F12" }}
     >
+      <LanguageSwitch className="absolute top-4 right-4" />
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2.5 mb-8">
@@ -100,9 +105,9 @@ export default function Signup({
             border: "1px solid rgba(255,255,255,0.07)",
           }}
         >
-          <h1 className="text-xl font-bold text-white mb-1">Create your account</h1>
+          <h1 className="text-xl font-bold text-white mb-1">{t("Create your account")}</h1>
           <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.38)" }}>
-            Start learning smarter in seconds
+            {t("Start learning smarter in seconds")}
           </p>
 
           {error && (
@@ -121,7 +126,7 @@ export default function Signup({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="signup-full-name" className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.5)" }}>
-                Full name
+                {t("Full name")}
               </label>
               <input
                 id="signup-full-name"
@@ -130,13 +135,13 @@ export default function Signup({
                 onChange={(e) => setFullName(e.target.value)}
                 required
                 className="w-full px-4 py-2.5 rounded-xl text-sm text-white outline-none transition-all duration-150 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] focus:border-[rgba(124,92,255,0.5)] focus:shadow-[0_0_0_3px_rgba(124,92,255,0.1)]"
-                placeholder="John Doe"
+                placeholder={t("John Doe")}
               />
             </div>
 
             <div>
               <label htmlFor="signup-email" className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.5)" }}>
-                Email
+                {t("Email")}
               </label>
               <input
                 id="signup-email"
@@ -151,7 +156,7 @@ export default function Signup({
 
             <div>
               <label htmlFor="signup-password" className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.5)" }}>
-                Password
+                {t("Password")}
               </label>
               <div className="relative">
                 <input
@@ -162,12 +167,12 @@ export default function Signup({
                   required
                   minLength={8}
                   className="w-full px-4 py-2.5 pr-10 rounded-xl text-sm text-white outline-none transition-all duration-150 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] focus:border-[rgba(124,92,255,0.5)] focus:shadow-[0_0_0_3px_rgba(124,92,255,0.1)]"
-                  placeholder="8+ characters"
+                  placeholder={t("8+ characters")}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={showPassword ? t("Hide password") : t("Show password")}
                   className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors text-[rgba(255,255,255,0.3)] hover:text-[rgba(255,255,255,0.7)]"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -179,7 +184,7 @@ export default function Signup({
                     <div className="flex-1 h-1 rounded-full overflow-hidden mr-3" style={{ background: "rgba(255,255,255,0.07)" }}>
                       <div className="h-full rounded-full transition-all duration-300" style={{ width: strength.width, background: strength.color }} />
                     </div>
-                    <span className="text-[11px] font-medium" style={{ color: strength.color }}>{strength.label}</span>
+                    <span className="text-[11px] font-medium" style={{ color: strength.color }}>{t(strength.label)}</span>
                   </div>
                 </div>
               )}
@@ -190,18 +195,18 @@ export default function Signup({
               disabled={loading}
               className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 disabled:opacity-50 bg-[#7C5CFF] enabled:hover:bg-[#8B6BFF] enabled:hover:shadow-[0_0_20px_rgba(124,92,255,0.4)]"
             >
-              {loading ? "Creating account..." : "Create account"}
+              {loading ? t("Creating account...") : t("Create account")}
             </button>
           </form>
         </div>
 
         <p className="text-center text-sm mt-5" style={{ color: "rgba(255,255,255,0.35)" }}>
-          Already have an account?{" "}
+          {t("Already have an account?")}{" "}
           <button
             onClick={onSwitchToLogin}
             className="font-semibold transition-colors duration-150 text-[#A78BFA] hover:text-[#C4B5FD]"
           >
-            Sign in
+            {t("Sign in")}
           </button>
         </p>
 

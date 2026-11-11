@@ -39,6 +39,7 @@ It started as a personal need: revising networking, Java and API coursework as a
 - **Plans and quotas** stored in the database (see [Plans and limits](#plans-and-limits))
 - **Swappable LLM provider**: Groq (default), Gemini or Ollama
 - Responsive dark UI, accessible labels and visible keyboard focus, respects `prefers-reduced-motion`
+- **French and English**: French by default, FR / EN switch on the landing, auth pages and account menu
 
 ## Tech stack
 
@@ -118,6 +119,13 @@ npm run dev            # http://localhost:8443
    ```bash
    supabase secrets set LLM_PROVIDER=groq GROQ_API_KEY=<your-key> ALLOWED_ORIGINS=http://localhost:8443 --project-ref <ref>
    ```
+
+## Translations
+
+The UI is in French (default) and English, with no i18n dependency (`src/lib/i18n/`).
+Write the English text in the code and wrap it: `const { t } = useT()`, then `t("Play again")` or
+`t("{n} questions", { n })`. Add the French version to the matching file in `src/lib/i18n/fr/`.
+`npm test` fails if a `t("...")` text has no French entry or if a translation drops a `{placeholder}`.
 
 ## Scripts
 

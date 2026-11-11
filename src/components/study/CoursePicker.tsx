@@ -11,7 +11,8 @@ export default function CoursePicker<T extends CourseSummary>({
   icon: Icon,
   courses,
   count,
-  unit,
+  countLabel,
+  emptyLabel,
   onPick,
   children,
 }: {
@@ -21,8 +22,10 @@ export default function CoursePicker<T extends CourseSummary>({
   courses: T[]
   /** Number of questions or cards of a course */
   count: (course: T) => number
-  /** "question" or "card", pluralised with an "s" */
-  unit: string
+  /** Translated count line, e.g. (n) => t("{n} questions", { n }) */
+  countLabel: (n: number) => string
+  /** Translated line for a course with nothing yet, e.g. t("No questions yet") */
+  emptyLabel: string
   onPick: (course: T) => void
   /** Shown between the title and the list, e.g. session settings */
   children?: ReactNode
@@ -55,7 +58,7 @@ export default function CoursePicker<T extends CourseSummary>({
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm text-white truncate">{course.titre}</p>
                 <p className={`text-xs mt-0.5 ${n > 0 ? "text-white/40" : "text-spark/80"}`}>
-                  {n > 0 ? `${n} ${unit}${n !== 1 ? "s" : ""}` : `No ${unit}s yet`}
+                  {n > 0 ? countLabel(n) : emptyLabel}
                 </p>
               </div>
               <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 bg-white/5 text-white/40 group-hover:bg-brand group-hover:text-white">

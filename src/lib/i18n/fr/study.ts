@@ -1,0 +1,142 @@
+/** French translations, keyed by the English text used in the code. */
+const fr: Record<string, string> = {
+  // Shared by Quiz and Flashcards
+  "Loading courses...": "Chargement de tes cours...",
+  "No courses yet": "Pas encore de cours",
+  "Back to courses": "Retour aux cours",
+  "Exit": "Quitter",
+  "This takes about 10 to 20 seconds.": "Ça prend environ 10 à 20 secondes.",
+
+  // Quiz: course picker
+  "Pick a quiz": "Choisis un quiz",
+  "Which course do you want to be quizzed on?": "Sur quel cours veux-tu t'entraîner ?",
+  "{n} question": "{n} question",
+  "{n} questions": "{n} questions",
+  "No questions yet": "Pas encore de questions",
+  "Upload a course first, then Kwizo writes a quiz from it.":
+    "Importe d'abord un cours, puis Kwizo en tire un quiz.",
+  "Getting your quiz ready...": "On prépare ton quiz...",
+  "No quiz questions yet": "Pas encore de questions de quiz",
+  "Generate the quiz for this course from the Dashboard first.":
+    "Génère d'abord le quiz de ce cours depuis le tableau de bord.",
+  "Questions per round": "Questions par partie",
+
+  // Quiz: playing
+  "Score: {n}": "Score : {n}",
+  "Question {current} of {total}": "Question {current} sur {total}",
+  "Your progress could not be saved. Check your connection.":
+    "Ta progression n'a pas pu être enregistrée. Vérifie ta connexion.",
+  "{n} new question added. Here they are!": "{n} nouvelle question ajoutée. La voici !",
+  "{n} new questions added. Here they are!": "{n} nouvelles questions ajoutées. Les voici !",
+  "No new question this time: here is a fresh mix instead.":
+    "Pas de nouvelle question cette fois : voici un nouveau mélange à la place.",
+  "Correct! +1": "Bonne réponse ! +1",
+  "Not quite. The answer is {letter}.": "Pas tout à fait. La bonne réponse est la {letter}.",
+  "Report": "Signaler",
+  "See my score": "Voir mon score",
+  "Next question": "Question suivante",
+  "(Enter)": "(Entrée)",
+  "Press 1-4 or A-D to answer": "Appuie sur 1-4 ou A-D pour répondre",
+
+  // Quiz: results
+  "Brilliant!": "Brillant !",
+  "You know this course.": "Tu maîtrises ce cours.",
+  "Nice work!": "Bien joué !",
+  "A few more rounds and it's yours.": "Encore quelques parties et c'est dans la poche.",
+  "Keep going!": "Continue comme ça !",
+  "Every miss is something you'll remember next time.":
+    "Chaque erreur, c'est une chose dont tu te souviendras la prochaine fois.",
+  "SCORE": "SCORE",
+  "Correct": "Réussies",
+  "Missed": "Ratées",
+  "Play again": "Rejoue",
+  "Play again · {n} new": "Rejoue · {n} à découvrir",
+  "Retry my {n} miss": "Retente ton erreur ({n})",
+  "Retry my {n} misses": "Retente tes {n} erreurs",
+  "Choose another course": "Choisir un autre cours",
+  "Want even more questions?": "Envie d'encore plus de questions ?",
+  "You have played every question": "Tu as joué toutes les questions",
+  "{n} question in this course.": "{n} question dans ce cours.",
+  "{n} questions in this course.": "{n} questions dans ce cours.",
+  "{total} question in this course · {n} not played yet.":
+    "{total} question dans ce cours · {n} à découvrir.",
+  "{total} questions in this course · {n} not played yet.":
+    "{total} questions dans ce cours · {n} à découvrir.",
+  "Kwizo can write 10 new ones, different from the ones you already have.":
+    "Kwizo peut en écrire 10 nouvelles, différentes de celles que tu as déjà.",
+  "Writing new questions...": "Écriture de nouvelles questions...",
+  "New questions": "Nouvelles questions",
+  "Learn from your misses ({n})": "Apprends de tes erreurs ({n})",
+  "Report this question": "Signaler cette question",
+
+  // Flashcards
+  "Again": "Encore",
+  "Hard": "Difficile",
+  "Good": "Bien",
+  "Easy": "Facile",
+  "Pick a deck": "Choisis un paquet",
+  "Cards that are due come first": "Les cartes à revoir passent en premier",
+  "{n} card": "{n} carte",
+  "{n} cards": "{n} cartes",
+  "No cards yet": "Pas encore de cartes",
+  "Upload a course first, then Kwizo makes a flashcard deck from it.":
+    "Importe d'abord un cours, puis Kwizo en fait un paquet de Flashcards.",
+  "Shuffling your deck...": "On mélange ton paquet...",
+  "No flashcards yet": "Pas encore de Flashcards",
+  "Generate the flashcards for this course from the Dashboard first.":
+    "Génère d'abord les Flashcards de ce cours depuis le tableau de bord.",
+  "Want more cards?": "Envie de plus de cartes ?",
+  "{n} card in this deck.": "{n} carte dans ce paquet.",
+  "{n} cards in this deck.": "{n} cartes dans ce paquet.",
+  "Kwizo can add 15 new ones, different from these.":
+    "Kwizo peut en ajouter 15 nouvelles, différentes de celles-ci.",
+  "Writing new cards...": "Écriture de nouvelles cartes...",
+  "More cards": "Plus de cartes",
+  "You're all caught up": "Tu es à jour",
+  "Next cards are due {date}": "Prochaines cartes à revoir : {date}",
+  "No card is due for this course.": "Aucune carte à revoir pour ce cours.",
+  "Review all {n} cards anyway": "Revois quand même les {n} cartes",
+  "Choose another deck": "Choisir un autre paquet",
+  "Deck complete!": "Paquet terminé !",
+  "{n} cards reviewed · {known} you knew well": "{n} cartes revues · {known} bien maîtrisées",
+  "Some reviews could not be saved. Check your connection.":
+    "Certaines révisions n'ont pas pu être enregistrées. Vérifie ta connexion.",
+  "Review again": "Revoir encore",
+  "Show the question": "Afficher la question",
+  "Show the answer": "Afficher la réponse",
+  "QUESTION": "QUESTION",
+  "ANSWER": "RÉPONSE",
+  "Tap or press Space to flip": "Touche ou appuie sur Espace pour retourner",
+  "How well did you know it?": "Tu la connaissais bien ?",
+  "Think of the answer, then flip the card": "Pense à la réponse, puis retourne la carte",
+  "Report this card": "Signaler cette carte",
+  "Previous card": "Carte précédente",
+
+  // Feedback dialog
+  "The answer is wrong": "La réponse est fausse",
+  "Unclear or ambiguous": "Pas clair ou ambigu",
+  "Not in my course": "Pas dans mon cours",
+  "Typo or formatting": "Faute de frappe ou mise en forme",
+  "Something else": "Autre chose",
+  "Tell us what you think": "Dis-nous ce que tu en penses",
+  "Thanks for helping us fix it. H.S Company reads every report.":
+    "Merci de nous aider à corriger ça. H.S Company lit chaque signalement.",
+  "A bug, an idea, something you love: it goes straight to the H.S Company team.":
+    "Un bug, une idée, un truc que tu adores : ça arrive direct à l'équipe H.S Company.",
+  "Close": "Fermer",
+  "Thank you!": "Merci !",
+  "We'll look at this one.": "On va regarder ça de près.",
+  "Your message has been sent.": "Ton message a bien été envoyé.",
+  "What's wrong?": "Qu'est-ce qui ne va pas ?",
+  "How do you like Kwizo? (optional)": "Comment trouves-tu Kwizo ? (facultatif)",
+  "{n} out of 5": "{n} sur 5",
+  "Details (optional)": "Détails (facultatif)",
+  "Your message": "Ton message",
+  "e.g. the right answer is…": "ex. : la bonne réponse est…",
+  "What should we improve?": "Qu'est-ce qu'on devrait améliorer ?",
+  "Sending...": "Envoi...",
+  "Send report": "Envoyer le signalement",
+  "Send": "Envoyer",
+}
+
+export default fr

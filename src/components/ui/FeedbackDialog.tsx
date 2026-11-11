@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { CheckCircle, Flag, Loader2, MessageSquareHeart, X } from "lucide-react"
 import { submitFeedback, type FeedbackInput, type ReportReason } from "@/lib/api"
 import { primaryButton } from "@/components/ui/PageStates"
+import { useT } from "@/lib/i18n"
 
 const REASONS: { id: ReportReason; label: string }[] = [
   { id: "wrong_answer", label: "The answer is wrong" },
@@ -21,6 +22,7 @@ export type FeedbackTarget =
 
 /** Modal to report a question / card, or to send general feedback. */
 export default function FeedbackDialog({ target, onClose }: { target: FeedbackTarget; onClose: () => void }) {
+  const { t } = useT()
   const isReport = target.kind !== "general"
   const [reason, setReason] = useState<ReportReason | null>(null)
   const [rating, setRating] = useState<number | null>(null)
@@ -96,15 +98,19 @@ export default function FeedbackDialog({ target, onClose }: { target: FeedbackTa
           </div>
           <div className="flex-1 min-w-0">
             <h2 id="feedback-title" className="font-black text-white">
-              {isReport ? `Report this ${target.kind === "question" ? "question" : "card"}` : "Tell us what you think"}
+              {isReport
+                ? target.kind === "question"
+                  ? t("Report this question")
+                  : t("Report this card")
+                : t("Tell us what you think")}
             </h2>
             <p className="text-xs text-white/45 mt-0.5">
               {isReport
-                ? "Thanks for helping us fix it. H.S Company reads every report."
-                : "A bug, an idea, something you love: it goes straight to the H.S Company team."}
+                ? t("Thanks for helping us fix it. H.S Company reads every report.")
+                : t("A bug, an idea, something you love: it goes straight to the H.S Company team.")}
             </p>
           </div>
-          <button onClick={onClose} aria-label="Close" className="p-1 rounded-lg text-white/40 hover:text-white hover:bg-white/5">
+          <button onClick={onClose} aria-label={t("Close")} className="p-1 rounded-lg text-white/40 hover:text-white hover:bg-white/5">
             <X size={18} />
           </button>
         </div>
@@ -112,12 +118,12 @@ export default function FeedbackDialog({ target, onClose }: { target: FeedbackTa
         {sent ? (
           <div className="text-center py-6" role="status">
             <CheckCircle size={40} className="mx-auto mb-3 text-ok" />
-            <p className="font-bold text-white">Thank you!</p>
+            <p className="font-bold text-white">{t("Thank you!")}</p>
             <p className="text-sm text-white/45 mt-1 mb-6">
-              {isReport ? "We'll look at this one." : "Your message has been sent."}
+              {isReport ? t("We'll look at this one.") : t("Your message has been sent.")}
             </p>
             <button onClick={onClose} className={primaryButton}>
-              Close
+              {t("Close")}
             </button>
           </div>
         ) : (
@@ -130,7 +136,7 @@ export default function FeedbackDialog({ target, onClose }: { target: FeedbackTa
 
             {isReport ? (
               <fieldset className="mb-4">
-                <legend className="text-xs font-semibold text-white/50 mb-2">What's wrong?</legend>
+                <legend className="text-xs font-semibold text-white/50 mb-2">{t("What's wrong?")}</legend>
                 <div className="flex flex-wrap gap-2">
                   {REASONS.map((r, i) => (
                     <button
@@ -144,20 +150,20 @@ export default function FeedbackDialog({ target, onClose }: { target: FeedbackTa
                           : "bg-white/[0.03] border-white/10 text-white/60 hover:text-white hover:border-white/25"
                       }`}
                     >
-                      {r.label}
+                      {t(r.label)}
                     </button>
                   ))}
                 </div>
               </fieldset>
             ) : (
               <fieldset className="mb-4">
-                <legend className="text-xs font-semibold text-white/50 mb-2">How do you like Kwizo? (optional)</legend>
+                <legend className="text-xs font-semibold text-white/50 mb-2">{t("How do you like Kwizo? (optional)")}</legend>
                 <div className="flex gap-2">
                   {RATINGS.map((emoji, i) => (
                     <button
                       key={emoji}
                       onClick={() => setRating(rating === i + 1 ? null : i + 1)}
-                      aria-label={`${i + 1} out of 5`}
+                      aria-label={t("{n} out of 5", { n: i + 1 })}
                       aria-pressed={rating === i + 1}
                       className={`w-11 h-11 rounded-xl text-xl border transition-all ${
                         rating === i + 1
@@ -174,14 +180,14 @@ export default function FeedbackDialog({ target, onClose }: { target: FeedbackTa
 
             <label className="block mb-5">
               <span className="text-xs font-semibold text-white/50">
-                {isReport ? "Details (optional)" : "Your message"}
+                {isReport ? t("Details (optional)") : t("Your message")}
               </span>
               <textarea
                 ref={!isReport ? (el) => { firstField.current = el } : undefined}
                 value={message}
                 onChange={(e) => setMessage(e.target.value.slice(0, 2000))}
                 rows={isReport ? 3 : 5}
-                placeholder={isReport ? "e.g. the right answer is…" : "What should we improve?"}
+                placeholder={isReport ? t("e.g. the right answer is…") : t("What should we improve?")}
                 className="mt-1.5 w-full px-3.5 py-2.5 rounded-xl text-sm text-white outline-none resize-none bg-white/5 border border-white/10 focus:border-brand/50 placeholder:text-white/25"
               />
             </label>
@@ -194,7 +200,7 @@ export default function FeedbackDialog({ target, onClose }: { target: FeedbackTa
 
             <button onClick={send} disabled={!canSend || sending} className={`w-full ${primaryButton}`}>
               {sending && <Loader2 size={15} className="animate-spin" />}
-              {sending ? "Sending..." : isReport ? "Send report" : "Send"}
+              {sending ? t("Sending...") : isReport ? t("Send report") : t("Send")}
             </button>
           </>
         )}

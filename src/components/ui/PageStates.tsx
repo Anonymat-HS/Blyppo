@@ -1,17 +1,19 @@
 import type { ComponentType, ReactNode } from "react"
 import { ChevronLeft, Loader2 } from "lucide-react"
+import { useT } from "@/lib/i18n"
 
 /** A lucide-react icon component. */
 export type IconType = ComponentType<{ size?: number; className?: string }>
 
-export function BackButton({ onClick, label = "Back" }: { onClick: () => void; label?: string }) {
+export function BackButton({ onClick, label }: { onClick: () => void; label?: string }) {
+  const { t } = useT()
   return (
     <button
       onClick={onClick}
       className="inline-flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150 text-white/40 hover:text-white/85"
     >
       <ChevronLeft size={15} />
-      {label}
+      {label ?? t("Back")}
     </button>
   )
 }
