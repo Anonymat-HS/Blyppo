@@ -18,7 +18,7 @@ export function sampleText(text: string, budget = maxWords()): string {
   if (words.length <= budget) return text.trim()
 
   const sectionSize = Math.ceil(words.length / SECTIONS)
-  const perSection = Math.floor(budget / SECTIONS)
+  const perSection = Math.max(1, Math.floor(budget / SECTIONS))
   const excerpts: string[] = []
   for (let i = 0; i < SECTIONS; i++) {
     const start = i * sectionSize

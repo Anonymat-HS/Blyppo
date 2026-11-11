@@ -59,8 +59,6 @@ export default function Quiz({
     } finally {
       setLoading(false)
     }
-    // startQuiz only uses state setters
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialCourseId])
 
   useEffect(() => {

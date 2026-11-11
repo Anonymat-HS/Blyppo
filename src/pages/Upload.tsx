@@ -41,7 +41,7 @@ export default function Upload({ onBack }: { onBack: () => void }) {
     fetchMyPlan().then(setPlan).catch(() => {})
   }, [loadRecentCourses])
 
-  const generateContent = async (courseId: string) => {
+  const generateContent = useCallback(async (courseId: string) => {
     setState("generating")
     setQuizError(null)
     setFlashcardError(null)
@@ -69,7 +69,7 @@ export default function Upload({ onBack }: { onBack: () => void }) {
     setRetryingMsg(null)
     setState("done")
     loadRecentCourses()
-  }
+  }, [loadRecentCourses])
 
   const handleUpload = useCallback(async (file: File, title: string) => {
     if (!title.trim()) {
@@ -104,7 +104,7 @@ export default function Upload({ onBack }: { onBack: () => void }) {
       setErrorMessage((err as Error).message)
       setState("error")
     }
-  }, [maxFileMb])
+  }, [maxFileMb, generateContent])
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
