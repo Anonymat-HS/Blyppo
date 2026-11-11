@@ -149,7 +149,7 @@ export default function Upload({ onBack, onNavigate }: { onBack: () => void; onN
         {t("New quiz from your notes")}
       </h1>
       <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.38)" }}>
-        {t("Upload a course and Kwizo writes a quiz and a flashcard deck from it")}
+        {t("Upload a course and Blyppo writes a quiz and a flashcard deck from it")}
       </p>
 
       {(state === "idle" || state === "dragover") && (

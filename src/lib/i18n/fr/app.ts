@@ -50,8 +50,8 @@ const fr: Record<string, string> = {
   "Start a quiz": "Lancer un quiz",
   "Review flashcards": "Réviser les flashcards",
   "Your first quiz is one upload away": "Ton premier quiz n'est qu'à un import",
-  "Upload a course (PDF, TXT or Markdown) and Kwizo writes a quiz and a flashcard deck from it.":
-    "Importe un cours (PDF, TXT ou Markdown) et Kwizo en tire un quiz et un paquet de flashcards.",
+  "Upload a course (PDF, TXT or Markdown) and Blyppo writes a quiz and a flashcard deck from it.":
+    "Importe un cours (PDF, TXT ou Markdown) et Blyppo en tire un quiz et un paquet de flashcards.",
   "Upload a course": "Importer un cours",
   "Your courses": "Tes cours",
   "Search courses": "Rechercher un cours",
@@ -82,8 +82,8 @@ const fr: Record<string, string> = {
   "Extracting text and saving to your library": "Extraction du texte et enregistrement dans ta bibliothèque",
   "Back to Dashboard": "Retour au tableau de bord",
   "New quiz from your notes": "Un nouveau quiz à partir de tes notes",
-  "Upload a course and Kwizo writes a quiz and a flashcard deck from it":
-    "Importe un cours et Kwizo en tire un quiz et un paquet de flashcards",
+  "Upload a course and Blyppo writes a quiz and a flashcard deck from it":
+    "Importe un cours et Blyppo en tire un quiz et un paquet de flashcards",
   "Course title": "Titre du cours",
   "e.g. Introduction to Algorithms - Chapter 1-4": "ex. Introduction à l'algorithmique - Chapitres 1 à 4",
   "Drop it here!": "Lâche-le ici !",

@@ -1,10 +1,13 @@
 import { useId } from "react"
 import { useT } from "@/lib/i18n"
 
-/** The Kwizo mark: a quiz bubble with a spark. Same drawing as public/logo.svg. */
+/**
+ * The Blyppo mark: a question bubble and an answer bubble (the "pp"), with a
+ * little "blip". Same drawing as public/logo.svg.
+ */
 export function LogoMark({ size = 40, className = "" }: { size?: number; className?: string }) {
   // Each mark on the page needs its own gradient id
-  const gradientId = `kz-bg-${useId()}`
+  const gradientId = `bl-bg-${useId()}`
   return (
     <svg
       width={size}
@@ -20,19 +23,41 @@ export function LogoMark({ size = 40, className = "" }: { size?: number; classNa
         </linearGradient>
       </defs>
       <rect width="64" height="64" rx="16" fill={`url(#${gradientId})`} />
+      {/* Question bubble */}
       <path
-        d="M22 13 H42 A10 10 0 0 1 52 23 V35 A10 10 0 0 1 42 45 H28 L18 53 V44.2 A10 10 0 0 1 12 35 V23 A10 10 0 0 1 22 13 Z"
+        d="M15 9 H31 A7 7 0 0 1 38 16 V26 A7 7 0 0 1 31 33 H19 L12.5 38.5 V32.2 A7 7 0 0 1 8 26 V16 A7 7 0 0 1 15 9 Z"
         fill="#fff"
       />
       <path
-        d="M26.5 24.5 A5.5 5.5 0 1 1 34.5 29.4 C32.8 30.3 32 31.3 32 33.3"
+        d="M19.4 17.4 A3.6 3.6 0 1 1 24.6 20.6 C23.5 21.2 23 21.9 23 23.2"
         fill="none"
         stroke="#6D4CFF"
-        strokeWidth="4.6"
+        strokeWidth="3.2"
         strokeLinecap="round"
       />
-      <circle cx="32" cy="39.2" r="2.7" fill="#6D4CFF" />
-      <path d="M51 6 L52.6 10.4 L57 12 L52.6 13.6 L51 18 L49.4 13.6 L45 12 L49.4 10.4 Z" fill="#FFC83D" />
+      <circle cx="23" cy="28" r="1.9" fill="#6D4CFF" />
+      {/* Answer bubble */}
+      <path
+        d="M33 29 H49 A7 7 0 0 1 56 36 V46 A7 7 0 0 1 51.5 52.2 V58.5 L45 53 H33 A7 7 0 0 1 26 46 V36 A7 7 0 0 1 33 29 Z"
+        fill="#FFC83D"
+        stroke="#5B3DF5"
+        strokeWidth="2.4"
+      />
+      <path
+        d="M34.5 41 L39 45.5 L47.5 37"
+        fill="none"
+        stroke="#3B2A00"
+        strokeWidth="3.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* The blip */}
+      {size >= 24 && (
+        <>
+          <path d="M46 12.5 A6.5 6.5 0 0 1 51.5 18" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" />
+          <path d="M47 6.5 A12 12 0 0 1 57.5 17" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" opacity="0.55" />
+        </>
+      )}
     </svg>
   )
 }
@@ -43,7 +68,7 @@ const SIZES = {
   lg: { mark: 48, text: "text-2xl" },
 } as const
 
-/** The company behind Kwizo, shown with the logo and in footers. */
+/** The company behind Blyppo, shown with the logo and in footers. */
 export const COMPANY = "H.S"
 
 /** Mark + wordmark. The "o" picks up the spark's yellow. `byline` adds "by H.S" under it. */
@@ -63,7 +88,7 @@ export function Logo({
       <LogoMark size={s.mark} />
       <span className="flex flex-col items-start text-left leading-none">
         <span className={`font-black tracking-tight text-white ${s.text}`}>
-          Kwiz<span className="text-[#FFC83D]">o</span>
+          Blypp<span className="text-[#FFC83D]">o</span>
         </span>
         {byline && (
           <span className="mt-1 whitespace-nowrap text-[10px] font-bold tracking-[0.12em] uppercase text-white/55">

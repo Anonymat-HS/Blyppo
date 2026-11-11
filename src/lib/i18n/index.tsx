@@ -3,13 +3,15 @@ import { LANGS, localeOf, translate, type Lang, type Vars } from "./translate"
 
 export type { Lang } from "./translate"
 
-const KEY = "kwizo.lang"
-/** Kwizo speaks French first: most of its students are French speakers. */
+const KEY = "blyppo.lang"
+/** Key used when the app was called Kwizo: still read, so nobody loses their setting */
+const OLD_KEY = "kwizo.lang"
+/** Blyppo speaks French first: most of its students are French speakers. */
 const DEFAULT_LANG: Lang = "fr"
 
 function savedLang(): Lang {
   try {
-    const saved = localStorage.getItem(KEY)
+    const saved = (localStorage.getItem(KEY) ?? localStorage.getItem(OLD_KEY))
     return LANGS.includes(saved as Lang) ? (saved as Lang) : DEFAULT_LANG
   } catch {
     return DEFAULT_LANG
@@ -32,7 +34,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.lang = lang
-    document.title = translate(lang, "Kwizo · Quiz yourself, ace the exam")
+    document.title = translate(lang, "Blyppo · Quiz yourself, ace the exam")
   }, [lang])
 
   const setLang = useCallback((next: Lang) => {

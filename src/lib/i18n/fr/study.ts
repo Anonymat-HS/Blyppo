@@ -13,8 +13,8 @@ const fr: Record<string, string> = {
   "{n} question": "{n} question",
   "{n} questions": "{n} questions",
   "No questions yet": "Pas encore de questions",
-  "Upload a course first, then Kwizo writes a quiz from it.":
-    "Importe d'abord un cours, puis Kwizo en tire un quiz.",
+  "Upload a course first, then Blyppo writes a quiz from it.":
+    "Importe d'abord un cours, puis Blyppo en tire un quiz.",
   "Getting your quiz ready...": "On prépare ton quiz...",
   "No quiz questions yet": "Pas encore de questions de quiz",
   "Generate the quiz for this course from the Dashboard first.":
@@ -62,8 +62,8 @@ const fr: Record<string, string> = {
     "{total} question dans ce cours · {n} à découvrir.",
   "{total} questions in this course · {n} not played yet.":
     "{total} questions dans ce cours · {n} à découvrir.",
-  "Kwizo can write 10 new ones, different from the ones you already have.":
-    "Kwizo peut en écrire 10 nouvelles, différentes de celles que tu as déjà.",
+  "Blyppo can write 10 new ones, different from the ones you already have.":
+    "Blyppo peut en écrire 10 nouvelles, différentes de celles que tu as déjà.",
   "Writing new questions...": "Écriture de nouvelles questions...",
   "New questions": "Nouvelles questions",
   "Learn from your misses ({n})": "Apprends de tes erreurs ({n})",
@@ -79,8 +79,8 @@ const fr: Record<string, string> = {
   "{n} card": "{n} carte",
   "{n} cards": "{n} cartes",
   "No cards yet": "Pas encore de cartes",
-  "Upload a course first, then Kwizo makes a flashcard deck from it.":
-    "Importe d'abord un cours, puis Kwizo en fait un paquet de Flashcards.",
+  "Upload a course first, then Blyppo makes a flashcard deck from it.":
+    "Importe d'abord un cours, puis Blyppo en fait un paquet de Flashcards.",
   "Shuffling your deck...": "On mélange ton paquet...",
   "No flashcards yet": "Pas encore de Flashcards",
   "Generate the flashcards for this course from the Dashboard first.":
@@ -88,8 +88,8 @@ const fr: Record<string, string> = {
   "Want more cards?": "Envie de plus de cartes ?",
   "{n} card in this deck.": "{n} carte dans ce paquet.",
   "{n} cards in this deck.": "{n} cartes dans ce paquet.",
-  "Kwizo can add 15 new ones, different from these.":
-    "Kwizo peut en ajouter 15 nouvelles, différentes de celles-ci.",
+  "Blyppo can add 15 new ones, different from these.":
+    "Blyppo peut en ajouter 15 nouvelles, différentes de celles-ci.",
   "Writing new cards...": "Écriture de nouvelles cartes...",
   "More cards": "Plus de cartes",
   "You're all caught up": "Tu es à jour",
@@ -128,7 +128,7 @@ const fr: Record<string, string> = {
   "We'll look at this one.": "On va regarder ça de près.",
   "Your message has been sent.": "Ton message a bien été envoyé.",
   "What's wrong?": "Qu'est-ce qui ne va pas ?",
-  "How do you like Kwizo? (optional)": "Comment trouves-tu Kwizo ? (facultatif)",
+  "How do you like Blyppo? (optional)": "Comment trouves-tu Blyppo ? (facultatif)",
   "{n} out of 5": "{n} sur 5",
   "Details (optional)": "Détails (facultatif)",
   "Your message": "Ton message",

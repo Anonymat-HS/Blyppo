@@ -5,7 +5,7 @@
 set -eu
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-DIR=$(mktemp -d /tmp/kwizo-db.XXXXXX)
+DIR=$(mktemp -d /tmp/blyppo-db.XXXXXX)
 PORT=${PGTEST_PORT:-55439}
 cleanup() { pg_ctl -D "$DIR/data" stop -m immediate >/dev/null 2>&1 || true; rm -rf "$DIR"; }
 trap cleanup EXIT
