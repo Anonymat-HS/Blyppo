@@ -49,8 +49,8 @@ const fr: Record<string, string> = {
   "Upload your first course and get a quiz and flashcards in minutes.":
     "Importe ton premier cours et obtiens un quiz et des flashcards en quelques minutes.",
   "Start for free": "Commencer gratuitement",
-  "© 2026 Kwizo, a product of H.S Company. All rights reserved.":
-    "© 2026 Kwizo, un produit de H.S Company. Tous droits réservés.",
+  "© 2026 Kwizo, a product of H.S. All rights reserved.":
+    "© 2026 Kwizo, un produit de H.S. Tous droits réservés.",
   "Designed and built by": "Conçu et développé par",
   "Start": "Commencer",
 }

@@ -106,8 +106,8 @@ export default function FeedbackDialog({ target, onClose }: { target: FeedbackTa
             </h2>
             <p className="text-xs text-white/45 mt-0.5">
               {isReport
-                ? t("Thanks for helping us fix it. H.S Company reads every report.")
-                : t("A bug, an idea, something you love: it goes straight to the H.S Company team.")}
+                ? t("Thanks for helping us fix it. H.S reads every report.")
+                : t("A bug, an idea, something you love: it goes straight to the H.S team.")}
             </p>
           </div>
           <button onClick={onClose} aria-label={t("Close")} className="p-1 rounded-lg text-white/40 hover:text-white hover:bg-white/5">

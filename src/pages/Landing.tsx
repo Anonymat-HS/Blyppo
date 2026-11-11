@@ -397,7 +397,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
           <Logo size="md" byline />
           <CompanyBadge label="Designed and built by" />
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
-            {t("© 2026 Kwizo, a product of H.S Company. All rights reserved.")}
+            {t("© 2026 Kwizo, a product of H.S. All rights reserved.")}
           </p>
         </div>
       </footer>

@@ -307,6 +307,8 @@ export default function Progress() {
               <Area
                 type="monotone"
                 dataKey="score"
+                // Days without a finished quiz have no score: draw across them
+                connectNulls
                 stroke="#7C5CFF"
                 strokeWidth={2}
                 fill="url(#scoreGrad)"
