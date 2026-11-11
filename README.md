@@ -43,20 +43,24 @@ src/
   pages/                 # Screen components (Landing, Login, Signup, CompleteProfile, Dashboard, Upload, Quiz, Flashcards, Progress, Profile)
   components/
     layout/              # Layout chrome (Sidebar, AvatarMenu)
+    ui/                  # Small shared UI pieces (ErrorState, SaveWarning)
   hooks/                 # Shared hooks (useUserStats)
   lib/
     api/                 # Typed data-access layer (only place that queries Supabase tables)
     supabase/            # Client, auth context (useAuth), edge-function calls
     types.ts             # Shared TypeScript interfaces
-    utils/               # Pure helpers (quotes, streak stats)
+    utils/               # Pure helpers (quotes, streak stats, spaced repetition, quiz grading)
 
 supabase/
-  schema.sql             # Full DB schema + RLS + indexes
+  schema.sql             # Full DB schema + RLS + indexes (fresh install)
+  storage.sql            # Avatars bucket + policies
+  migrations/            # SQL to run on a database created with an older schema
   functions/
     extract-course/      # PDF/TXT/MD → text extraction
     generate-quiz/       # LLM → quiz questions → DB
     generate-flashcards/ # LLM → flashcards → DB
-    _shared/llm/         # LLM abstraction (Gemini, Groq, Ollama providers)
+    _shared/http.ts      # CORS, auth and error helpers shared by the functions
+    _shared/llm/         # LLM abstraction: prompts, text sampling, output validation, providers
 ```
 
 ## How It Works
@@ -80,9 +84,11 @@ pnpm dev
 ### Supabase Setup
 
 1. Create a project at [supabase.com](https://supabase.com)
-2. Run `supabase/schema.sql` in the SQL Editor
-3. Deploy Edge Functions via the Supabase Dashboard
-4. Set secrets: `LLM_PROVIDER=groq`, `GROQ_API_KEY=<your-key>`
+2. Run `supabase/schema.sql` then `supabase/storage.sql` in the SQL Editor
+   (existing database: run the files in `supabase/migrations/` instead)
+3. Deploy the Edge Functions with the CLI — they import `_shared/`, which the Dashboard editor cannot bundle:
+   `supabase functions deploy extract-course generate-quiz generate-flashcards --project-ref <ref>`
+4. Set secrets: `supabase secrets set LLM_PROVIDER=groq GROQ_API_KEY=<your-key> --project-ref <ref>`
 
 ## Environment Variables
 
@@ -92,8 +98,11 @@ pnpm dev
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase anon/publishable key |
 | `LLM_PROVIDER` | `gemini`, `groq`, or `ollama` |
 | `GROQ_API_KEY` | Groq API key (if using Groq) |
+| `GROQ_MODEL` | Optional. Groq model id (default `openai/gpt-oss-120b`) |
 | `GEMINI_API_KEY` | Gemini API key (if using Gemini) |
-| `OLLAMA_BASE_URL` | Ollama endpoint (if using Ollama) |
+| `OLLAMA_URL` | Ollama endpoint (if using Ollama) |
+| `LLM_MAX_INPUT_WORDS` | Optional. Words of course text sent to the LLM (default 2200) |
+| `DAILY_COURSE_LIMIT` | Optional. Courses a user can create per 24 h (default 10) |
 
 ## Project Context
 

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Menu } from "lucide-react"
 import { AuthProvider, useAuth } from "@/lib/supabase/auth"
 import Landing from "@/pages/Landing"
@@ -23,9 +23,37 @@ export type Screen =
   | "progress"
   | "profile"
 
+const appScreens: Screen[] = ["dashboard", "upload", "quiz", "flashcards", "progress", "profile"]
+
+/** "#/quiz" → "quiz". Anything else (no hash, landing anchors, auth callbacks) is the landing page. */
+function screenFromHash(): Screen {
+  const name = window.location.hash.replace(/^#\/?/, "")
+  return appScreens.find((s) => s === name) ?? "landing"
+}
+
+/** Keeps the current screen in the URL hash so reload, back and forward work. */
+function useHashScreen(): [Screen, (screen: Screen) => void] {
+  const [screen, setScreen] = useState<Screen>(screenFromHash)
+
+  useEffect(() => {
+    const onHashChange = () => setScreen(screenFromHash())
+    window.addEventListener("hashchange", onHashChange)
+    return () => window.removeEventListener("hashchange", onHashChange)
+  }, [])
+
+  const navigate = useCallback((next: Screen) => {
+    window.location.hash = next === "landing" ? "" : `/${next}`
+    setScreen(next)
+  }, [])
+
+  return [screen, navigate]
+}
+
 function AppContent() {
   const { user, loading, refreshUser } = useAuth()
-  const [screen, setScreen] = useState<Screen>("landing")
+  const [route, setScreen] = useHashScreen()
+  // A signed-in user never lands on the marketing page
+  const screen: Screen = user && route === "landing" ? "dashboard" : route
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [authView, setAuthView] = useState<"login" | "signup">("login")
 

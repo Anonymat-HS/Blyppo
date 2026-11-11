@@ -13,7 +13,9 @@ import { Flame, Target, Brain, TrendingUp } from "lucide-react"
 import { useMemo } from "react"
 import { useAuth } from "@/lib/supabase/auth"
 import { useUserStats } from "@/hooks/useUserStats"
-import type { UserProgress } from "@/lib/types"
+import { countByDay, localDayKey } from "@/lib/utils/stats"
+import ErrorState from "@/components/ui/ErrorState"
+import type { QuizAttempt, StudyEvent } from "@/lib/types"
 
 const CustomTooltip = ({
   active,
@@ -73,30 +75,28 @@ const BarTooltip = ({
   return null
 }
 
-function computeScoreHistory(progressRows: UserProgress[]) {
-  const answered = progressRows.filter((r) => r.correct !== null)
-  const byDate: Record<string, { correct: number; total: number }> = {}
-  for (const row of answered) {
-    const day = new Date(row.last_reviewed).toISOString().slice(0, 10)
-    if (!byDate[day]) byDate[day] = { correct: 0, total: 0 }
-    byDate[day].total++
-    if (row.correct) byDate[day].correct++
+/** Average score of the quizzes finished each day (last 12 active days). */
+function computeScoreHistory(attempts: QuizAttempt[]) {
+  const byDate: Record<string, { score: number; total: number }> = {}
+  for (const a of attempts) {
+    const day = localDayKey(a.created_at)
+    if (!byDate[day]) byDate[day] = { score: 0, total: 0 }
+    byDate[day].score += a.score
+    byDate[day].total += a.total
   }
-  const entries = Object.entries(byDate)
+  return Object.entries(byDate)
+    .filter(([, { total }]) => total > 0)
     .sort(([a], [b]) => a.localeCompare(b))
     .slice(-12)
-  return entries.map(([date, { correct, total }]) => ({
-    date: new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-    score: Math.round((correct / total) * 100),
-  }))
+    .map(([date, { score, total }]) => ({
+      date: new Date(`${date}T00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      score: Math.round((score / total) * 100),
+    }))
 }
 
-function computeWeeklyActivity(progressRows: UserProgress[]) {
-  const days: Record<string, number> = {}
-  for (const row of progressRows) {
-    const day = new Date(row.last_reviewed).toISOString().slice(0, 10)
-    days[day] = (days[day] || 0) + 1
-  }
+/** Answers and reviews per day over the last 52 weeks, one column per week. */
+function computeActivityGrid(events: StudyEvent[]) {
+  const days = countByDay(events)
   const today = new Date()
   const weeks: number[][] = []
   for (let w = 51; w >= 0; w--) {
@@ -104,28 +104,31 @@ function computeWeeklyActivity(progressRows: UserProgress[]) {
     for (let d = 0; d < 7; d++) {
       const date = new Date(today)
       date.setDate(date.getDate() - (w * 7 + (6 - d)))
-      const key = date.toISOString().slice(0, 10)
-      weekDays.push(days[key] || 0)
+      weekDays.push(days[localDayKey(date)] || 0)
     }
     weeks.push(weekDays)
   }
-  return { weeks, days }
+  return weeks
 }
 
 export default function Progress() {
   const { user } = useAuth()
   const {
     loading,
-    progressRows,
+    error,
+    reload,
+    attempts,
+    events,
     breakdown,
-    answeredCount: quizzesTaken,
+    answeredCount,
+    quizzesTaken,
     avgScore,
     streak,
     flashcardsReviewed,
   } = useUserStats(user?.id)
 
-  const scoreHistory = useMemo(() => computeScoreHistory(progressRows), [progressRows])
-  const weeklyActivity = useMemo(() => computeWeeklyActivity(progressRows), [progressRows])
+  const scoreHistory = useMemo(() => computeScoreHistory(attempts), [attempts])
+  const activityWeeks = useMemo(() => computeActivityGrid(events), [events])
   const courseStats = useMemo(
     () =>
       breakdown
@@ -137,7 +140,11 @@ export default function Progress() {
     [breakdown]
   )
 
-  const hasData = quizzesTaken > 0 || flashcardsReviewed > 0
+  const hasData = answeredCount > 0 || flashcardsReviewed > 0 || events.length > 0
+
+  if (error) {
+    return <ErrorState message={error} onRetry={reload} />
+  }
 
   if (loading) {
     return (
@@ -198,21 +205,21 @@ export default function Progress() {
             value: String(quizzesTaken),
             icon: Brain,
             color: "#A78BFA",
-            sub: quizzesTaken > 0 ? `${quizzesTaken} total` : "Take your first quiz",
+            sub: quizzesTaken > 0 ? `${answeredCount} questions answered` : "Finish your first quiz",
           },
           {
             label: "Avg score",
-            value: quizzesTaken ? `${avgScore}%` : "—",
+            value: answeredCount ? `${avgScore}%` : "—",
             icon: Target,
             color: "#4ADE80",
-            sub: quizzesTaken > 0 ? "Across all courses" : "No data yet",
+            sub: answeredCount > 0 ? "Latest answer to each question" : "No data yet",
           },
           {
             label: "Flashcards reviewed",
             value: String(flashcardsReviewed),
             icon: TrendingUp,
             color: "#00D9FF",
-            sub: flashcardsReviewed > 0 ? `${flashcardsReviewed} total` : "Review your first flashcard",
+            sub: flashcardsReviewed > 0 ? "Distinct cards" : "Review your first flashcard",
           },
         ].map(({ label, value, icon: Icon, color, sub }) => (
           <div
@@ -259,7 +266,7 @@ export default function Progress() {
             className="text-xs mb-6"
             style={{ color: "rgba(255,255,255,0.38)" }}
           >
-            Rolling average across all courses
+            Average score of the quizzes finished each day
           </p>
           <ResponsiveContainer width="100%" height={160}>
             <AreaChart
@@ -320,7 +327,7 @@ export default function Progress() {
               className="text-xs mb-6"
               style={{ color: "rgba(255,255,255,0.38)" }}
             >
-              Average quiz score per subject
+              Questions currently answered correctly
             </p>
             <ResponsiveContainer width="100%" height={150}>
               <BarChart
@@ -383,7 +390,7 @@ export default function Progress() {
                           className="text-[11px]"
                           style={{ color: "rgba(255,255,255,0.3)" }}
                         >
-                          {c.quizCount} quizzes · {c.flashcardCount} flashcards
+                          {c.quizCount} questions · {c.flashcardCount} flashcards
                         </p>
                       </div>
                     </div>
@@ -414,7 +421,7 @@ export default function Progress() {
       </div>
 
       {/* Weekly activity grid */}
-      {weeklyActivity.weeks.length > 0 && (
+      {activityWeeks.length > 0 && (
         <div
           className="mt-5 p-6 rounded-2xl"
           style={{
@@ -422,10 +429,10 @@ export default function Progress() {
             border: "1px solid rgba(255,255,255,0.07)",
           }}
         >
-          <h2 className="font-bold text-white mb-5">Weekly Activity</h2>
+          <h2 className="font-bold text-white mb-5">Activity (last 12 months)</h2>
           <div className="overflow-x-auto pb-2 -mx-2 px-2">
             <div className="flex gap-1">
-              {weeklyActivity.weeks.map((week, wi) => (
+              {activityWeeks.map((week, wi) => (
                 <div key={wi} className="flex flex-col gap-1">
                   {week.map((count, di) => {
                     const opacity =
@@ -439,7 +446,7 @@ export default function Progress() {
                         key={di}
                         className="w-3 h-3 rounded-sm"
                         style={{ background: `rgba(124,92,255,${opacity})` }}
-                        title={`${count} quiz ${count !== 1 ? "s" : ""}`}
+                        title={`${count} answer${count !== 1 ? "s" : ""} and review${count !== 1 ? "s" : ""}`}
                       />
                     )
                   })}

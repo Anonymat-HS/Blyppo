@@ -1,13 +1,21 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   fetchCourses,
   fetchUserProgress,
   fetchFlashcardProgress,
+  fetchQuizAttempts,
+  fetchStudyEvents,
   fetchQuizIdsByCourseIds,
   fetchFlashcardIdsByCourseIds,
 } from "@/lib/api"
 import { computeStreak } from "@/lib/utils/stats"
-import type { Course, UserProgress, FlashcardProgress } from "@/lib/types"
+import type {
+  CourseSummary,
+  UserProgress,
+  FlashcardProgress,
+  QuizAttempt,
+  StudyEvent,
+} from "@/lib/types"
 
 export interface CourseStat {
   id: string
@@ -19,15 +27,27 @@ export interface CourseStat {
   progress: number
 }
 
+type IdRow = { id: string; course_id: string }
+
 const courseColors = ["#7C5CFF", "#00D9FF", "#F59E0B", "#22C55E", "#EC4899", "#F97316"]
 
 export function useUserStats(userId?: string) {
   const [loading, setLoading] = useState(true)
-  const [courses, setCourses] = useState<Course[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
+  const [courses, setCourses] = useState<CourseSummary[]>([])
   const [progressRows, setProgressRows] = useState<UserProgress[]>([])
   const [flashRows, setFlashRows] = useState<FlashcardProgress[]>([])
-  const [quizIds, setQuizIds] = useState<{ id: string; course_id: string }[]>([])
-  const [flashIds, setFlashIds] = useState<{ id: string; course_id: string }[]>([])
+  const [attempts, setAttempts] = useState<QuizAttempt[]>([])
+  const [events, setEvents] = useState<StudyEvent[]>([])
+  const [quizIds, setQuizIds] = useState<IdRow[]>([])
+  const [flashIds, setFlashIds] = useState<IdRow[]>([])
+
+  const reload = useCallback(() => {
+    setLoading(true)
+    setError(null)
+    setReloadKey((k) => k + 1)
+  }, [])
 
   useEffect(() => {
     if (!userId) return
@@ -35,36 +55,41 @@ export function useUserStats(userId?: string) {
     let ignore = false
 
     async function load() {
-      const [coursesData, progressData, flashData] = await Promise.all([
+      const [coursesData, progressData, flashData, attemptData, eventData] = await Promise.all([
         fetchCourses(uid),
         fetchUserProgress(uid),
         fetchFlashcardProgress(uid),
+        fetchQuizAttempts(uid),
+        fetchStudyEvents(uid),
       ])
 
       const courseIds = coursesData.map((c) => c.id)
-      let quizIdData: { id: string; course_id: string }[] = []
-      let flashIdData: { id: string; course_id: string }[] = []
-      if (courseIds.length) {
-        ;[quizIdData, flashIdData] = await Promise.all([
-          fetchQuizIdsByCourseIds(courseIds),
-          fetchFlashcardIdsByCourseIds(courseIds),
-        ])
-      }
+      const [quizIdData, flashIdData] = await Promise.all([
+        fetchQuizIdsByCourseIds(courseIds),
+        fetchFlashcardIdsByCourseIds(courseIds),
+      ])
 
       if (ignore) return
       setCourses(coursesData)
       setProgressRows(progressData)
       setFlashRows(flashData)
+      setAttempts(attemptData)
+      setEvents(eventData)
       setQuizIds(quizIdData)
       setFlashIds(flashIdData)
-      setLoading(false)
     }
 
     load()
+      .catch((err) => {
+        if (!ignore) setError((err as Error).message)
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false)
+      })
     return () => {
       ignore = true
     }
-  }, [userId])
+  }, [userId, reloadKey])
 
   return useMemo(() => {
     const answered = progressRows.filter((r) => r.correct !== null)
@@ -103,17 +128,22 @@ export function useUserStats(userId?: string) {
 
     return {
       loading,
+      error,
+      reload,
       courses,
-      progressRows,
-      flashRows,
+      attempts,
+      events,
       breakdown,
+      /** Questions answered at least once */
       answeredCount,
       correctCount,
+      /** Finished quizzes */
+      quizzesTaken: attempts.length,
+      /** Distinct flashcards reviewed at least once */
       flashcardsReviewed: flashRows.length,
-      avgScore: answeredCount
-        ? Math.round((correctCount / answeredCount) * 100)
-        : 0,
-      streak: computeStreak(progressRows, flashRows),
+      /** Share of questions whose latest answer is correct */
+      avgScore: answeredCount ? Math.round((correctCount / answeredCount) * 100) : 0,
+      streak: computeStreak(events),
     }
-  }, [loading, courses, progressRows, flashRows, quizIds, flashIds])
+  }, [loading, error, reload, courses, progressRows, flashRows, attempts, events, quizIds, flashIds])
 }

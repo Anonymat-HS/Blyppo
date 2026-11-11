@@ -161,7 +161,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
           </div>
 
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>
-            No credit card required · Free 14-day trial · 10,000+ students
+            No credit card required · Free during beta
           </p>
         </div>
 
@@ -346,30 +346,6 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
         </div>
       </section>
 
-      {/* Social proof strip */}
-      <section
-        className="py-8"
-        style={{ borderTop: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8 text-center">
-            {[
-              { value: "10,000+", label: "Active students" },
-              { value: "2.4M", label: "Flashcards reviewed" },
-              { value: "94%", label: "Pass rate improvement" },
-              { value: "4.9 ★", label: "Average rating" },
-            ].map(({ value, label }) => (
-              <div key={label}>
-                <p className="text-2xl font-black text-white">{value}</p>
-                <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.38)" }}>
-                  {label}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Pricing */}
       <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24 text-center">
         <div
@@ -411,7 +387,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
             Ready to study smarter?
           </h2>
           <p className="mb-8" style={{ color: "rgba(255,255,255,0.45)" }}>
-            Join thousands of students who already use StudyForge every day.
+            Upload your first course and get a quiz and flashcards in minutes.
           </p>
           <button
             onClick={onEnter}
@@ -444,7 +420,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
             <span className="font-black text-sm">StudyForge</span>
           </div>
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.28)" }}>
-            © 2025 StudyForge. Built for serious learners.
+            © 2026 StudyForge. Built for serious learners.
           </p>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.18)" }}>
             Crafted with care by <span style={{ color: "rgba(124,92,255,0.5)" }}>H.S Company</span>

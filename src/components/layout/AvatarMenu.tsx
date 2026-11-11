@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react"
-import { User, Settings, LogOut } from "lucide-react"
+import { User, LogOut } from "lucide-react"
 import { useAuth } from "@/lib/supabase/auth"
 import type { Screen } from "@/App"
 
@@ -98,16 +98,6 @@ export default function AvatarMenu({ onNavigate }: AvatarMenuProps) {
           >
             <User size={15} />
             Profile
-          </button>
-
-          <button
-            onClick={() => setOpen(false)}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-white/70 hover:text-white transition-colors"
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)" }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent" }}
-          >
-            <Settings size={15} />
-            Settings
           </button>
 
           <div className="h-px mx-2 my-1" style={{ background: "rgba(255,255,255,0.06)" }} />

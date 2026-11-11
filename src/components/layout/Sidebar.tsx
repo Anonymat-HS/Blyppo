@@ -4,7 +4,6 @@ import {
   Brain,
   CreditCard,
   TrendingUp,
-  Settings,
   X,
 } from "lucide-react"
 import type { Screen } from "@/App"
@@ -116,46 +115,19 @@ export default function Sidebar({
 
         {/* Bottom */}
         <div
-          className="px-3 py-4 space-y-1"
+          className="px-3 py-4"
           style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
         >
-          <button
-            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
-            style={{ color: "rgba(255,255,255,0.35)" }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.05)"
-              e.currentTarget.style.color = "rgba(255,255,255,0.7)"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent"
-              e.currentTarget.style.color = "rgba(255,255,255,0.35)"
-            }}
-          >
-            <Settings size={17} />
-            Settings
-          </button>
-
           <div
-            className="mx-0.5 p-3 rounded-xl mt-1"
+            className="mx-0.5 p-3 rounded-xl"
             style={{
               background: "rgba(124,92,255,0.08)",
               border: "1px solid rgba(124,92,255,0.18)",
             }}
           >
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-xs font-bold text-violet-300">Pro Plan</p>
-              <span
-                className="text-[10px] px-1.5 py-0.5 rounded-md font-semibold"
-                style={{
-                  background: "rgba(124,92,255,0.25)",
-                  color: "#A78BFA",
-                }}
-              >
-                ACTIVE
-              </span>
-            </div>
+            <p className="text-xs font-bold text-violet-300 mb-1">Beta</p>
             <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>
-              Unlimited uploads
+              Free while in beta
             </p>
           </div>
         </div>

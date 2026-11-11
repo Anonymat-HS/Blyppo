@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/supabase/auth"
 import { callGenerateFunction } from "@/lib/supabase/functions"
 import { fetchCourses, fetchQuizCountsByCourses, fetchFlashcardCountsByCourses } from "@/lib/api"
+import ErrorState from "@/components/ui/ErrorState"
 import type { CourseWithCounts } from "@/lib/types"
 
 export default function Dashboard({
@@ -18,6 +19,7 @@ export default function Dashboard({
   const [loading, setLoading] = useState(true)
   const [retryingCourse, setRetryingCourse] = useState<{ id: string; type: "quiz" | "flashcard" } | null>(null)
   const [retryError, setRetryError] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   const displayName = user?.user_metadata?.full_name?.split(" ")[0] ?? user?.email?.split("@")[0] ?? "there"
 
@@ -38,12 +40,16 @@ export default function Dashboard({
     setCourses(coursesWithStats)
   }
 
+  const loadDashboard = () => {
+    setLoading(true)
+    setLoadError(null)
+    loadCourses()
+      .catch((err) => setLoadError((err as Error).message))
+      .finally(() => setLoading(false))
+  }
+
   useEffect(() => {
-    let ignore = false
-    loadCourses().finally(() => {
-      if (!ignore) setLoading(false)
-    })
-    return () => { ignore = true }
+    loadDashboard()
   }, [])
 
   const handleRetry = async (courseId: string, type: "quiz" | "flashcard") => {
@@ -80,6 +86,10 @@ export default function Dashboard({
     month: "long",
     year: "numeric",
   })
+
+  if (loadError) {
+    return <ErrorState message={loadError} onRetry={loadDashboard} />
+  }
 
   if (loading) {
     return (

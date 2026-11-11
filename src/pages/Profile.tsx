@@ -3,6 +3,9 @@ import { Camera, Flame, Brain, Target, TrendingUp, BookOpen, Upload, ArrowLeft }
 import { supabase } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/supabase/auth"
 import { useUserStats } from "@/hooks/useUserStats"
+import ErrorState from "@/components/ui/ErrorState"
+
+const MAX_AVATAR_MB = 2
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/)
@@ -28,11 +31,22 @@ export default function Profile({ onBack }: { onBack: () => void }) {
   const { user } = useAuth()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  const [avatarError, setAvatarError] = useState<string | null>(null)
 
-  const { loading, courses, progressRows, flashcardsReviewed, streak, avgScore, breakdown } = useUserStats(user?.id)
+  const {
+    loading,
+    error,
+    reload,
+    courses,
+    answeredCount,
+    quizzesTaken,
+    flashcardsReviewed,
+    streak,
+    avgScore,
+    breakdown,
+  } = useUserStats(user?.id)
 
   const courseCount = courses.length
-  const quizCount = progressRows.length
   const flashcardCount = flashcardsReviewed
   const courseStats = breakdown
 
@@ -45,42 +59,38 @@ export default function Profile({ onBack }: { onBack: () => void }) {
 
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
+    e.target.value = ""
     if (!file || !user) return
-    setUploading(true)
+    setAvatarError(null)
 
+    if (!file.type.startsWith("image/")) {
+      setAvatarError("Please choose an image file.")
+      return
+    }
+    if (file.size > MAX_AVATAR_MB * 1024 * 1024) {
+      setAvatarError(`Image exceeds the ${MAX_AVATAR_MB} MB limit.`)
+      return
+    }
+
+    setUploading(true)
     try {
-      const ext = file.name.split(".").pop()
+      const ext = file.name.includes(".") ? file.name.split(".").pop() : "png"
       const filePath = `${user.id}/${Date.now()}.${ext}`
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(filePath, file, { upsert: true })
-
       if (uploadError) throw uploadError
 
       const { data: publicUrlData } = supabase.storage.from("avatars").getPublicUrl(filePath)
-      const avatarUrl = publicUrlData.publicUrl
 
+      // The auth listener picks up the updated user: no page reload needed
       const { error: updateError } = await supabase.auth.updateUser({
-        data: { avatar_url: avatarUrl },
+        data: { avatar_url: publicUrlData.publicUrl },
       })
       if (updateError) throw updateError
-
-      window.location.reload()
-    } catch {
-      // Fallback: store as data URL directly in metadata
-      try {
-        const reader = new FileReader()
-        reader.onloadend = async () => {
-          await supabase.auth.updateUser({
-            data: { avatar_url: reader.result as string },
-          })
-          window.location.reload()
-        }
-        reader.readAsDataURL(file)
-      } catch {
-        // Silent failure
-      }
+    } catch (err) {
+      setAvatarError(`Could not update your photo: ${(err as Error).message}`)
     } finally {
       setUploading(false)
     }
@@ -93,6 +103,10 @@ export default function Profile({ onBack }: { onBack: () => void }) {
         day: "numeric",
       })
     : ""
+
+  if (error) {
+    return <ErrorState message={error} onRetry={reload} />
+  }
 
   if (loading) {
     return (
@@ -173,6 +187,11 @@ export default function Profile({ onBack }: { onBack: () => void }) {
           <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.25)" }}>
             Member since {createdDate}
           </p>
+          {avatarError && (
+            <p className="text-xs mt-2" style={{ color: "#FCA5A5" }}>
+              {avatarError}
+            </p>
+          )}
         </div>
       </div>
 
@@ -180,7 +199,7 @@ export default function Profile({ onBack }: { onBack: () => void }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         {[
           { label: "Courses", value: String(courseCount), icon: BookOpen, color: "#7C5CFF" },
-          { label: "Quizzes taken", value: String(quizCount), icon: Brain, color: "#A78BFA" },
+          { label: "Quizzes taken", value: String(quizzesTaken), icon: Brain, color: "#A78BFA" },
           { label: "Flashcards reviewed", value: String(flashcardCount), icon: TrendingUp, color: "#00D9FF" },
           { label: "Day streak", value: String(streak), icon: Flame, color: "#FCD34D" },
         ].map(({ label, value, icon: Icon, color }) => (
@@ -221,14 +240,14 @@ export default function Profile({ onBack }: { onBack: () => void }) {
           <h2 className="font-bold text-white">Average Score</h2>
         </div>
         <p className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.38)" }}>
-          Across all quiz attempts
+          Latest answer to each question
         </p>
         <div className="flex items-end gap-3">
           <span className="text-4xl font-black" style={{ color: "#4ADE80" }}>
             {avgScore}%
           </span>
           <span className="text-sm mb-1" style={{ color: "rgba(255,255,255,0.3)" }}>
-            {quizCount > 0 ? `based on ${quizCount} question${quizCount !== 1 ? "s" : ""}` : "No data yet"}
+            {answeredCount > 0 ? `based on ${answeredCount} question${answeredCount !== 1 ? "s" : ""}` : "No data yet"}
           </span>
         </div>
         <div

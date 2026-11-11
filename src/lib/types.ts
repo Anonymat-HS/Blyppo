@@ -6,10 +6,10 @@ export interface Course {
   created_at: string;
 }
 
-export interface CourseWithCounts {
-  id: string;
-  titre: string;
-  created_at: string;
+/** A course without its (potentially very large) extracted text. */
+export type CourseSummary = Pick<Course, "id" | "titre" | "created_at">;
+
+export interface CourseWithCounts extends CourseSummary {
   quiz_count: number;
   flashcard_count: number;
 }
@@ -55,6 +55,20 @@ export interface FlashcardProgress {
   niveau: "nouveau" | "difficile" | "bien" | "facile";
   last_reviewed: string;
   next_review: string | null;
+  intervalle_jours: number;
+}
+
+export interface QuizAttempt {
+  id: string;
+  course_id: string;
+  score: number;
+  total: number;
+  created_at: string;
+}
+
+export interface StudyEvent {
+  kind: "quiz_answer" | "flashcard_review";
+  created_at: string;
 }
 
 export interface QuizOptions {

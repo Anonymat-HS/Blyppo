@@ -12,7 +12,9 @@ import {
 import { supabase } from "@/lib/supabase/client"
 import { callGenerateFunction } from "@/lib/supabase/functions"
 import { fetchRecentCourses } from "@/lib/api"
-import type { Course } from "@/lib/types"
+import type { CourseSummary } from "@/lib/types"
+
+const MAX_FILE_MB = 20
 
 type UploadState = "idle" | "dragover" | "processing" | "generating" | "done" | "error"
 
@@ -22,15 +24,20 @@ export default function Upload({ onBack }: { onBack: () => void }) {
   const [filename, setFilename] = useState("")
   const [titre, setTitre] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
-  const [recentCourses, setRecentCourses] = useState<Course[]>([])
+  const [recentCourses, setRecentCourses] = useState<CourseSummary[]>([])
   const [quizError, setQuizError] = useState<string | null>(null)
   const [flashcardError, setFlashcardError] = useState<string | null>(null)
   const [retryingMsg, setRetryingMsg] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    fetchRecentCourses().then(setRecentCourses)
+  // The list is a convenience: the page stays usable if it cannot be loaded
+  const loadRecentCourses = useCallback(() => {
+    fetchRecentCourses().then(setRecentCourses).catch(() => {})
   }, [])
+
+  useEffect(() => {
+    loadRecentCourses()
+  }, [loadRecentCourses])
 
   const generateContent = async (courseId: string) => {
     setState("generating")
@@ -59,7 +66,7 @@ export default function Upload({ onBack }: { onBack: () => void }) {
 
     setRetryingMsg(null)
     setState("done")
-    fetchRecentCourses().then(setRecentCourses)
+    loadRecentCourses()
   }
 
   const handleUpload = useCallback(async (file: File, title: string) => {
@@ -69,8 +76,8 @@ export default function Upload({ onBack }: { onBack: () => void }) {
       return
     }
 
-    if (file.size > 50 * 1024 * 1024) {
-      setErrorMessage("File exceeds the 50 MB limit.")
+    if (file.size > MAX_FILE_MB * 1024 * 1024) {
+      setErrorMessage(`File exceeds the ${MAX_FILE_MB} MB limit.`)
       setState("error")
       return
     }
@@ -94,13 +101,13 @@ export default function Upload({ onBack }: { onBack: () => void }) {
       setProgress(Math.min(p, 100))
     }, 400)
 
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 120_000)
+
     try {
       const formData = new FormData()
       formData.append("file", file)
-      formData.append("titre", titre.trim())
-
-      const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 120_000)
+      formData.append("titre", title.trim())
 
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error("Not authenticated")
@@ -117,13 +124,13 @@ export default function Upload({ onBack }: { onBack: () => void }) {
         signal: controller.signal,
       })
 
-      const json = await res.json()
+      const json = await res.json().catch(() => ({}))
 
       clearInterval(interval)
       clearTimeout(timeout)
 
       if (!res.ok) {
-        throw new Error(json.error || "Upload failed")
+        throw new Error(json.error || `Upload failed (error ${res.status})`)
       }
 
       setProgress(100)
@@ -134,6 +141,7 @@ export default function Upload({ onBack }: { onBack: () => void }) {
       await generateContent(courseId)
     } catch (err) {
       clearInterval(interval)
+      clearTimeout(timeout)
       setErrorMessage(
         (err as Error).name === "AbortError"
           ? "Upload timed out. Please try again."
@@ -288,7 +296,7 @@ export default function Upload({ onBack }: { onBack: () => void }) {
                 className="text-xs"
                 style={{ color: "rgba(255,255,255,0.22)" }}
               >
-                Max 50 MB
+                Max {MAX_FILE_MB} MB
               </p>
             </div>
             <input

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { ChevronLeft, CheckCircle, XCircle, ArrowRight, RotateCcw, BookOpen, Loader2 } from "lucide-react"
 import { useAuth } from "@/lib/supabase/auth"
 import {
@@ -6,12 +6,18 @@ import {
   fetchQuizCountsByCourses,
   fetchQuestionsForCourse,
   recordQuizAnswer,
+  recordQuizAttempt,
 } from "@/lib/api"
-import type { Course, QuizQuestion } from "@/lib/types"
+import { findCorrectIndex } from "@/lib/utils/quiz"
+import ErrorState from "@/components/ui/ErrorState"
+import SaveWarning from "@/components/ui/SaveWarning"
+import type { CourseSummary, QuizQuestion } from "@/lib/types"
 
-interface CourseWithCount extends Course {
+interface CourseWithCount extends CourseSummary {
   quiz_count: number
 }
+
+const SAVE_WARNING = "Your progress could not be saved. Check your connection."
 
 export default function Quiz({ onBack }: { onBack: () => void }) {
   const { user } = useAuth()
@@ -25,25 +31,43 @@ export default function Quiz({ onBack }: { onBack: () => void }) {
   const [selected, setSelected] = useState<number | null>(null)
   const [score, setScore] = useState(0)
   const [finished, setFinished] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [saveFailed, setSaveFailed] = useState(false)
 
-  useEffect(() => {
-    async function fetchCourseList() {
+  const loadCourses = useCallback(async () => {
+    setLoading(true)
+    setLoadError(null)
+    try {
       const coursesData = await fetchCourses()
       const counts = await fetchQuizCountsByCourses(coursesData.map((c) => c.id))
       setCourses(coursesData.map((c) => ({ ...c, quiz_count: counts[c.id] ?? 0 })))
+    } catch (err) {
+      setLoadError((err as Error).message)
+    } finally {
       setLoading(false)
     }
-    fetchCourseList()
   }, [])
+
+  useEffect(() => {
+    loadCourses()
+  }, [loadCourses])
 
   const startQuiz = async (course: CourseWithCount) => {
     setSelectedCourse(course)
     setLoadingQuiz(true)
+    setLoadError(null)
+    setSaveFailed(false)
 
-    const data = await fetchQuestionsForCourse(course.id)
-
-    setQuestions(data)
-    setLoadingQuiz(false)
+    try {
+      const data = await fetchQuestionsForCourse(course.id)
+      // A question whose correct option cannot be identified cannot be graded
+      setQuestions(data.filter((question) => findCorrectIndex(question) !== -1))
+    } catch (err) {
+      setSelectedCourse(null)
+      setLoadError((err as Error).message)
+    } finally {
+      setLoadingQuiz(false)
+    }
     setCurrent(0)
     setScore(0)
     setFinished(false)
@@ -52,31 +76,26 @@ export default function Quiz({ onBack }: { onBack: () => void }) {
 
   const q = questions[current]
   const total = questions.length
-  const correctIndex = (() => {
-    if (!q) return -1
-    const normalize = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ")
-    const target = normalize(q.bonne_reponse)
-    const exact = q.options.findIndex((o) => normalize(o) === target)
-    if (exact !== -1) return exact
-    return q.options.findIndex((o) => {
-      const opt = normalize(o)
-      return target.includes(opt) || opt.includes(target)
-    })
-  })()
+  const correctIndex = q ? findCorrectIndex(q) : -1
 
-  const handleSelect = async (idx: number) => {
+  const handleSelect = (idx: number) => {
     if (selected !== null) return
     setSelected(idx)
     const isCorrect = idx === correctIndex
     if (isCorrect) setScore((s) => s + 1)
 
     if (!user || !q) return
-    await recordQuizAnswer(user.id, q.id, isCorrect)
+    recordQuizAnswer(user.id, q.id, isCorrect).catch(() => setSaveFailed(true))
   }
 
   const handleNext = () => {
     if (current + 1 >= total) {
       setFinished(true)
+      if (user && selectedCourse) {
+        recordQuizAttempt(user.id, selectedCourse.id, score, total).catch(() =>
+          setSaveFailed(true)
+        )
+      }
     } else {
       setCurrent((c) => c + 1)
       setSelected(null)
@@ -88,6 +107,11 @@ export default function Quiz({ onBack }: { onBack: () => void }) {
     setSelected(null)
     setScore(0)
     setFinished(false)
+    setSaveFailed(false)
+  }
+
+  if (loadError) {
+    return <ErrorState message={loadError} onRetry={loadCourses} />
   }
 
   // Loading state
@@ -263,6 +287,8 @@ export default function Quiz({ onBack }: { onBack: () => void }) {
           {selectedCourse?.titre} · Quiz complete
         </p>
 
+        {saveFailed && <SaveWarning message={SAVE_WARNING} />}
+
         <div className="flex gap-3 sm:gap-4 mb-10">
           <div
             className="px-5 py-3 rounded-xl text-center"
@@ -344,7 +370,7 @@ export default function Quiz({ onBack }: { onBack: () => void }) {
             color: "#C4B5FD",
           }}
         >
-          {score} / {current} correct
+          {score} / {current + (selected !== null ? 1 : 0)} correct
         </div>
       </div>
 
@@ -361,6 +387,8 @@ export default function Quiz({ onBack }: { onBack: () => void }) {
           }}
         />
       </div>
+
+      {saveFailed && <SaveWarning message={SAVE_WARNING} />}
 
       <h2 className="text-xl md:text-2xl font-bold leading-snug text-white mb-7">
         {q.question}

@@ -1,16 +1,19 @@
-import { useState, useEffect } from "react"
-import { ChevronLeft, RotateCcw, BookOpen, Loader2 } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
+import { ChevronLeft, RotateCcw, BookOpen, Loader2, CheckCircle } from "lucide-react"
 import { useAuth } from "@/lib/supabase/auth"
 import {
   fetchCourses,
   fetchFlashcardCountsByCourses,
   fetchCardsForCourse,
+  fetchProgressForCards,
   recordFlashcardRating,
-  type FlashcardRating,
 } from "@/lib/api"
-import type { Course, FlashcardReviewCard } from "@/lib/types"
+import { formatInterval, nextIntervalDays, type FlashcardRating } from "@/lib/utils/srs"
+import ErrorState from "@/components/ui/ErrorState"
+import SaveWarning from "@/components/ui/SaveWarning"
+import type { CourseSummary, FlashcardReviewCard } from "@/lib/types"
 
-interface CourseWithCount extends Course {
+interface CourseWithCount extends CourseSummary {
   flashcard_count: number
 }
 
@@ -20,45 +23,91 @@ const ratings: {
   color: string
   bg: string
   border: string
-  sub: string
 }[] = [
-  { r: "again", label: "Again", color: "#F87171", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.22)", sub: "< 1m" },
-  { r: "hard", label: "Hard", color: "#FCD34D", bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.22)", sub: "5m" },
-  { r: "good", label: "Good", color: "#4ADE80", bg: "rgba(34,197,94,0.1)", border: "rgba(34,197,94,0.22)", sub: "1d" },
-  { r: "easy", label: "Easy", color: "#00D9FF", bg: "rgba(0,217,255,0.08)", border: "rgba(0,217,255,0.2)", sub: "4d" },
+  { r: "again", label: "Again", color: "#F87171", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.22)" },
+  { r: "hard", label: "Hard", color: "#FCD34D", bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.22)" },
+  { r: "good", label: "Good", color: "#4ADE80", bg: "rgba(34,197,94,0.1)", border: "rgba(34,197,94,0.22)" },
+  { r: "easy", label: "Easy", color: "#00D9FF", bg: "rgba(0,217,255,0.08)", border: "rgba(0,217,255,0.2)" },
 ]
 
 export default function Flashcards({ onBack }: { onBack: () => void }) {
   const { user } = useAuth()
   const [courses, setCourses] = useState<CourseWithCount[]>([])
   const [selectedCourse, setSelectedCourse] = useState<CourseWithCount | null>(null)
-  const [cards, setCards] = useState<FlashcardReviewCard[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingCards, setLoadingCards] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [saveFailed, setSaveFailed] = useState(false)
+
+  // Every card of the course, and the cards of the current session
+  // (a card rated "Again" comes back at the end of the session)
+  const [allCards, setAllCards] = useState<FlashcardReviewCard[]>([])
+  const [cards, setCards] = useState<FlashcardReviewCard[]>([])
+  // Interval of each card (in days) when the session started
+  const [intervals, setIntervals] = useState<Record<string, number>>({})
+  const [nextDue, setNextDue] = useState<Date | null>(null)
 
   const [current, setCurrent] = useState(0)
   const [flipped, setFlipped] = useState(false)
   const [done, setDone] = useState(false)
   const [history, setHistory] = useState<FlashcardRating[]>([])
 
-  useEffect(() => {
-    async function fetchCourseList() {
+  const loadCourses = useCallback(async () => {
+    setLoading(true)
+    setLoadError(null)
+    try {
       const coursesData = await fetchCourses()
       const counts = await fetchFlashcardCountsByCourses(coursesData.map((c) => c.id))
       setCourses(coursesData.map((c) => ({ ...c, flashcard_count: counts[c.id] ?? 0 })))
+    } catch (err) {
+      setLoadError((err as Error).message)
+    } finally {
       setLoading(false)
     }
-    fetchCourseList()
   }, [])
 
-  const startReview = async (course: CourseWithCount) => {
+  useEffect(() => {
+    loadCourses()
+  }, [loadCourses])
+
+  /** Starts a session with the cards that are due, or with every card when `includeAll` is set. */
+  const startReview = async (course: CourseWithCount, includeAll = false) => {
     setSelectedCourse(course)
     setLoadingCards(true)
+    setLoadError(null)
+    setSaveFailed(false)
 
-    const data = await fetchCardsForCourse(course.id)
+    try {
+      const data = await fetchCardsForCourse(course.id)
+      const progress = user
+        ? await fetchProgressForCards(user.id, data.map((c) => c.id))
+        : {}
 
-    setCards(data)
-    setLoadingCards(false)
+      const now = Date.now()
+      const dueTime = (c: FlashcardReviewCard) => {
+        const next = progress[c.id]?.next_review
+        return next ? new Date(next).getTime() : null
+      }
+      // Overdue cards first (most overdue at the top), then cards never reviewed
+      const overdue = data
+        .filter((c) => dueTime(c) !== null && dueTime(c)! <= now)
+        .sort((a, b) => dueTime(a)! - dueTime(b)!)
+      const fresh = data.filter((c) => dueTime(c) === null)
+      const upcoming = data.map(dueTime).filter((t): t is number => t !== null && t > now)
+
+      const savedIntervals: Record<string, number> = {}
+      for (const c of data) savedIntervals[c.id] = progress[c.id]?.intervalle_jours ?? 0
+
+      setAllCards(data)
+      setCards(includeAll ? data : [...overdue, ...fresh])
+      setIntervals(savedIntervals)
+      setNextDue(upcoming.length ? new Date(Math.min(...upcoming)) : null)
+    } catch (err) {
+      setSelectedCourse(null)
+      setLoadError((err as Error).message)
+    } finally {
+      setLoadingCards(false)
+    }
     setCurrent(0)
     setFlipped(false)
     setDone(false)
@@ -69,14 +118,20 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
   const total = cards.length
 
   const handleRate = (r: FlashcardRating) => {
-    const next = [...history, r]
-    setHistory(next)
+    if (!card) return
+    setHistory((h) => [...h, r])
 
-    if (user && card) {
-      void recordFlashcardRating(user.id, card.id, r)
+    if (user) {
+      recordFlashcardRating(user.id, card.id, r, intervals[card.id] ?? 0).catch(() =>
+        setSaveFailed(true)
+      )
     }
 
-    if (current + 1 >= total) {
+    // A forgotten card is asked again before the session ends
+    const sessionLength = r === "again" ? total + 1 : total
+    if (r === "again") setCards((c) => [...c, card])
+
+    if (current + 1 >= sessionLength) {
       setDone(true)
     } else {
       setCurrent((c) => c + 1)
@@ -84,11 +139,16 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
     }
   }
 
-  const reset = () => {
-    setCurrent(0)
+  const handlePrevious = () => {
+    // Undo the "ask again" copy added by the rating being cancelled
+    if (history[history.length - 1] === "again") setCards((c) => c.slice(0, -1))
+    setHistory((h) => h.slice(0, -1))
+    setCurrent((c) => c - 1)
     setFlipped(false)
-    setDone(false)
-    setHistory([])
+  }
+
+  if (loadError) {
+    return <ErrorState message={loadError} onRetry={loadCourses} />
   }
 
   // Loading
@@ -206,7 +266,7 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
   }
 
   // No cards
-  if (cards.length === 0) {
+  if (allCards.length === 0) {
     return (
       <div className="p-6 md:p-8 max-w-lg mx-auto">
         <button
@@ -236,6 +296,36 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
     )
   }
 
+  // Nothing to review right now
+  if (cards.length === 0) {
+    return (
+      <div className="p-6 md:p-8 max-w-lg mx-auto flex flex-col items-center text-center pt-16">
+        <CheckCircle size={40} className="mb-4" style={{ color: "#4ADE80" }} />
+        <h2 className="text-2xl font-black text-white mb-2">You're all caught up</h2>
+        <p className="mb-8 text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
+          {nextDue
+            ? `Next review: ${nextDue.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}`
+            : "No card is due for this course."}
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            onClick={() => startReview(selectedCourse, true)}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-[#7C5CFF] hover:bg-[#8B6BFF] transition-colors duration-200"
+          >
+            <RotateCcw size={14} />
+            Review all {allCards.length} cards anyway
+          </button>
+          <button
+            onClick={() => setSelectedCourse(null)}
+            className="px-6 py-2.5 rounded-xl text-sm font-medium border border-white/[0.08] text-white/60 hover:bg-white/5 hover:text-white/90 transition-colors duration-200"
+          >
+            Choose another course
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   // Done
   if (done) {
     const counts = { again: 0, hard: 0, good: 0, easy: 0 } as Record<FlashcardRating, number>
@@ -246,8 +336,10 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
         <div className="text-5xl mb-4">🎉</div>
         <h2 className="text-3xl font-black text-white mb-2">Deck complete!</h2>
         <p className="mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>
-          You reviewed all {total} cards
+          You reviewed {new Set(cards.map((c) => c.id)).size} cards
         </p>
+
+        {saveFailed && <SaveWarning message="Some reviews could not be saved. Check your connection." />}
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 w-full max-w-xs mb-10">
           {ratings.map(({ r, label, color, bg, border }) => (
@@ -264,7 +356,7 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
 
         <div className="flex flex-col sm:flex-row gap-3">
           <button
-            onClick={reset}
+            onClick={() => startReview(selectedCourse, true)}
             className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200"
             style={{ background: "#7C5CFF" }}
             onMouseEnter={(e) => (e.currentTarget.style.background = "#8B6BFF")}
@@ -332,6 +424,8 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
         />
       </div>
 
+      {saveFailed && <SaveWarning message="Some reviews could not be saved. Check your connection." />}
+
       {/* Flashcard */}
       <div
         className="cursor-pointer mb-5 select-none w-full rounded-2xl p-8 sm:p-10 text-center transition-all duration-300"
@@ -375,7 +469,7 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
         className="grid grid-cols-4 gap-2 transition-all duration-300"
         style={{ opacity: flipped ? 1 : 0, pointerEvents: flipped ? "auto" : "none" }}
       >
-        {ratings.map(({ r, label, color, bg, border, sub }) => (
+        {ratings.map(({ r, label, color, bg, border }) => (
           <button
             key={r}
             onClick={() => handleRate(r)}
@@ -389,7 +483,9 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
             }}
           >
             <span className="text-sm font-bold" style={{ color }}>{label}</span>
-            <span className="text-[11px]" style={{ color: color + "90" }}>{sub}</span>
+            <span className="text-[11px]" style={{ color: color + "90" }}>
+              {formatInterval(nextIntervalDays(r, intervals[card.id] ?? 0))}
+            </span>
           </button>
         ))}
       </div>
@@ -397,11 +493,7 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
       {!flipped && current > 0 && (
         <div className="flex justify-center mt-4">
           <button
-            onClick={() => {
-              setCurrent((c) => c - 1)
-              setFlipped(false)
-              setHistory((h) => h.slice(0, -1))
-            }}
+            onClick={handlePrevious}
             className="flex items-center gap-1 text-xs transition-colors duration-150"
             style={{ color: "rgba(255,255,255,0.25)" }}
             onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.6)")}
