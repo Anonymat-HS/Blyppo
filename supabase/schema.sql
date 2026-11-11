@@ -170,13 +170,7 @@ create policy "Users can view quizzes for own courses"
     )
   );
 
-create policy "Users can delete quizzes for own courses"
-  on quizzes for delete
-  using (
-    course_id in (
-      select id from courses where user_id = auth.uid()
-    )
-  );
+-- No delete policy: questions / cards go only with their course (migration 006)
 
 -- flashcards: accessible via course ownership
 create policy "Users can view flashcards for own courses"
@@ -187,13 +181,7 @@ create policy "Users can view flashcards for own courses"
     )
   );
 
-create policy "Users can delete flashcards for own courses"
-  on flashcards for delete
-  using (
-    course_id in (
-      select id from courses where user_id = auth.uid()
-    )
-  );
+-- No delete policy: questions / cards go only with their course (migration 006)
 
 -- user_progress: user can only see/modify their own
 create policy "Users can view own progress"
@@ -300,9 +288,7 @@ create table if not exists feedback (
   page text check (char_length(page) <= 50),
   -- Item text at the time of the report, so it stays readable if regenerated
   snapshot text check (char_length(snapshot) <= 1000),
-  created_at timestamptz not null default now(),
-  check (kind <> 'question' or quiz_id is not null),
-  check (kind <> 'flashcard' or flashcard_id is not null)
+  created_at timestamptz not null default now()
 );
 
 create index if not exists idx_feedback_created_at on feedback (created_at desc);
@@ -314,11 +300,93 @@ create policy "Users can send feedback"
   to authenticated
   with check (user_id = auth.uid());
 
--- At most 30 messages per user per day, so a script cannot flood the table
-create or replace function feedback_daily_limit() returns trigger
-language plpgsql security definer set search_path = public as $$
+-- Security hardening (migration 006)
+-- ── 1. Usage quotas ────────────────────────────────────────────────────────
+-- Append-only log of costly actions. Not linked to courses, so deleting a course
+-- does not give its quota back. Service role only (no policy).
+create table if not exists public.usage_events (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references auth.users on delete cascade,
+  kind text not null check (kind in ('course_upload', 'generation')),
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_usage_events_user_kind_time
+  on public.usage_events (user_id, kind, created_at desc);
+alter table public.usage_events enable row level security;
+
+-- Records one use if the user is under the limit for the window, atomically
+-- (a per-user lock serialises parallel requests). Returns the number of uses in
+-- the window including this one, or -1 when the limit is reached.
+create or replace function public.claim_usage(
+  p_user uuid,
+  p_kind text,
+  p_limit int,
+  p_window_seconds int
+) returns int
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  used int;
 begin
-  if (select count(*) from feedback
+  perform pg_advisory_xact_lock(hashtext(p_user::text || ':' || p_kind));
+  select count(*) into used
+  from public.usage_events
+  where user_id = p_user
+    and kind = p_kind
+    and created_at > now() - make_interval(secs => p_window_seconds);
+  if used >= p_limit then
+    return -1;
+  end if;
+  insert into public.usage_events (user_id, kind) values (p_user, p_kind);
+  return used + 1;
+end;
+$$;
+
+-- Only the Edge Functions (service role) may call it
+revoke all on function public.claim_usage(uuid, text, int, int) from public, anon, authenticated;
+grant execute on function public.claim_usage(uuid, text, int, int) to service_role;
+
+-- ── 3. Feedback ────────────────────────────────────────────────────────────
+-- Server-side rules on every new feedback row: the sender and the date come from
+-- the session, a report must target the sender's own question / card, and the
+-- 30-per-day limit is counted under a per-user lock.
+create or replace function public.feedback_before_insert() returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  new.user_id := auth.uid();
+  new.created_at := now();
+  if new.user_id is null then
+    raise exception 'Not signed in';
+  end if;
+
+  if new.kind = 'question' then
+    new.flashcard_id := null;
+    if new.quiz_id is null or not exists (
+      select 1 from public.quizzes q join public.courses c on c.id = q.course_id
+      where q.id = new.quiz_id and c.user_id = new.user_id
+    ) then
+      raise exception 'Unknown question';
+    end if;
+  elsif new.kind = 'flashcard' then
+    new.quiz_id := null;
+    if new.flashcard_id is null or not exists (
+      select 1 from public.flashcards f join public.courses c on c.id = f.course_id
+      where f.id = new.flashcard_id and c.user_id = new.user_id
+    ) then
+      raise exception 'Unknown flashcard';
+    end if;
+  else
+    new.quiz_id := null;
+    new.flashcard_id := null;
+  end if;
+
+  perform pg_advisory_xact_lock(hashtext('feedback:' || new.user_id::text));
+  if (select count(*) from public.feedback
       where user_id = new.user_id and created_at > now() - interval '1 day') >= 30 then
     raise exception 'Too many messages today, please try again tomorrow.';
   end if;
@@ -326,6 +394,28 @@ begin
 end;
 $$;
 
-drop trigger if exists feedback_daily_limit on feedback;
-create trigger feedback_daily_limit before insert on feedback
-  for each row execute function feedback_daily_limit();
+drop trigger if exists feedback_daily_limit on public.feedback;
+drop function if exists public.feedback_daily_limit();
+drop trigger if exists feedback_before_insert on public.feedback;
+create trigger feedback_before_insert before insert on public.feedback
+  for each row execute function public.feedback_before_insert();
+
+-- ── 4. Study history dates come from the server ───────────────────────────
+-- Backdated events could fake a streak.
+create or replace function public.set_created_at_now() returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.created_at := now();
+  return new;
+end;
+$$;
+
+drop trigger if exists study_events_created_at on public.study_events;
+create trigger study_events_created_at before insert on public.study_events
+  for each row execute function public.set_created_at_now();
+
+drop trigger if exists quiz_attempts_created_at on public.quiz_attempts;
+create trigger quiz_attempts_created_at before insert on public.quiz_attempts
+  for each row execute function public.set_created_at_now();

@@ -19,3 +19,13 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+
+  database-security:
+    # Loads supabase/schema.sql into a throwaway Postgres and runs
+    # supabase/tests/security.test.sql (RLS, triggers, quotas)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Put the preinstalled Postgres binaries on PATH
+        run: echo "$(ls -d /usr/lib/postgresql/*/bin | sort -V | tail -1)" >> "$GITHUB_PATH"
+      - run: sh scripts/test-db.sh

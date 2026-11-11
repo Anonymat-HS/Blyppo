@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { HttpError, json } from "./http.ts"
+import { claimUsage } from "./usage.ts"
 
 type Kind = "quiz" | "flashcards"
 
@@ -9,6 +10,8 @@ const TEXT_COLUMN: Record<Kind, string> = { quiz: "question", flashcards: "recto
 // A claim older than this with nothing generated comes from a crashed run
 const STALE_CLAIM_MS = 3 * 60 * 1000
 const UNIQUE_VIOLATION = "23505"
+/** LLM calls a user can make per hour, successful or not (shared Groq budget). */
+const GENERATIONS_PER_HOUR = 30
 
 /** The caller's course text, or 404 when the course is not theirs. */
 export async function loadCourseText(
@@ -35,6 +38,8 @@ export interface NextRound {
 /**
  * The round a "new questions" request would create, and what the course
  * already has. Throws 403 once the plan's number of rounds is used up.
+ * Rounds are counted from course_generations (server-only) as well as from the
+ * content, so nothing a user can delete lowers the count.
  */
 export async function nextRound(
   supabase: SupabaseClient,
@@ -49,8 +54,20 @@ export async function nextRound(
     .eq("course_id", courseId)
   if (error) throw new Error(error.message)
 
-  const rows = (data ?? []) as Record<string, unknown>[]
-  const round = rows.reduce((max, r) => Math.max(max, Number(r.round) || 1), 0) + 1
+  const { data: claims, error: claimsError } = await supabase
+    .from("course_generations")
+    .select("round")
+    .eq("course_id", courseId)
+    .eq("kind", kind)
+  if (claimsError) throw new Error(claimsError.message)
+
+  // The select string is built at runtime, so supabase-js cannot type the rows
+  const rows = (data ?? []) as unknown as Record<string, unknown>[]
+  const highest = [...rows, ...((claims ?? []) as Record<string, unknown>[])].reduce(
+    (max, r) => Math.max(max, Number(r.round) || 1),
+    0
+  )
+  const round = highest + 1
   if (round > maxRounds) {
     const what = kind === "quiz" ? "question sets" : "card sets"
     throw new HttpError(
@@ -69,6 +86,7 @@ export async function nextRound(
  */
 export async function generateOnce<T extends object>(
   supabase: SupabaseClient,
+  userId: string,
   courseId: string,
   kind: Kind,
   generate: () => Promise<T[]>,
@@ -109,6 +127,15 @@ export async function generateOnce<T extends object>(
   }
 
   try {
+    // Every LLM call counts, even a failed one, so failures cannot be retried for free
+    await claimUsage(
+      supabase,
+      userId,
+      "generation",
+      GENERATIONS_PER_HOUR,
+      60 * 60,
+      "You have generated a lot in the last hour. Please try again a bit later."
+    )
     const items = await generate()
     const { error: insertError } = await supabase
       .from(table)
