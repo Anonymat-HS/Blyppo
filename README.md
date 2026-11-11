@@ -1,6 +1,8 @@
 # Kwizo
 
 > **Quiz yourself. Ace the exam.** Turn your course notes into AI-generated quizzes and spaced-repetition flashcards.
+>
+> A product of **H.S Company**.
 
 [![CI](https://github.com/Anonymat-HS/Kwizo/actions/workflows/ci.yml/badge.svg)](https://github.com/Anonymat-HS/Kwizo/actions/workflows/ci.yml)
 [Live app: kwizo.vercel.app](https://kwizo.vercel.app)

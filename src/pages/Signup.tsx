@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Eye, EyeOff, CheckCircle } from "lucide-react"
 import { useAuth } from "@/lib/supabase/auth"
-import { Logo } from "@/components/ui/Logo"
+import { CompanyBadge, Logo } from "@/components/ui/Logo"
 
 function getPasswordStrength(pw: string): { label: string; color: string; width: string } {
   let score = 0
@@ -90,7 +90,7 @@ export default function Signup({
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2.5 mb-8">
-          <Logo size="lg" />
+          <Logo size="lg" byline />
         </div>
 
         <div
@@ -204,6 +204,10 @@ export default function Signup({
             Sign in
           </button>
         </p>
+
+        <div className="flex justify-center mt-8">
+          <CompanyBadge />
+        </div>
       </div>
     </div>
   )

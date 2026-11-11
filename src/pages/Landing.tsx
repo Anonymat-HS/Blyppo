@@ -1,5 +1,5 @@
 import { ArrowRight, Upload, Sparkles, Brain, CheckCircle, Zap, CalendarClock, Target, Flame, Keyboard } from "lucide-react"
-import { Logo } from "@/components/ui/Logo"
+import { CompanyBadge, Logo } from "@/components/ui/Logo"
 
 export default function Landing({ onEnter }: { onEnter: () => void }) {
   return (
@@ -9,7 +9,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
     >
       {/* Nav */}
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex items-center justify-between">
-        <Logo size="md" />
+        <Logo size="md" byline />
 
         <div
           className="hidden md:flex items-center gap-8 text-sm"
@@ -391,13 +391,11 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 
       {/* Footer */}
       <footer style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <Logo size="sm" />
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.28)" }}>
-            © 2026 Kwizo. All rights reserved.
-          </p>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.18)" }}>
-            Crafted with care by <span style={{ color: "rgba(124,92,255,0.5)" }}>H.S Company</span>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 flex flex-col items-center gap-5 text-center">
+          <Logo size="md" byline />
+          <CompanyBadge label="Designed and built by" />
+          <p className="text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
+            © 2026 Kwizo, a product of H.S Company. All rights reserved.
           </p>
         </div>
       </footer>
