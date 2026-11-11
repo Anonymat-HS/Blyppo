@@ -30,7 +30,14 @@ const ratings: {
   { r: "easy", label: "Easy", color: "#00D9FF", bg: "rgba(0,217,255,0.08)", border: "rgba(0,217,255,0.2)" },
 ]
 
-export default function Flashcards({ onBack }: { onBack: () => void }) {
+export default function Flashcards({
+  onBack,
+  initialCourseId,
+}: {
+  onBack: () => void
+  /** Course to review right away (opened from a Dashboard card) */
+  initialCourseId?: string
+}) {
   const { user } = useAuth()
   const [courses, setCourses] = useState<CourseWithCount[]>([])
   const [selectedCourse, setSelectedCourse] = useState<CourseWithCount | null>(null)
@@ -58,20 +65,26 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
     try {
       const coursesData = await fetchCourses()
       const counts = await fetchFlashcardCountsByCourses(coursesData.map((c) => c.id))
-      setCourses(coursesData.map((c) => ({ ...c, flashcard_count: counts[c.id] ?? 0 })))
+      const withCounts = coursesData.map((c) => ({ ...c, flashcard_count: counts[c.id] ?? 0 }))
+      setCourses(withCounts)
+
+      const initial = withCounts.find((c) => c.id === initialCourseId)
+      if (initial) await startReview(initial)
     } catch (err) {
       setLoadError((err as Error).message)
     } finally {
       setLoading(false)
     }
-  }, [])
+    // startReview only uses state setters and the signed-in user
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCourseId, user?.id])
 
   useEffect(() => {
     loadCourses()
   }, [loadCourses])
 
   /** Starts a session with the cards that are due, or with every card when `includeAll` is set. */
-  const startReview = async (course: CourseWithCount, includeAll = false) => {
+  async function startReview(course: CourseWithCount, includeAll = false) {
     setSelectedCourse(course)
     setLoadingCards(true)
     setLoadError(null)
@@ -146,6 +159,23 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
     setCurrent((c) => c - 1)
     setFlipped(false)
   }
+
+  // Keyboard: Space or Enter flips the card, 1-4 rates it once the answer is shown
+  const inReview = Boolean(selectedCourse) && !loadingCards && !done && Boolean(card)
+  useEffect(() => {
+    if (!inReview) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return
+      if (e.key === " " || e.key === "Enter") {
+        e.preventDefault()
+        setFlipped((f) => !f)
+      } else if (flipped && "1234".includes(e.key) && e.key.length === 1) {
+        handleRate(ratings[Number(e.key) - 1].r)
+      }
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  })
 
   if (loadError) {
     return <ErrorState message={loadError} onRetry={loadCourses} />
@@ -461,7 +491,7 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
       </div>
 
       <p className="text-center text-xs mb-5" style={{ color: "rgba(255,255,255,0.28)" }}>
-        {flipped ? "How well did you know this?" : "Tap the card to reveal the answer"}
+        {flipped ? "How well did you know this? (keys 1-4)" : "Tap the card or press Space to reveal the answer"}
       </p>
 
       {/* Rating buttons */}

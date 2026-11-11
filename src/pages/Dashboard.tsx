@@ -1,17 +1,17 @@
-import { Upload, Brain, CreditCard, Flame, ArrowRight, Quote, BookOpen, AlertCircle, RefreshCw } from "lucide-react"
+import { Upload, Brain, CreditCard, Flame, ArrowRight, Quote, BookOpen, AlertCircle, RefreshCw, Trash2 } from "lucide-react"
 import { getRandomQuote } from "@/lib/utils/quotes"
-import type { Screen } from "@/App"
+import type { Navigate, Screen } from "@/App"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/supabase/auth"
 import { callGenerateFunction } from "@/lib/supabase/functions"
-import { fetchCourses, fetchQuizCountsByCourses, fetchFlashcardCountsByCourses } from "@/lib/api"
+import { fetchCourses, fetchQuizCountsByCourses, fetchFlashcardCountsByCourses, deleteCourse } from "@/lib/api"
 import ErrorState from "@/components/ui/ErrorState"
 import type { CourseWithCounts } from "@/lib/types"
 
 export default function Dashboard({
   onNavigate,
 }: {
-  onNavigate: (s: Screen) => void
+  onNavigate: Navigate
 }) {
   const { user } = useAuth()
   const [quote] = useState(() => getRandomQuote())
@@ -20,6 +20,9 @@ export default function Dashboard({
   const [retryingCourse, setRetryingCourse] = useState<{ id: string; type: "quiz" | "flashcard" } | null>(null)
   const [retryError, setRetryError] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
+  // Course whose deletion is awaiting confirmation, and course being deleted
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null)
+  const [deletingCourse, setDeletingCourse] = useState<string | null>(null)
 
   const displayName = user?.user_metadata?.full_name?.split(" ")[0] ?? user?.email?.split("@")[0] ?? "there"
 
@@ -67,6 +70,20 @@ export default function Dashboard({
       setRetryError((err as Error).message)
     } finally {
       setRetryingCourse(null)
+    }
+  }
+
+  const handleDelete = async (courseId: string) => {
+    setDeletingCourse(courseId)
+    setRetryError(null)
+    try {
+      await deleteCourse(courseId)
+      setCourses((list) => list.filter((c) => c.id !== courseId))
+    } catch (err) {
+      setRetryError(`Could not delete the course: ${(err as Error).message}`)
+    } finally {
+      setDeletingCourse(null)
+      setConfirmingDelete(null)
     }
   }
 
@@ -297,7 +314,41 @@ export default function Dashboard({
                           </p>
                         </div>
                       </div>
+
+                      {confirmingDelete === course.id ? (
+                        <div className="flex items-center gap-1.5 shrink-0 text-xs">
+                          <button
+                            onClick={() => handleDelete(course.id)}
+                            disabled={deletingCourse === course.id}
+                            className="px-2.5 py-1 rounded-lg font-semibold text-white bg-red-600 hover:bg-red-500 disabled:opacity-50 transition-colors"
+                          >
+                            {deletingCourse === course.id ? "Deleting..." : "Delete"}
+                          </button>
+                          <button
+                            onClick={() => setConfirmingDelete(null)}
+                            disabled={deletingCourse === course.id}
+                            className="px-2.5 py-1 rounded-lg text-white/60 border border-white/10 hover:bg-white/5 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmingDelete(course.id)}
+                          aria-label={`Delete ${course.titre}`}
+                          title="Delete course"
+                          className="shrink-0 p-1.5 rounded-lg text-white/25 hover:text-[#FCA5A5] hover:bg-red-500/10 transition-colors"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      )}
                     </div>
+
+                    {confirmingDelete === course.id && (
+                      <p className="text-xs mb-3 text-[#FCA5A5]">
+                        This deletes the course, its questions, flashcards and your progress on it.
+                      </p>
+                    )}
 
                     <div
                       className="flex items-center gap-3 text-xs flex-wrap"
@@ -365,6 +416,29 @@ export default function Dashboard({
                         </span>
                       )}
                     </div>
+
+                    {(!needsQuiz || !needsFlashcard) && (
+                      <div className="flex gap-2 mt-4">
+                        {!needsQuiz && (
+                          <button
+                            onClick={() => onNavigate("quiz", course.id)}
+                            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#C4B5FD] bg-[#7C5CFF]/15 border border-[#7C5CFF]/25 hover:bg-[#7C5CFF]/25 transition-colors"
+                          >
+                            <Brain size={13} />
+                            Quiz
+                          </button>
+                        )}
+                        {!needsFlashcard && (
+                          <button
+                            onClick={() => onNavigate("flashcards", course.id)}
+                            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-white/70 border border-white/10 hover:bg-white/5 transition-colors"
+                          >
+                            <CreditCard size={13} />
+                            Flashcards
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )
               })}
@@ -387,7 +461,7 @@ export default function Dashboard({
                 </p>
               </div>
               <button
-                onClick={() => onNavigate("quiz")}
+                onClick={() => onNavigate("quiz", courses.find((c) => c.quiz_count > 0)?.id)}
                 className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-200"
                 style={{
                   background: "rgba(124,92,255,0.2)",

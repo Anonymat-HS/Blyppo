@@ -14,6 +14,7 @@ interface AuthState {
   recoveringPassword: boolean;
   requestPasswordReset: (email: string) => Promise<{ error?: string }>;
   updatePassword: (password: string) => Promise<{ error?: string }>;
+  updateFullName: (fullName: string) => Promise<{ error?: string }>;
   refreshUser: () => Promise<void>;
 }
 
@@ -87,6 +88,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return {};
   };
 
+  const updateFullName = async (fullName: string) => {
+    // The auth listener receives the updated user
+    const { error } = await supabase.auth.updateUser({ data: { full_name: fullName } });
+    return { error: error?.message };
+  };
+
   const refreshUser = async () => {
     const { data } = await supabase.auth.getSession();
     setSession(data.session);
@@ -106,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         recoveringPassword,
         requestPasswordReset,
         updatePassword,
+        updateFullName,
       }}>
       {children}
     </AuthContext.Provider>

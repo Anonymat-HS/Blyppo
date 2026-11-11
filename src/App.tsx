@@ -25,37 +25,47 @@ export type Screen =
   | "progress"
   | "profile"
 
+export type Navigate = (screen: Screen, courseId?: string) => void
+
 const appScreens: Screen[] = ["dashboard", "upload", "quiz", "flashcards", "progress", "profile"]
 
-/** "#/quiz" → "quiz". Anything else (no hash, landing anchors, auth callbacks) is the landing page. */
-function screenFromHash(): Screen {
-  const name = window.location.hash.replace(/^#\/?/, "")
-  return appScreens.find((s) => s === name) ?? "landing"
+interface Route {
+  screen: Screen
+  /** Course to open directly, for "#/quiz/<courseId>" and "#/flashcards/<courseId>" */
+  courseId?: string
+}
+
+/** "#/quiz" → quiz. Anything else (no hash, landing anchors, auth callbacks) is the landing page. */
+function routeFromHash(): Route {
+  const [name, courseId] = window.location.hash.replace(/^#\/?/, "").split("/")
+  const screen = appScreens.find((s) => s === name)
+  return screen ? { screen, courseId: courseId || undefined } : { screen: "landing" }
 }
 
 /** Keeps the current screen in the URL hash so reload, back and forward work. */
-function useHashScreen(): [Screen, (screen: Screen) => void] {
-  const [screen, setScreen] = useState<Screen>(screenFromHash)
+function useHashRoute(): [Route, Navigate] {
+  const [route, setRoute] = useState<Route>(routeFromHash)
 
   useEffect(() => {
-    const onHashChange = () => setScreen(screenFromHash())
+    const onHashChange = () => setRoute(routeFromHash())
     window.addEventListener("hashchange", onHashChange)
     return () => window.removeEventListener("hashchange", onHashChange)
   }, [])
 
-  const navigate = useCallback((next: Screen) => {
-    window.location.hash = next === "landing" ? "" : `/${next}`
-    setScreen(next)
+  const navigate = useCallback<Navigate>((screen, courseId) => {
+    window.location.hash =
+      screen === "landing" ? "" : courseId ? `/${screen}/${courseId}` : `/${screen}`
+    setRoute({ screen, courseId })
   }, [])
 
-  return [screen, navigate]
+  return [route, navigate]
 }
 
 function AppContent() {
   const { user, loading, refreshUser, recoveringPassword } = useAuth()
-  const [route, setScreen] = useHashScreen()
+  const [route, setScreen] = useHashRoute()
   // A signed-in user never lands on the marketing page
-  const screen: Screen = user && route === "landing" ? "dashboard" : route
+  const screen: Screen = user && route.screen === "landing" ? "dashboard" : route.screen
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [authView, setAuthView] = useState<"login" | "signup" | "forgot">("login")
 
@@ -153,10 +163,10 @@ function AppContent() {
             <Upload onBack={() => setScreen("dashboard")} />
           )}
           {screen === "quiz" && (
-            <Quiz onBack={() => setScreen("dashboard")} />
+            <Quiz key={route.courseId} initialCourseId={route.courseId} onBack={() => setScreen("dashboard")} />
           )}
           {screen === "flashcards" && (
-            <Flashcards onBack={() => setScreen("dashboard")} />
+            <Flashcards key={route.courseId} initialCourseId={route.courseId} onBack={() => setScreen("dashboard")} />
           )}
           {screen === "progress" && <Progress />}
           {screen === "profile" && (

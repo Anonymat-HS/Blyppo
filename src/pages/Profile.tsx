@@ -1,5 +1,5 @@
 import { useState, useRef } from "react"
-import { Camera, Flame, Brain, Target, TrendingUp, BookOpen, Upload, ArrowLeft } from "lucide-react"
+import { Camera, Flame, Brain, Target, TrendingUp, BookOpen, Upload, ArrowLeft, Pencil } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/supabase/auth"
 import { useUserStats } from "@/hooks/useUserStats"
@@ -29,7 +29,11 @@ function getAvatarColor(name: string): string {
 }
 
 export default function Profile({ onBack }: { onBack: () => void }) {
-  const { user } = useAuth()
+  const { user, updateFullName } = useAuth()
+  const [editingName, setEditingName] = useState(false)
+  const [nameDraft, setNameDraft] = useState("")
+  const [savingName, setSavingName] = useState(false)
+  const [nameError, setNameError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [avatarError, setAvatarError] = useState<string | null>(null)
@@ -57,6 +61,21 @@ export default function Profile({ onBack }: { onBack: () => void }) {
   const avatarUrl = user?.user_metadata?.avatar_url as string | undefined
   const initials = getInitials(name)
   const bgGradient = getAvatarColor(name)
+
+  async function handleSaveName(e: React.FormEvent) {
+    e.preventDefault()
+    const next = nameDraft.trim()
+    if (!next) {
+      setNameError("Please enter your name")
+      return
+    }
+    setSavingName(true)
+    setNameError(null)
+    const { error } = await updateFullName(next)
+    setSavingName(false)
+    if (error) setNameError(error)
+    else setEditingName(false)
+  }
 
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -183,7 +202,51 @@ export default function Profile({ onBack }: { onBack: () => void }) {
           />
         </div>
         <div className="min-w-0">
-          <h2 className="text-lg font-bold text-white truncate">{name}</h2>
+          {editingName ? (
+            <form onSubmit={handleSaveName} className="flex flex-wrap items-center gap-2">
+              <input
+                type="text"
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                aria-label="Full name"
+                maxLength={80}
+                autoFocus
+                className="px-3 py-1.5 rounded-lg text-sm text-white outline-none bg-white/5 border border-white/10 focus:border-[#7C5CFF]/50"
+              />
+              <button
+                type="submit"
+                disabled={savingName}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#7C5CFF] hover:bg-[#8B6BFF] disabled:opacity-50 transition-colors"
+              >
+                {savingName ? "Saving..." : "Save"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingName(false)}
+                disabled={savingName}
+                className="px-3 py-1.5 rounded-lg text-xs text-white/60 border border-white/10 hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+            </form>
+          ) : (
+            <div className="flex items-center gap-2 min-w-0">
+              <h2 className="text-lg font-bold text-white truncate">{name}</h2>
+              <button
+                onClick={() => {
+                  setNameDraft(user?.user_metadata?.full_name ?? "")
+                  setNameError(null)
+                  setEditingName(true)
+                }}
+                aria-label="Edit name"
+                title="Edit name"
+                className="shrink-0 p-1 rounded-md text-white/30 hover:text-white hover:bg-white/5 transition-colors"
+              >
+                <Pencil size={13} />
+              </button>
+            </div>
+          )}
+          {nameError && <p className="text-xs mt-1 text-[#FCA5A5]">{nameError}</p>}
           <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>{email}</p>
           <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.25)" }}>
             Member since {createdDate}

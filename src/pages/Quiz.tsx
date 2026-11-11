@@ -8,7 +8,7 @@ import {
   recordQuizAnswer,
   recordQuizAttempt,
 } from "@/lib/api"
-import { findCorrectIndex } from "@/lib/utils/quiz"
+import { findCorrectIndex, prepareQuestions } from "@/lib/utils/quiz"
 import ErrorState from "@/components/ui/ErrorState"
 import SaveWarning from "@/components/ui/SaveWarning"
 import type { CourseSummary, QuizQuestion } from "@/lib/types"
@@ -19,7 +19,14 @@ interface CourseWithCount extends CourseSummary {
 
 const SAVE_WARNING = "Your progress could not be saved. Check your connection."
 
-export default function Quiz({ onBack }: { onBack: () => void }) {
+export default function Quiz({
+  onBack,
+  initialCourseId,
+}: {
+  onBack: () => void
+  /** Course to start right away (opened from a Dashboard card) */
+  initialCourseId?: string
+}) {
   const { user } = useAuth()
   const [courses, setCourses] = useState<CourseWithCount[]>([])
   const [selectedCourse, setSelectedCourse] = useState<CourseWithCount | null>(null)
@@ -33,6 +40,8 @@ export default function Quiz({ onBack }: { onBack: () => void }) {
   const [finished, setFinished] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [saveFailed, setSaveFailed] = useState(false)
+  // Option picked for each question of the session, in order
+  const [answers, setAnswers] = useState<number[]>([])
 
   const loadCourses = useCallback(async () => {
     setLoading(true)
@@ -40,19 +49,25 @@ export default function Quiz({ onBack }: { onBack: () => void }) {
     try {
       const coursesData = await fetchCourses()
       const counts = await fetchQuizCountsByCourses(coursesData.map((c) => c.id))
-      setCourses(coursesData.map((c) => ({ ...c, quiz_count: counts[c.id] ?? 0 })))
+      const withCounts = coursesData.map((c) => ({ ...c, quiz_count: counts[c.id] ?? 0 }))
+      setCourses(withCounts)
+
+      const initial = withCounts.find((c) => c.id === initialCourseId)
+      if (initial) await startQuiz(initial)
     } catch (err) {
       setLoadError((err as Error).message)
     } finally {
       setLoading(false)
     }
-  }, [])
+    // startQuiz only uses state setters
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCourseId])
 
   useEffect(() => {
     loadCourses()
   }, [loadCourses])
 
-  const startQuiz = async (course: CourseWithCount) => {
+  async function startQuiz(course: CourseWithCount) {
     setSelectedCourse(course)
     setLoadingQuiz(true)
     setLoadError(null)
@@ -60,8 +75,7 @@ export default function Quiz({ onBack }: { onBack: () => void }) {
 
     try {
       const data = await fetchQuestionsForCourse(course.id)
-      // A question whose correct option cannot be identified cannot be graded
-      setQuestions(data.filter((question) => findCorrectIndex(question) !== -1))
+      setQuestions(prepareQuestions(data))
     } catch (err) {
       setSelectedCourse(null)
       setLoadError((err as Error).message)
@@ -72,6 +86,7 @@ export default function Quiz({ onBack }: { onBack: () => void }) {
     setScore(0)
     setFinished(false)
     setSelected(null)
+    setAnswers([])
   }
 
   const q = questions[current]
@@ -79,8 +94,9 @@ export default function Quiz({ onBack }: { onBack: () => void }) {
   const correctIndex = q ? findCorrectIndex(q) : -1
 
   const handleSelect = (idx: number) => {
-    if (selected !== null) return
+    if (selected !== null || idx >= q.options.length) return
     setSelected(idx)
+    setAnswers((a) => [...a, idx])
     const isCorrect = idx === correctIndex
     if (isCorrect) setScore((s) => s + 1)
 
@@ -108,7 +124,28 @@ export default function Quiz({ onBack }: { onBack: () => void }) {
     setScore(0)
     setFinished(false)
     setSaveFailed(false)
+    setAnswers([])
+    setQuestions((qs) => prepareQuestions(qs))
   }
+
+  // Keyboard: 1-4 or A-D to answer, Enter or Space for the next question
+  const inQuiz = Boolean(selectedCourse) && !loadingQuiz && !finished && questions.length > 0
+  useEffect(() => {
+    if (!inQuiz) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return
+      const key = e.key.toLowerCase()
+      const idx = "1234".includes(key) ? Number(key) - 1 : "abcd".indexOf(key)
+      if (key.length === 1 && idx >= 0 && idx < 4) {
+        handleSelect(idx)
+      } else if ((key === "enter" || key === " ") && selected !== null) {
+        e.preventDefault()
+        handleNext()
+      }
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  })
 
   if (loadError) {
     return <ErrorState message={loadError} onRetry={loadCourses} />
@@ -262,6 +299,9 @@ export default function Quiz({ onBack }: { onBack: () => void }) {
   // Finished
   if (finished) {
     const pct = Math.round((score / total) * 100)
+    const mistakes = questions
+      .map((question, i) => ({ question, picked: question.options[answers[i]] }))
+      .filter(({ question, picked }) => picked !== undefined && picked !== question.bonne_reponse)
     const grade =
       pct >= 80
         ? { label: "Excellent!", color: "#22C55E", bg: "rgba(34,197,94,0.1)", border: "rgba(34,197,94,0.25)" }
@@ -305,6 +345,31 @@ export default function Quiz({ onBack }: { onBack: () => void }) {
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.38)" }}>Incorrect</p>
           </div>
         </div>
+
+        {mistakes.length > 0 && (
+          <div className="w-full text-left mb-10">
+            <h3 className="text-sm font-bold text-white mb-3">
+              Review your mistakes ({mistakes.length})
+            </h3>
+            <div className="space-y-3">
+              {mistakes.map(({ question, picked }) => (
+                <div
+                  key={question.id}
+                  className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08]"
+                >
+                  <p className="text-sm font-semibold text-white mb-2">{question.question}</p>
+                  <p className="text-xs mb-1 text-[#FCA5A5]">Your answer: {picked}</p>
+                  <p className="text-xs text-[#86EFAC]">Correct answer: {question.bonne_reponse}</p>
+                  {question.explication && (
+                    <p className="text-xs mt-2 leading-relaxed text-white/50">
+                      {question.explication}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col sm:flex-row gap-3">
           <button
@@ -498,6 +563,7 @@ export default function Quiz({ onBack }: { onBack: () => void }) {
           }}
         >
           {current + 1 >= total ? "See results" : "Next question"}
+          <span className="hidden sm:inline text-xs font-normal text-white/60">(Enter)</span>
           <ArrowRight size={17} className="group-hover:translate-x-0.5 transition-transform" />
         </button>
       )}
