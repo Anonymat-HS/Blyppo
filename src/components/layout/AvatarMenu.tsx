@@ -53,6 +53,9 @@ export default function AvatarMenu({ onNavigate }: AvatarMenuProps) {
     <div ref={menuRef} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
+        aria-label="Account menu"
+        aria-haspopup="menu"
+        aria-expanded={open}
         className="w-9 h-9 rounded-full overflow-hidden shrink-0 ring-2 ring-transparent hover:ring-violet-500/40 transition-all duration-200"
         style={{ background: avatarUrl ? "none" : bgGradient }}
       >
@@ -92,9 +95,7 @@ export default function AvatarMenu({ onNavigate }: AvatarMenuProps) {
               setOpen(false)
               onNavigate("profile")
             }}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-white/70 hover:text-white transition-colors"
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)" }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent" }}
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-white/70 hover:text-white transition-colors hover:bg-[rgba(255,255,255,0.05)]"
           >
             <User size={15} />
             Profile
@@ -107,16 +108,7 @@ export default function AvatarMenu({ onNavigate }: AvatarMenuProps) {
               setOpen(false)
               signOut()
             }}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm transition-colors"
-            style={{ color: "rgba(255,100,100,0.7)" }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255,100,100,0.1)"
-              e.currentTarget.style.color = "#FF6B6B"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent"
-              e.currentTarget.style.color = "rgba(255,100,100,0.7)"
-            }}
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm transition-colors text-[rgba(255,100,100,0.7)] hover:bg-[rgba(255,100,100,0.1)] hover:text-[#FF6B6B]"
           >
             <LogOut size={15} />
             Log out

@@ -66,6 +66,7 @@ export default function Sidebar({
           </span>
           <button
             onClick={onToggle}
+            aria-label="Close menu"
             className="ml-auto lg:hidden text-white/30 hover:text-white transition-colors"
           >
             <X size={18} />
@@ -83,28 +84,11 @@ export default function Sidebar({
                   onNavigate(id)
                   if (isOpen) onToggle()
                 }}
-                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
-                style={{
-                  background: active
-                    ? "rgba(124,92,255,0.14)"
-                    : "transparent",
-                  border: active
-                    ? "1px solid rgba(124,92,255,0.22)"
-                    : "1px solid transparent",
-                  color: active ? "#A78BFA" : "rgba(255,255,255,0.45)",
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.05)"
-                    e.currentTarget.style.color = "rgba(255,255,255,0.9)"
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.background = "transparent"
-                    e.currentTarget.style.color = "rgba(255,255,255,0.45)"
-                  }
-                }}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 border ${
+                  active
+                    ? "bg-[rgba(124,92,255,0.14)] border-[rgba(124,92,255,0.22)] text-[#A78BFA]"
+                    : "border-transparent text-[rgba(255,255,255,0.45)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[rgba(255,255,255,0.9)]"
+                }`}
               >
                 <Icon size={17} />
                 {label}

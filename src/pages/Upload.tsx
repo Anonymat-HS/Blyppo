@@ -9,12 +9,9 @@ import {
   Brain,
   CreditCard,
 } from "lucide-react"
-import { supabase } from "@/lib/supabase/client"
-import { callGenerateFunction } from "@/lib/supabase/functions"
-import { fetchRecentCourses } from "@/lib/api"
-import type { CourseSummary } from "@/lib/types"
-
-const MAX_FILE_MB = 20
+import { callGenerateFunction, uploadCourseFile } from "@/lib/supabase/functions"
+import { fetchMyPlan, fetchRecentCourses } from "@/lib/api"
+import type { CourseSummary, PlanLimits } from "@/lib/types"
 
 type UploadState = "idle" | "dragover" | "processing" | "generating" | "done" | "error"
 
@@ -25,10 +22,14 @@ export default function Upload({ onBack }: { onBack: () => void }) {
   const [titre, setTitre] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
   const [recentCourses, setRecentCourses] = useState<CourseSummary[]>([])
+  const [plan, setPlan] = useState<PlanLimits | null>(null)
+  const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null)
   const [quizError, setQuizError] = useState<string | null>(null)
   const [flashcardError, setFlashcardError] = useState<string | null>(null)
   const [retryingMsg, setRetryingMsg] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const maxFileMb = plan?.max_file_mb ?? 20
 
   // The list is a convenience: the page stays usable if it cannot be loaded
   const loadRecentCourses = useCallback(() => {
@@ -37,6 +38,7 @@ export default function Upload({ onBack }: { onBack: () => void }) {
 
   useEffect(() => {
     loadRecentCourses()
+    fetchMyPlan().then(setPlan).catch(() => {})
   }, [loadRecentCourses])
 
   const generateContent = async (courseId: string) => {
@@ -76,8 +78,8 @@ export default function Upload({ onBack }: { onBack: () => void }) {
       return
     }
 
-    if (file.size > MAX_FILE_MB * 1024 * 1024) {
-      setErrorMessage(`File exceeds the ${MAX_FILE_MB} MB limit.`)
+    if (file.size > maxFileMb * 1024 * 1024) {
+      setErrorMessage(`File exceeds the ${maxFileMb} MB limit of your plan.`)
       setState("error")
       return
     }
@@ -94,62 +96,15 @@ export default function Upload({ onBack }: { onBack: () => void }) {
     setProgress(0)
     setErrorMessage("")
 
-    let p = 0
-    const interval = setInterval(() => {
-      p += Math.random() * 12 + 2
-      if (p > 90) p = 90
-      setProgress(Math.min(p, 100))
-    }, 400)
-
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 120_000)
-
     try {
-      const formData = new FormData()
-      formData.append("file", file)
-      formData.append("titre", title.trim())
-
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error("Not authenticated")
-
-      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-course`
-
-      const res = await fetch(functionUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
-        body: formData,
-        signal: controller.signal,
-      })
-
-      const json = await res.json().catch(() => ({}))
-
-      clearInterval(interval)
-      clearTimeout(timeout)
-
-      if (!res.ok) {
-        throw new Error(json.error || `Upload failed (error ${res.status})`)
-      }
-
-      setProgress(100)
-
-      const courseId = json.course?.id
-      if (!courseId) throw new Error("No course ID returned")
-
+      const { courseId, quota } = await uploadCourseFile(file, title.trim(), setProgress)
+      if (quota) setQuota(quota)
       await generateContent(courseId)
     } catch (err) {
-      clearInterval(interval)
-      clearTimeout(timeout)
-      setErrorMessage(
-        (err as Error).name === "AbortError"
-          ? "Upload timed out. Please try again."
-          : (err as Error).message
-      )
+      setErrorMessage((err as Error).message)
       setState("error")
     }
-  }, [])
+  }, [maxFileMb])
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -164,24 +119,18 @@ export default function Upload({ onBack }: { onBack: () => void }) {
     [handleUpload, titre]
   )
 
+  // The upload is measured; extraction runs server-side and is only known to be in progress
+  const uploaded = progress >= 100
   const processingSteps = [
-    { label: "Uploading document", threshold: 20 },
-    { label: "Extracting text content", threshold: 50 },
-    { label: "Saving to your library", threshold: 80 },
+    { label: "Uploading document", done: uploaded },
+    { label: "Extracting text and saving to your library", done: false },
   ]
 
   return (
     <div className="p-6 md:p-8 max-w-2xl mx-auto">
       <button
         onClick={onBack}
-        className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150"
-        style={{ color: "rgba(255,255,255,0.38)" }}
-        onMouseEnter={(e) =>
-          (e.currentTarget.style.color = "rgba(255,255,255,0.8)")
-        }
-        onMouseLeave={(e) =>
-          (e.currentTarget.style.color = "rgba(255,255,255,0.38)")
-        }
+        className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150 text-[rgba(255,255,255,0.38)] hover:text-[rgba(255,255,255,0.8)]"
       >
         <ChevronLeft size={15} />
         Back to Dashboard
@@ -198,27 +147,16 @@ export default function Upload({ onBack }: { onBack: () => void }) {
         <>
           {/* Title input */}
           <div className="mb-4">
-            <label className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.5)" }}>
+            <label htmlFor="upload-course-title" className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.5)" }}>
               Course title
             </label>
             <input
+                id="upload-course-title"
               type="text"
               value={titre}
               onChange={(e) => setTitre(e.target.value)}
               placeholder="e.g. Introduction to Algorithms - Chapter 1-4"
-              className="w-full px-4 py-2.5 rounded-xl text-sm text-white outline-none transition-all duration-150"
-              style={{
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.1)",
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "rgba(124,92,255,0.5)"
-                e.currentTarget.style.boxShadow = "0 0 0 3px rgba(124,92,255,0.1)"
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"
-                e.currentTarget.style.boxShadow = "none"
-              }}
+              className="w-full px-4 py-2.5 rounded-xl text-sm text-white outline-none transition-all duration-150 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] focus:border-[rgba(124,92,255,0.5)] focus:shadow-[0_0_0_3px_rgba(124,92,255,0.1)]"
             />
           </div>
 
@@ -231,25 +169,17 @@ export default function Upload({ onBack }: { onBack: () => void }) {
             onDragLeave={() => setState("idle")}
             onDrop={handleDrop}
             onClick={() => inputRef.current?.click()}
-            className="cursor-pointer rounded-2xl p-8 sm:p-14 text-center transition-all duration-200"
+            className={`cursor-pointer rounded-2xl p-8 sm:p-14 text-center transition-all duration-200 ${
+              state === "idle"
+                ? "hover:border-[rgba(124,92,255,0.4)]! hover:bg-[rgba(124,92,255,0.04)]!"
+                : ""
+            }`}
             style={{
               border: `2px dashed ${state === "dragover" ? "rgba(124,92,255,0.6)" : "rgba(255,255,255,0.12)"}`,
               background:
                 state === "dragover"
                   ? "rgba(124,92,255,0.08)"
                   : "rgba(255,255,255,0.02)",
-            }}
-            onMouseEnter={(e) => {
-              if (state === "idle") {
-                e.currentTarget.style.borderColor = "rgba(124,92,255,0.4)"
-                e.currentTarget.style.background = "rgba(124,92,255,0.04)"
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (state === "idle") {
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"
-                e.currentTarget.style.background = "rgba(255,255,255,0.02)"
-              }
             }}
           >
             <div className="flex flex-col items-center gap-4">
@@ -293,10 +223,16 @@ export default function Upload({ onBack }: { onBack: () => void }) {
                 ))}
               </div>
               <p
-                className="text-xs"
+                className="text-xs text-center"
                 style={{ color: "rgba(255,255,255,0.22)" }}
               >
-                Max {MAX_FILE_MB} MB
+                Max {maxFileMb} MB · text only, no scanned PDFs
+              </p>
+              <p className="text-xs text-center" style={{ color: "rgba(255,255,255,0.22)" }}>
+                <span className="capitalize">{plan?.id ?? "free"}</span> plan ·{" "}
+                {quota
+                  ? `${Math.max(0, quota.limit - quota.used)} of ${quota.limit} uploads left today`
+                  : `up to ${plan?.daily_courses ?? 10} uploads per 24 h`}
               </p>
             </div>
             <input
@@ -328,14 +264,7 @@ export default function Upload({ onBack }: { onBack: () => void }) {
               {recentCourses.map((course) => (
                 <div
                   key={course.id}
-                  className="flex items-center gap-3 p-3 rounded-xl transition-colors duration-150 cursor-pointer"
-                  style={{ color: "rgba(255,255,255,0.7)" }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.03)"
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "transparent"
-                  }}
+                  className="flex items-center gap-3 p-3 rounded-xl transition-colors duration-150 cursor-pointer text-[rgba(255,255,255,0.7)] hover:bg-[rgba(255,255,255,0.03)]"
                 >
                   <FileText
                     size={15}
@@ -398,7 +327,7 @@ export default function Upload({ onBack }: { onBack: () => void }) {
           <div className="mb-6">
             <div className="flex justify-between text-sm mb-2">
               <span style={{ color: "rgba(255,255,255,0.4)" }}>
-                Processing
+                {uploaded ? "Extracting text…" : "Uploading"}
               </span>
               <span className="font-bold" style={{ color: "#C4B5FD" }}>
                 {Math.round(progress)}%
@@ -420,8 +349,7 @@ export default function Upload({ onBack }: { onBack: () => void }) {
           </div>
 
           <div className="space-y-3">
-            {processingSteps.map(({ label, threshold }) => {
-              const done = progress >= threshold
+            {processingSteps.map(({ label, done }) => {
               return (
                 <div key={label} className="flex items-center gap-3">
                   <div
@@ -559,14 +487,7 @@ export default function Upload({ onBack }: { onBack: () => void }) {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={onBack}
-              className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200"
-              style={{ background: "#7C5CFF" }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "#8B6BFF")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "#7C5CFF")
-              }
+              className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 bg-[#7C5CFF] hover:bg-[#8B6BFF]"
             >
               Back to Dashboard
             </button>
@@ -580,19 +501,7 @@ export default function Upload({ onBack }: { onBack: () => void }) {
                 setFlashcardError(null)
                 setRetryingMsg(null)
               }}
-              className="px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
-              style={{
-                border: "1px solid rgba(255,255,255,0.08)",
-                color: "rgba(255,255,255,0.6)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.05)"
-                e.currentTarget.style.color = "rgba(255,255,255,0.9)"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent"
-                e.currentTarget.style.color = "rgba(255,255,255,0.6)"
-              }}
+              className="px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 border border-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.6)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[rgba(255,255,255,0.9)]"
             >
               Upload another
             </button>
@@ -633,14 +542,7 @@ export default function Upload({ onBack }: { onBack: () => void }) {
               setProgress(0)
               setErrorMessage("")
             }}
-            className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200"
-            style={{ background: "#7C5CFF" }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.background = "#8B6BFF")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.background = "#7C5CFF")
-            }
+            className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 bg-[#7C5CFF] hover:bg-[#8B6BFF]"
           >
             Try again
           </button>

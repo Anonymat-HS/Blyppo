@@ -30,7 +30,14 @@ const ratings: {
   { r: "easy", label: "Easy", color: "#00D9FF", bg: "rgba(0,217,255,0.08)", border: "rgba(0,217,255,0.2)" },
 ]
 
-export default function Flashcards({ onBack }: { onBack: () => void }) {
+export default function Flashcards({
+  onBack,
+  initialCourseId,
+}: {
+  onBack: () => void
+  /** Course to review right away (opened from a Dashboard card) */
+  initialCourseId?: string
+}) {
   const { user } = useAuth()
   const [courses, setCourses] = useState<CourseWithCount[]>([])
   const [selectedCourse, setSelectedCourse] = useState<CourseWithCount | null>(null)
@@ -58,20 +65,26 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
     try {
       const coursesData = await fetchCourses()
       const counts = await fetchFlashcardCountsByCourses(coursesData.map((c) => c.id))
-      setCourses(coursesData.map((c) => ({ ...c, flashcard_count: counts[c.id] ?? 0 })))
+      const withCounts = coursesData.map((c) => ({ ...c, flashcard_count: counts[c.id] ?? 0 }))
+      setCourses(withCounts)
+
+      const initial = withCounts.find((c) => c.id === initialCourseId)
+      if (initial) await startReview(initial)
     } catch (err) {
       setLoadError((err as Error).message)
     } finally {
       setLoading(false)
     }
-  }, [])
+    // startReview only uses state setters and the signed-in user
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCourseId, user?.id])
 
   useEffect(() => {
     loadCourses()
   }, [loadCourses])
 
   /** Starts a session with the cards that are due, or with every card when `includeAll` is set. */
-  const startReview = async (course: CourseWithCount, includeAll = false) => {
+  async function startReview(course: CourseWithCount, includeAll = false) {
     setSelectedCourse(course)
     setLoadingCards(true)
     setLoadError(null)
@@ -147,6 +160,25 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
     setFlipped(false)
   }
 
+  // Keyboard: Space or Enter flips the card, 1-4 rates it once the answer is shown
+  const inReview = Boolean(selectedCourse) && !loadingCards && !done && Boolean(card)
+  useEffect(() => {
+    if (!inReview) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return
+      if (e.key === " " || e.key === "Enter") {
+        // Let the focused control (e.g. a rating button) handle its own Enter/Space
+        if ((e.target as HTMLElement).closest("button, a, input, select")) return
+        e.preventDefault()
+        setFlipped((f) => !f)
+      } else if (flipped && "1234".includes(e.key) && e.key.length === 1) {
+        handleRate(ratings[Number(e.key) - 1].r)
+      }
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  })
+
   if (loadError) {
     return <ErrorState message={loadError} onRetry={loadCourses} />
   }
@@ -169,10 +201,7 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
       <div className="p-6 md:p-8 max-w-lg mx-auto">
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150"
-          style={{ color: "rgba(255,255,255,0.38)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.38)")}
+          className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150 text-[rgba(255,255,255,0.38)] hover:text-[rgba(255,255,255,0.8)]"
         >
           <ChevronLeft size={15} />
           Back
@@ -200,10 +229,7 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
       <div className="p-6 md:p-8 max-w-lg mx-auto">
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150"
-          style={{ color: "rgba(255,255,255,0.38)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.38)")}
+          className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150 text-[rgba(255,255,255,0.38)] hover:text-[rgba(255,255,255,0.8)]"
         >
           <ChevronLeft size={15} />
           Back
@@ -219,19 +245,7 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
             <button
               key={course.id}
               onClick={() => startReview(course)}
-              className="w-full p-4 rounded-xl text-left transition-all duration-200"
-              style={{
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.07)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.06)"
-                e.currentTarget.style.borderColor = "rgba(124,92,255,0.3)"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.03)"
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"
-              }}
+              className="w-full p-4 rounded-xl text-left transition-all duration-200 bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.07)] hover:bg-[rgba(255,255,255,0.06)] hover:border-[rgba(124,92,255,0.3)]"
             >
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-sm text-white">{course.titre}</span>
@@ -271,10 +285,7 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
       <div className="p-6 md:p-8 max-w-lg mx-auto">
         <button
           onClick={() => setSelectedCourse(null)}
-          className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150"
-          style={{ color: "rgba(255,255,255,0.38)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.38)")}
+          className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150 text-[rgba(255,255,255,0.38)] hover:text-[rgba(255,255,255,0.8)]"
         >
           <ChevronLeft size={15} />
           Back to courses
@@ -357,29 +368,14 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={() => startReview(selectedCourse, true)}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200"
-            style={{ background: "#7C5CFF" }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#8B6BFF")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "#7C5CFF")}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 bg-[#7C5CFF] hover:bg-[#8B6BFF]"
           >
             <RotateCcw size={14} />
             Review again
           </button>
           <button
             onClick={() => setSelectedCourse(null)}
-            className="px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
-            style={{
-              border: "1px solid rgba(255,255,255,0.08)",
-              color: "rgba(255,255,255,0.6)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.05)"
-              e.currentTarget.style.color = "rgba(255,255,255,0.9)"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent"
-              e.currentTarget.style.color = "rgba(255,255,255,0.6)"
-            }}
+            className="px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 border border-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.6)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[rgba(255,255,255,0.9)]"
           >
             Choose another course
           </button>
@@ -392,10 +388,7 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
     <div className="p-6 md:p-8 max-w-lg mx-auto">
       <button
         onClick={() => setSelectedCourse(null)}
-        className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150"
-        style={{ color: "rgba(255,255,255,0.38)" }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.38)")}
+        className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150 text-[rgba(255,255,255,0.38)] hover:text-[rgba(255,255,255,0.8)]"
       >
         <ChevronLeft size={15} />
         Back
@@ -435,6 +428,9 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
           minHeight: "270px",
         }}
         onClick={() => setFlipped((f) => !f)}
+        role="button"
+        tabIndex={0}
+        aria-label={flipped ? "Show the question" : "Show the answer"}
       >
         {flipped ? (
           <div className="flex flex-col items-center justify-center h-full">
@@ -461,7 +457,7 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
       </div>
 
       <p className="text-center text-xs mb-5" style={{ color: "rgba(255,255,255,0.28)" }}>
-        {flipped ? "How well did you know this?" : "Tap the card to reveal the answer"}
+        {flipped ? "How well did you know this? (keys 1-4)" : "Tap the card or press Space to reveal the answer"}
       </p>
 
       {/* Rating buttons */}
@@ -473,14 +469,8 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
           <button
             key={r}
             onClick={() => handleRate(r)}
-            className="flex flex-col items-center gap-0.5 py-3 sm:py-4 rounded-xl transition-all duration-150 active:scale-95 min-h-[60px]"
+            className="flex flex-col items-center gap-0.5 py-3 sm:py-4 rounded-xl transition-all duration-150 active:scale-95 min-h-[60px] hover:scale-[1.04]"
             style={{ background: bg, border: `1px solid ${border}` }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "scale(1.04)"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "scale(1)"
-            }}
           >
             <span className="text-sm font-bold" style={{ color }}>{label}</span>
             <span className="text-[11px]" style={{ color: color + "90" }}>
@@ -494,10 +484,7 @@ export default function Flashcards({ onBack }: { onBack: () => void }) {
         <div className="flex justify-center mt-4">
           <button
             onClick={handlePrevious}
-            className="flex items-center gap-1 text-xs transition-colors duration-150"
-            style={{ color: "rgba(255,255,255,0.25)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.6)")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.25)")}
+            className="flex items-center gap-1 text-xs transition-colors duration-150 text-[rgba(255,255,255,0.25)] hover:text-[rgba(255,255,255,0.6)]"
           >
             <ChevronLeft size={13} />
             Previous card

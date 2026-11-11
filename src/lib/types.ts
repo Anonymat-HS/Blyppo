@@ -39,6 +39,15 @@ export interface Flashcard {
 
 export type FlashcardReviewCard = Pick<Flashcard, "id" | "recto" | "verso">;
 
+/** Limits attached to a plan row (`plans` table). */
+export interface PlanLimits {
+  id: string;
+  max_file_mb: number;
+  daily_courses: number;
+  max_questions: number;
+  max_cards: number;
+}
+
 export interface UserProgress {
   id: string;
   user_id: string;

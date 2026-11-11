@@ -1,28 +1,25 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts"
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@1.6.2"
 import { authenticate, handle, HttpError, json } from "../_shared/http.ts"
+import { getPlanLimits } from "../_shared/plans.ts"
 
-const MAX_FILE_BYTES = 20 * 1024 * 1024
 const MAX_TITLE_CHARS = 200
 // Stored text is capped: the LLM only reads a sample of it anyway.
 const MAX_TEXT_CHARS = 500_000
-const DEFAULT_DAILY_COURSE_LIMIT = 10
-
-function dailyCourseLimit(): number {
-  const fromEnv = parseInt(Deno.env.get("DAILY_COURSE_LIMIT") ?? "", 10)
-  return Number.isFinite(fromEnv) && fromEnv > 0 ? fromEnv : DEFAULT_DAILY_COURSE_LIMIT
-}
 
 serve((req) =>
   handle(req, async () => {
     const { supabase, user } = await authenticate(req)
+    const limits = await getPlanLimits(supabase, user.id)
 
     const formData = await req.formData().catch(() => null)
     const file = formData?.get("file")
     const titre = String(formData?.get("titre") ?? "").trim().slice(0, MAX_TITLE_CHARS)
 
     if (!(file instanceof File) || !titre) throw new HttpError(400, "Missing file or titre")
-    if (file.size > MAX_FILE_BYTES) throw new HttpError(413, "File exceeds the 20 MB limit")
+    if (file.size > limits.max_file_mb * 1024 * 1024) {
+      throw new HttpError(413, `File exceeds the ${limits.max_file_mb} MB limit`)
+    }
 
     const fileName = file.name.toLowerCase()
     const isPdf = fileName.endsWith(".pdf")
@@ -31,6 +28,10 @@ serve((req) =>
     }
 
     // Each course costs two LLM calls: cap how many a user can create per day.
+    // Checked before reading the file, extracting text or calling the LLM, so a
+    // blocked upload costs nothing.
+    // shortcut: count-then-insert is not atomic, so parallel uploads can exceed the
+    // quota; add a DB-level guard if that ever matters.
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
     const { count, error: countError } = await supabase
       .from("courses")
@@ -38,7 +39,7 @@ serve((req) =>
       .eq("user_id", user.id)
       .gte("created_at", since)
     if (countError) throw new Error(countError.message)
-    const limit = dailyCourseLimit()
+    const limit = limits.daily_courses
     if ((count ?? 0) >= limit) {
       throw new HttpError(403, `Daily limit reached (${limit} courses per 24 hours). Try again tomorrow.`)
     }
@@ -74,6 +75,10 @@ serve((req) =>
       .single()
     if (dbError) throw new Error(dbError.message)
 
-    return json({ course })
+    return json({
+      course,
+      plan: limits.id,
+      quota: { used: (count ?? 0) + 1, limit },
+    })
   })
 )

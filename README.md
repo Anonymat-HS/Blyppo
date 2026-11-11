@@ -104,7 +104,35 @@ pnpm dev
 | `OLLAMA_URL` | Ollama endpoint (if using Ollama) |
 | `LLM_MAX_INPUT_WORDS` | Optional. Words of course text sent to the LLM (default 2200) |
 | `ALLOWED_ORIGINS` | Comma-separated app origins allowed to call the functions (e.g. `https://my-app.vercel.app`). Unset = any origin, for development only |
-| `DAILY_COURSE_LIMIT` | Optional. Courses a user can create per 24 h (default 10) |
+
+## Plans and limits
+
+Upload size, daily course quota and generation sizes are per plan. They live in
+the `plans` table (`supabase/migrations/003_plans.sql`), so they change with an
+`UPDATE` and need no redeploy.
+
+| Plan | Max file | Courses / 24 h | Questions / quiz | Cards / deck |
+|---|---|---|---|---|
+| `free` | 20 MB | 10 | 20 | 30 |
+| `premium` | 50 MB | 50 | 30 | 60 |
+| `business` | 100 MB | 200 | 40 | 80 |
+| `bold` | 200 MB | 500 | 50 | 100 |
+
+A user with no row in `user_plans` is on `free`. Assigning a plan is a
+service-role write (billing or an admin), never a client one:
+
+```sql
+insert into user_plans (user_id, plan)
+select id, 'premium' from auth.users where email = 'user@example.com'
+on conflict (user_id) do update set plan = excluded.plan, updated_at = now();
+```
+
+The seeded numbers are placeholders; adjust them per plan with `update plans`.
+Limits are enforced server-side only: the Upload page displays them but the
+Edge Functions are the authority.
+
+Still common to every plan: one generation per course, text-based PDFs only
+(no scans), 2200 words of course text sent to the LLM.
 
 ## Project Context
 

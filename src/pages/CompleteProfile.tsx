@@ -83,28 +83,17 @@ export default function CompleteProfile({
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.5)" }}>
+              <label htmlFor="profile-full-name" className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.5)" }}>
                 Full name
               </label>
               <input
+                id="profile-full-name"
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
                 autoFocus
-                className="w-full px-4 py-2.5 rounded-xl text-sm text-white outline-none transition-all duration-150"
-                style={{
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(124,92,255,0.5)"
-                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(124,92,255,0.1)"
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"
-                  e.currentTarget.style.boxShadow = "none"
-                }}
+                className="w-full px-4 py-2.5 rounded-xl text-sm text-white outline-none transition-all duration-150 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] focus:border-[rgba(124,92,255,0.5)] focus:shadow-[0_0_0_3px_rgba(124,92,255,0.1)]"
                 placeholder={defaultName}
               />
             </div>
@@ -112,18 +101,7 @@ export default function CompleteProfile({
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 disabled:opacity-50"
-              style={{ background: "#7C5CFF" }}
-              onMouseEnter={(e) => {
-                if (!loading) {
-                  e.currentTarget.style.background = "#8B6BFF"
-                  e.currentTarget.style.boxShadow = "0 0 20px rgba(124,92,255,0.4)"
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "#7C5CFF"
-                e.currentTarget.style.boxShadow = "none"
-              }}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 disabled:opacity-50 bg-[#7C5CFF] enabled:hover:bg-[#8B6BFF] enabled:hover:shadow-[0_0_20px_rgba(124,92,255,0.4)]"
             >
               {loading ? "Saving..." : "Continue"}
             </button>
