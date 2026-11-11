@@ -4,8 +4,10 @@ import { useAuth } from "@/lib/supabase/auth"
 
 export default function Login({
   onSwitchToSignup,
+  onForgotPassword,
 }: {
   onSwitchToSignup: () => void
+  onForgotPassword: () => void
 }) {
   const { signIn } = useAuth()
   const [email, setEmail] = useState("")
@@ -94,9 +96,18 @@ export default function Login({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.5)" }}>
-                Password
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={onForgotPassword}
+                  className="text-xs font-medium text-[#A78BFA] hover:text-[#C4B5FD] transition-colors duration-150"
+                >
+                  Forgot password?
+                </button>
+              </div>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
