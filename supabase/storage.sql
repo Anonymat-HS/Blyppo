@@ -25,11 +25,18 @@ create policy "Users can update their own avatar"
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
--- Allow public read access to avatars
+-- The bucket is public: avatar URLs work without a select policy.
+-- Listing is limited to the user's own folder (needed for upsert), so nobody can
+-- enumerate other users' folders.
 drop policy if exists "Anyone can view avatars" on storage.objects;
-create policy "Anyone can view avatars"
+drop policy if exists "Users can view their own avatar files" on storage.objects;
+create policy "Users can view their own avatar files"
   on storage.objects for select
-  using (bucket_id = 'avatars');
+  to authenticated
+  using (
+    bucket_id = 'avatars'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
 
 -- Allow users to delete their own avatar
 drop policy if exists "Users can delete their own avatar" on storage.objects;

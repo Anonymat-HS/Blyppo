@@ -11,7 +11,8 @@
     "format": "oxfmt",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:db": "sh scripts/test-db.sh"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.8",

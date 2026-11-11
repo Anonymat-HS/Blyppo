@@ -21,13 +21,14 @@ serve((req) =>
       const { round, existing } = await nextRound(supabase, courseId, "flashcards", max_rounds)
       return generateOnce(
         supabase,
+        user.id,
         courseId,
         "flashcards",
         () => generateFlashcards(courseText, numberOfCards, { round, avoid: existing }),
         round
       )
     }
-    return generateOnce(supabase, courseId, "flashcards", () =>
+    return generateOnce(supabase, user.id, courseId, "flashcards", () =>
       generateFlashcards(courseText, numberOfCards)
     )
   })

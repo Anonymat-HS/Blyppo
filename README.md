@@ -137,6 +137,7 @@ Write the English text in the code and wrap it: `const { t } = useT()`, then `t(
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint |
 | `npm test` | Vitest (unit tests on the pure logic: spaced repetition, stats, quiz grading, LLM parsing) |
+| `npm run test:db` | Database security tests in a throwaway local Postgres (needs `initdb` / `pg_ctl` / `psql`) |
 
 CI runs typecheck, lint, tests and build on every pull request.
 
@@ -167,6 +168,19 @@ Reports and feedback land in the `feedback` table (migration `005_feedback.sql`)
 their own rows; read them in the Supabase dashboard (**Table editor → feedback**), newest first. A
 report keeps a `snapshot` of the question so it stays readable if the course is deleted. Each user can
 send at most 30 messages a day.
+
+## Security
+
+- **Row Level Security** on every table: a user only reads their own data. Courses, questions, cards,
+  plans and quotas are written by the Edge Functions only (service role).
+- **Quotas** (daily uploads, LLM calls per hour) are counted in `usage_events` by `claim_usage()`, atomically
+  and independently of the content, so deleting a course never gives quota back (migration `006_security.sql`).
+- **Feedback**: the sender, the date and the target's ownership are set or checked by a trigger.
+- **Avatars**: one file per user; nobody can list other users' folders.
+- **Headers** (`vercel.json`): strict CSP pinned to the project's Supabase URL, HSTS, `X-Frame-Options`,
+  `Permissions-Policy`, `Cross-Origin-Opener-Policy`.
+- **Tests**: `npm run test:db` loads `schema.sql` into a throwaway local Postgres and replays attacks
+  (`supabase/tests/security.test.sql`). It runs in CI on every pull request.
 
 ## Deployment
 

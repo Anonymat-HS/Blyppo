@@ -26,12 +26,13 @@ serve((req) =>
       const { round, existing } = await nextRound(supabase, courseId, "quiz", max_rounds)
       return generateOnce(
         supabase,
+        user.id,
         courseId,
         "quiz",
         () => generateQuiz(courseText, numberOfQuestions, { round, avoid: existing }),
         round
       )
     }
-    return generateOnce(supabase, courseId, "quiz", () => generateQuiz(courseText, numberOfQuestions))
+    return generateOnce(supabase, user.id, courseId, "quiz", () => generateQuiz(courseText, numberOfQuestions))
   })
 )

@@ -96,19 +96,21 @@ export default function Profile({ onBack }: { onBack: () => void }) {
 
     setUploading(true)
     try {
-      const ext = file.name.includes(".") ? file.name.split(".").pop() : "png"
-      const filePath = `${user.id}/${Date.now()}.${ext}`
+      // One file per user, replaced on each upload: old photos do not pile up.
+      // The content type comes from the checked MIME type, not the file name.
+      const filePath = `${user.id}/avatar`
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(filePath, file, { upsert: true })
+        .upload(filePath, file, { upsert: true, contentType: file.type })
       if (uploadError) throw uploadError
 
       const { data: publicUrlData } = supabase.storage.from("avatars").getPublicUrl(filePath)
 
-      // The auth listener picks up the updated user: no page reload needed
+      // The auth listener picks up the updated user: no page reload needed.
+      // ?v= makes browsers fetch the new photo instead of the cached one.
       const { error: updateError } = await supabase.auth.updateUser({
-        data: { avatar_url: publicUrlData.publicUrl },
+        data: { avatar_url: `${publicUrlData.publicUrl}?v=${Date.now()}` },
       })
       if (updateError) throw updateError
     } catch (err) {

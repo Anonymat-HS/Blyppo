@@ -7,10 +7,14 @@ serve((req) =>
   handle(req, async () => {
     const { supabase, user } = await authenticate(req)
 
-    // Avatar files live in storage, outside the cascade
-    const { data: files, error: listError } = await supabase.storage.from("avatars").list(user.id)
-    if (listError) throw new Error(listError.message)
-    if (files?.length) {
+    // Avatar files live in storage, outside the cascade. list() returns 100
+    // files at most: keep removing pages until the folder is empty.
+    for (let page = 0; page < 50; page++) {
+      const { data: files, error: listError } = await supabase.storage
+        .from("avatars")
+        .list(user.id, { limit: 100 })
+      if (listError) throw new Error(listError.message)
+      if (!files?.length) break
       const { error: removeError } = await supabase.storage
         .from("avatars")
         .remove(files.map((f) => `${user.id}/${f.name}`))
