@@ -4,6 +4,8 @@ import { AuthProvider, useAuth } from "@/lib/supabase/auth"
 import Landing from "@/pages/Landing"
 import Login from "@/pages/Login"
 import Signup from "@/pages/Signup"
+import ForgotPassword from "@/pages/ForgotPassword"
+import ResetPassword from "@/pages/ResetPassword"
 import CompleteProfile from "@/pages/CompleteProfile"
 import Dashboard from "@/pages/Dashboard"
 import Upload from "@/pages/Upload"
@@ -50,12 +52,12 @@ function useHashScreen(): [Screen, (screen: Screen) => void] {
 }
 
 function AppContent() {
-  const { user, loading, refreshUser } = useAuth()
+  const { user, loading, refreshUser, recoveringPassword } = useAuth()
   const [route, setScreen] = useHashScreen()
   // A signed-in user never lands on the marketing page
   const screen: Screen = user && route === "landing" ? "dashboard" : route
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [authView, setAuthView] = useState<"login" | "signup">("login")
+  const [authView, setAuthView] = useState<"login" | "signup" | "forgot">("login")
 
   if (loading) {
     return (
@@ -68,6 +70,11 @@ function AppContent() {
     )
   }
 
+  // Opened from a password-reset email: choosing a new password comes first
+  if (user && recoveringPassword) {
+    return <ResetPassword />
+  }
+
   if (screen === "landing") {
     return <Landing onEnter={() => setScreen("dashboard")} />
   }
@@ -76,7 +83,15 @@ function AppContent() {
     if (authView === "signup") {
       return <Signup onSwitchToLogin={() => setAuthView("login")} />
     }
-    return <Login onSwitchToSignup={() => setAuthView("signup")} />
+    if (authView === "forgot") {
+      return <ForgotPassword onBackToLogin={() => setAuthView("login")} />
+    }
+    return (
+      <Login
+        onSwitchToSignup={() => setAuthView("signup")}
+        onForgotPassword={() => setAuthView("forgot")}
+      />
+    )
   }
 
   // Check if profile is complete (has full_name in metadata)
