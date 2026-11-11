@@ -2,12 +2,14 @@ import { useId } from "react"
 import { useT } from "@/lib/i18n"
 
 /**
- * The Blyppo mark: a question bubble and an answer bubble (the "pp"), with a
- * little "blip". Same drawing as public/logo.svg.
+ * The Blyppo mark: a quiz card (a question and its options, the right one
+ * ticked) in front of a flashcard, with the yellow spark. Same drawing as
+ * public/logo.svg. Below 24 px the pale options and the spark are left out.
  */
 export function LogoMark({ size = 40, className = "" }: { size?: number; className?: string }) {
   // Each mark on the page needs its own gradient id
   const gradientId = `bl-bg-${useId()}`
+  const detailed = size >= 24
   return (
     <svg
       width={size}
@@ -23,40 +25,33 @@ export function LogoMark({ size = 40, className = "" }: { size?: number; classNa
         </linearGradient>
       </defs>
       <rect width="64" height="64" rx="16" fill={`url(#${gradientId})`} />
-      {/* Question bubble */}
-      <path
-        d="M15 9 H31 A7 7 0 0 1 38 16 V26 A7 7 0 0 1 31 33 H19 L12.5 38.5 V32.2 A7 7 0 0 1 8 26 V16 A7 7 0 0 1 15 9 Z"
-        fill="#fff"
-      />
-      <path
-        d="M19.4 17.4 A3.6 3.6 0 1 1 24.6 20.6 C23.5 21.2 23 21.9 23 23.2"
-        fill="none"
-        stroke="#6D4CFF"
-        strokeWidth="3.2"
-        strokeLinecap="round"
-      />
-      <circle cx="23" cy="28" r="1.9" fill="#6D4CFF" />
-      {/* Answer bubble */}
-      <path
-        d="M33 29 H49 A7 7 0 0 1 56 36 V46 A7 7 0 0 1 51.5 52.2 V58.5 L45 53 H33 A7 7 0 0 1 26 46 V36 A7 7 0 0 1 33 29 Z"
-        fill="#FFC83D"
-        stroke="#5B3DF5"
-        strokeWidth="2.4"
-      />
-      <path
-        d="M34.5 41 L39 45.5 L47.5 37"
-        fill="none"
-        stroke="#3B2A00"
-        strokeWidth="3.3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      {/* The blip */}
-      {size >= 24 && (
-        <>
-          <path d="M46 12.5 A6.5 6.5 0 0 1 51.5 18" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" />
-          <path d="M47 6.5 A12 12 0 0 1 57.5 17" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" opacity="0.55" />
-        </>
+      {/* Flashcard behind */}
+      <rect x="10" y="12" width="29" height="40" rx="6" fill="#FFC83D" transform="rotate(-12 24.5 32)" />
+      {/* Quiz card: a question, three options, the right one ticked */}
+      <g transform="rotate(6 33 32)">
+        <rect x="19" y="10" width="30" height="43" rx="6" fill="#fff" />
+        <path
+          d="M30.6 16.6 A3 3 0 1 1 34.9 19.2 C34 19.7 33.6 20.3 33.6 21.3"
+          fill="none"
+          stroke="#6D4CFF"
+          strokeWidth="2.6"
+          strokeLinecap="round"
+        />
+        <circle cx="33.6" cy="24.7" r="1.5" fill="#6D4CFF" />
+        {detailed && <rect x="23" y="29" width="22" height="4.6" rx="2.3" fill="#E4DDFF" />}
+        <rect x="23" y="36" width="22" height="6" rx="3" fill="#22C55E" />
+        <path
+          d="M26 39 L27.9 40.9 L31.3 37.5"
+          fill="none"
+          stroke="#fff"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {detailed && <rect x="23" y="44.4" width="22" height="4.6" rx="2.3" fill="#E4DDFF" />}
+      </g>
+      {detailed && (
+        <path d="M55 4.5 L56.3 8 L59.8 9.3 L56.3 10.6 L55 14.1 L53.7 10.6 L50.2 9.3 L53.7 8 Z" fill="#FFC83D" />
       )}
     </svg>
   )
