@@ -145,7 +145,7 @@ export default function Flashcards({
   const card = cards[current]
   const total = cards.length
 
-  /** Asks Kwizo for a new set of cards, then reviews the new ones (they are due). */
+  /** Asks Blyppo for a new set of cards, then reviews the new ones (they are due). */
   const generateMore = async () => {
     if (!selectedCourse) return
     setGenerating(true)
@@ -180,7 +180,7 @@ export default function Flashcards({
             {allCards.length === 1
               ? t("{n} card in this deck.", { n: allCards.length })
               : t("{n} cards in this deck.", { n: allCards.length })}{" "}
-            {t("Kwizo can add 15 new ones, different from these.")}
+            {t("Blyppo can add 15 new ones, different from these.")}
           </p>
         </div>
         <button
@@ -269,7 +269,7 @@ export default function Flashcards({
         <EmptyState
           icon={BookOpen}
           title={t("No courses yet")}
-          text={t("Upload a course first, then Kwizo makes a flashcard deck from it.")}
+          text={t("Upload a course first, then Blyppo makes a flashcard deck from it.")}
         />
       </div>
     )

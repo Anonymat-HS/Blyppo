@@ -244,7 +244,7 @@ export default function Dashboard({
         <EmptyState
           icon={BookOpen}
           title={t("Your first quiz is one upload away")}
-          text={t("Upload a course (PDF, TXT or Markdown) and Kwizo writes a quiz and a flashcard deck from it.")}
+          text={t("Upload a course (PDF, TXT or Markdown) and Blyppo writes a quiz and a flashcard deck from it.")}
           action={
             <button onClick={() => onNavigate("upload")} className={primaryButton}>
               <Upload size={15} />

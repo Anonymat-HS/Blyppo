@@ -95,7 +95,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
             className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-10"
             style={{ color: "rgba(255,255,255,0.48)" }}
           >
-            {t("Kwizo turns your PDFs and lecture notes into quizzes and flashcards. Answer, see what you missed, and come back tomorrow to keep your streak alive.")}
+            {t("Blyppo turns your PDFs and lecture notes into quizzes and flashcards. Answer, see what you missed, and come back tomorrow to keep your streak alive.")}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-5">
@@ -252,7 +252,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
               step: "02",
               icon: Sparkles,
               title: "Get a quiz and a deck",
-              desc: "Kwizo reads your material and writes quiz questions and flashcards straight from it, not from the internet.",
+              desc: "Blyppo reads your material and writes quiz questions and flashcards straight from it, not from the internet.",
               color: "#00D9FF",
             },
             {
@@ -358,7 +358,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
             {t("Free during beta")}
           </div>
           <h2 className="text-2xl sm:text-3xl font-black mb-3">
-            {t("Kwizo is free right now")}
+            {t("Blyppo is free right now")}
           </h2>
           <p style={{ color: "rgba(255,255,255,0.45)" }}>
             {t("No credit card, no hidden fees. We're building this for students first — pricing details coming soon.")}
@@ -396,8 +396,9 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 flex flex-col items-center gap-5 text-center">
           <Logo size="md" byline />
           <CompanyBadge label="Designed and built by" />
+          <p className="text-sm text-white/45">{t("Blyppo is pronounced “blip-oh”, like the sound of a right answer.")}</p>
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
-            {t("© 2026 Kwizo, a product of H.S. All rights reserved.")}
+            {t("© 2026 Blyppo, a product of H.S. All rights reserved.")}
           </p>
         </div>
       </footer>

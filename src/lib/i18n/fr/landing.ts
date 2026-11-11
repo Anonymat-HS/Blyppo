@@ -6,8 +6,8 @@ const fr: Record<string, string> = {
   "Your notes in, a quiz out": "Tes notes en entrée, un quiz en sortie",
   "Quiz yourself.": "Teste-toi.",
   "Ace the exam.": "Cartonne à l'examen.",
-  "Kwizo turns your PDFs and lecture notes into quizzes and flashcards. Answer, see what you missed, and come back tomorrow to keep your streak alive.":
-    "Kwizo transforme tes PDF et tes notes de cours en quiz et en flashcards. Réponds, vois ce que tu as raté, et reviens demain pour garder ta série en vie.",
+  "Blyppo turns your PDFs and lecture notes into quizzes and flashcards. Answer, see what you missed, and come back tomorrow to keep your streak alive.":
+    "Blyppo transforme tes PDF et tes notes de cours en quiz et en flashcards. Réponds, vois ce que tu as raté, et reviens demain pour garder ta série en vie.",
   "Start my first quiz": "Lancer mon premier quiz",
   "See how it works": "Voir comment ça marche",
   "No credit card required · Free during beta": "Aucune carte bancaire requise · Gratuit pendant la bêta",
@@ -24,8 +24,8 @@ const fr: Record<string, string> = {
   "Drop in a PDF, a text file or Markdown notes. One course, one upload.":
     "Dépose un PDF, un fichier texte ou des notes Markdown. Un cours, un import.",
   "Get a quiz and a deck": "Reçois un quiz et un paquet de cartes",
-  "Kwizo reads your material and writes quiz questions and flashcards straight from it, not from the internet.":
-    "Kwizo lit ton cours et en tire directement des questions de quiz et des flashcards, pas d'Internet.",
+  "Blyppo reads your material and writes quiz questions and flashcards straight from it, not from the internet.":
+    "Blyppo lit ton cours et en tire directement des questions de quiz et des flashcards, pas d'Internet.",
   "Play, miss, retry": "Joue, rate, recommence",
   "Answer with 1-4 on the keyboard, review your mistakes, and let the flashcards come back when you need them.":
     "Réponds avec les touches 1 à 4, revois tes erreurs, et laisse les flashcards revenir quand tu en as besoin.",
@@ -42,17 +42,18 @@ const fr: Record<string, string> = {
   "At the end of a quiz, review the questions you missed with the right answer.":
     "À la fin d'un quiz, revois les questions ratées avec la bonne réponse.",
   "Free during beta": "Gratuit pendant la bêta",
-  "Kwizo is free right now": "Kwizo est gratuit pour l'instant",
+  "Blyppo is free right now": "Blyppo est gratuit pour l'instant",
   "No credit card, no hidden fees. We're building this for students first — pricing details coming soon.":
-    "Pas de carte bancaire, pas de frais cachés. On construit Kwizo d'abord pour les étudiants — les tarifs arrivent bientôt.",
+    "Pas de carte bancaire, pas de frais cachés. On construit Blyppo d'abord pour les étudiants — les tarifs arrivent bientôt.",
   "Your first quiz is one upload away": "Ton premier quiz est à un import près",
   "Upload your first course and get a quiz and flashcards in minutes.":
     "Importe ton premier cours et obtiens un quiz et des flashcards en quelques minutes.",
   "Start for free": "Commencer gratuitement",
-  "© 2026 Kwizo, a product of H.S. All rights reserved.":
-    "© 2026 Kwizo, un produit de H.S. Tous droits réservés.",
+  "© 2026 Blyppo, a product of H.S. All rights reserved.":
+    "© 2026 Blyppo, un produit de H.S. Tous droits réservés.",
   "Designed and built by": "Conçu et développé par",
   "Start": "Commencer",
+  "Blyppo is pronounced “blip-oh”, like the sound of a right answer.": "Blyppo, ça se prononce « blipo », comme le petit son d'une bonne réponse.",
 }
 
 export default fr

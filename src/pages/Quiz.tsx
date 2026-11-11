@@ -199,7 +199,7 @@ export default function Quiz({
     beginSession(pickSession(pool, lastCorrect, quizLength))
   }
 
-  /** Asks Kwizo for a new set of questions, then plays them (one course only). */
+  /** Asks Blyppo for a new set of questions, then plays them (one course only). */
   const generateMore = async () => {
     if (!selectedCourse || isMixed) return
     setGenerating(true)
@@ -261,7 +261,7 @@ export default function Quiz({
         <EmptyState
           icon={BookOpen}
           title={t("No courses yet")}
-          text={t("Upload a course first, then Kwizo writes a quiz from it.")}
+          text={t("Upload a course first, then Blyppo writes a quiz from it.")}
         />
       </div>
     )
@@ -469,7 +469,7 @@ export default function Quiz({
                     : unseen > 0
                       ? t("{total} questions in this course · {n} not played yet.", { total: pool.length, n: unseen })
                       : t("{n} questions in this course.", { n: pool.length })}{" "}
-                  {t("Kwizo can write 10 new ones, different from the ones you already have.")}
+                  {t("Blyppo can write 10 new ones, different from the ones you already have.")}
                 </p>
               </div>
               <button

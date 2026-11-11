@@ -157,7 +157,7 @@ export default function FeedbackDialog({ target, onClose }: { target: FeedbackTa
               </fieldset>
             ) : (
               <fieldset className="mb-4">
-                <legend className="text-xs font-semibold text-white/50 mb-2">{t("How do you like Kwizo? (optional)")}</legend>
+                <legend className="text-xs font-semibold text-white/50 mb-2">{t("How do you like Blyppo? (optional)")}</legend>
                 <div className="flex gap-2">
                   {RATINGS.map((emoji, i) => (
                     <button

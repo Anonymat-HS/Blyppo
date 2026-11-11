@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="public/logo.svg" alt="Kwizo logo" width="96" height="96" />
+  <img src="public/logo.svg" alt="Blyppo logo" width="96" height="96" />
 </p>
 
-<h1 align="center">Kwizo</h1>
+<h1 align="center">Blyppo</h1>
 
 <p align="center">
   <b>Quiz yourself. Ace the exam.</b><br />
@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Anonymat-HS/Kwizo/actions/workflows/ci.yml"><img src="https://github.com/Anonymat-HS/Kwizo/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/Anonymat-HS/Blyppo/actions/workflows/ci.yml"><img src="https://github.com/Anonymat-HS/Blyppo/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <img src="https://img.shields.io/badge/license-proprietary-7C5CFF" alt="License: proprietary" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React 19" />
   <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <a href="https://kwizo.vercel.app"><b>Live app</b></a> ·
+  <a href="https://blyppo.vercel.app"><b>Live app</b></a> ·
   <a href="#screenshots">Screenshots</a> ·
   <a href="#features">Features</a> ·
   <a href="#getting-started">Getting started</a> ·
@@ -29,19 +29,19 @@
 <p align="center"><sub>A product of <b>H.S</b></sub></p>
 
 <p align="center">
-  <img src="docs/screenshots/landing.png" alt="Kwizo landing page" width="900" />
+  <img src="docs/screenshots/landing.png" alt="Blyppo landing page" width="900" />
 </p>
 
 ---
 
-## Why Kwizo
+## Why Blyppo
 
 Re-reading and highlighting *feel* productive, but they are weak for long-term memory. What makes knowledge stick is **pulling the answer out of your own head** (active recall), again and again, **spaced over time**.
 
-Kwizo automates the boring part, writing the questions:
+Blyppo automates the boring part, writing the questions:
 
 1. **Upload** a course: PDF, TXT or Markdown.
-2. **Kwizo writes** a varied quiz and a flashcard deck **from your own material**, not from the internet.
+2. **Blyppo writes** a varied quiz and a flashcard deck **from your own material**, not from the internet.
 3. **Practise**: answer before you see the solution, review what you missed, and let flashcards come back right before you forget them.
 
 It started as a personal need, revising networking, Java and API coursework as a first-year CS student, and is built to grow into a tool for any student or institution.
@@ -178,8 +178,8 @@ supabase/
 Requirements: Node.js 20+, npm, and the [Supabase CLI](https://supabase.com/docs/guides/cli).
 
 ```bash
-git clone https://github.com/Anonymat-HS/Kwizo.git
-cd Kwizo
+git clone https://github.com/Anonymat-HS/Blyppo.git
+cd Blyppo
 npm ci
 cp .env.example .env   # then fill in VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY
 npm run dev            # http://localhost:8443
@@ -239,7 +239,7 @@ CI runs typecheck, lint, tests and build on every pull request.
 | `GEMINI_API_KEY` | Gemini API key (when using Gemini) |
 | `OLLAMA_URL` | Ollama endpoint (when using Ollama) |
 | `LLM_MAX_INPUT_WORDS` | Optional. Words of course text sent to the LLM (default 2200) |
-| `ALLOWED_ORIGINS` | Comma-separated app origins allowed to call the functions (e.g. `https://kwizo.vercel.app,http://localhost:8443`). Unset = any origin, for development only |
+| `ALLOWED_ORIGINS` | Comma-separated app origins allowed to call the functions (e.g. `https://blyppo.vercel.app,http://localhost:8443`). Unset = any origin, for development only |
 
 ## Reading reports and feedback
 

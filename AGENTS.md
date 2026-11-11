@@ -1,4 +1,4 @@
-# Kwizo
+# Blyppo
 
 React + Vite + Tailwind CSS app (Supabase backend).
 
