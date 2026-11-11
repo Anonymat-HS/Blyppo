@@ -1,5 +1,10 @@
 # StudyForge — Contexte projet pour assistant IA (OpenCode)
 
+> **État de référence : `HANDOFF.md` (passation) et `AGENTS.md` (conventions).**
+> Ce document décrit la vision et les décisions de départ ; certaines parties
+> sont périmées (il mentionne Next.js, `pdf-parse`, `screens/`, l'ancien modèle
+> Groq, et l'absence de plans). En cas de contradiction, `HANDOFF.md` fait foi.
+
 > Ce fichier sert de mémoire de projet. Toute IA (OpenCode, Claude, etc.) qui aide sur ce repo doit lire ce document en premier pour comprendre le contexte, les contraintes et les décisions déjà prises.
 
 ---
