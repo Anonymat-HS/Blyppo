@@ -394,7 +394,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <Logo size="sm" />
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.28)" }}>
-            © 2026 Kwizo. Quiz yourself, ace the exam.
+            © 2026 Kwizo. All rights reserved.
           </p>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.18)" }}>
             Crafted with care by <span style={{ color: "rgba(124,92,255,0.5)" }}>H.S Company</span>
