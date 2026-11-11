@@ -1,10 +1,16 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@1.6.2"
+import { authenticate, corsHeaders, errorResponse, HttpError, json } from "../_shared/http.ts"
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+const MAX_FILE_BYTES = 20 * 1024 * 1024
+const MAX_TITLE_CHARS = 200
+// Stored text is capped: the LLM only reads a sample of it anyway.
+const MAX_TEXT_CHARS = 500_000
+const DEFAULT_DAILY_COURSE_LIMIT = 10
+
+function dailyCourseLimit(): number {
+  const fromEnv = parseInt(Deno.env.get("DAILY_COURSE_LIMIT") ?? "", 10)
+  return Number.isFinite(fromEnv) && fromEnv > 0 ? fromEnv : DEFAULT_DAILY_COURSE_LIMIT
 }
 
 serve(async (req) => {
@@ -13,82 +19,63 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    const { supabase, user } = await authenticate(req)
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const formData = await req.formData().catch(() => null)
+    const file = formData?.get("file")
+    const titre = String(formData?.get("titre") ?? "").trim().slice(0, MAX_TITLE_CHARS)
 
-    const authHeader = req.headers.get("Authorization")!
-    const token = authHeader.replace("Bearer ", "")
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      )
-    }
-
-    const formData = await req.formData()
-    const file = formData.get("file") as File | null
-    const titre = formData.get("titre") as string | null
-
-    if (!file || !titre) {
-      return new Response(
-        JSON.stringify({ error: "Missing file or titre" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      )
-    }
-
-    const arrayBuffer = await file.arrayBuffer()
-    const uint8Array = new Uint8Array(arrayBuffer)
-
-    let texteExtrait = ""
+    if (!(file instanceof File) || !titre) throw new HttpError(400, "Missing file or titre")
+    if (file.size > MAX_FILE_BYTES) throw new HttpError(413, "File exceeds the 20 MB limit")
 
     const fileName = file.name.toLowerCase()
+    const isPdf = fileName.endsWith(".pdf")
+    if (!isPdf && !fileName.endsWith(".txt") && !fileName.endsWith(".md")) {
+      throw new HttpError(415, "Unsupported file type. Please upload a PDF, TXT, or MD file.")
+    }
 
-    if (fileName.endsWith(".txt") || fileName.endsWith(".md")) {
-      texteExtrait = new TextDecoder().decode(uint8Array)
-    } else if (fileName.endsWith(".pdf")) {
-      const pdf = await getDocumentProxy(uint8Array)
+    // Each course costs two LLM calls: cap how many a user can create per day.
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    const { count, error: countError } = await supabase
+      .from("courses")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .gte("created_at", since)
+    if (countError) throw new Error(countError.message)
+    const limit = dailyCourseLimit()
+    if ((count ?? 0) >= limit) {
+      throw new HttpError(403, `Daily limit reached (${limit} courses per 24 hours). Try again tomorrow.`)
+    }
+
+    const bytes = new Uint8Array(await file.arrayBuffer())
+    let texteExtrait = ""
+    if (isPdf) {
+      const pdf = await getDocumentProxy(bytes)
       const { text } = await extractText(pdf, { mergePages: true })
       texteExtrait = text
     } else {
-      texteExtrait = new TextDecoder().decode(uint8Array)
+      texteExtrait = new TextDecoder().decode(bytes)
     }
+    texteExtrait = texteExtrait.trim().slice(0, MAX_TEXT_CHARS)
 
-    if (!texteExtrait.trim()) {
-      return new Response(
-        JSON.stringify({ error: "Could not extract text from file" }),
-        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    if (!texteExtrait) {
+      throw new HttpError(
+        422,
+        isPdf
+          ? "No text found in this PDF. It is probably a scan (images only), which is not supported yet."
+          : "The file is empty."
       )
     }
 
     const { data: course, error: dbError } = await supabase
       .from("courses")
-      .insert({
-        user_id: user.id,
-        titre,
-        texte_extrait: texteExtrait,
-      })
-      .select()
+      .insert({ user_id: user.id, titre, texte_extrait: texteExtrait })
+      .select("id, titre, created_at")
       .single()
+    if (dbError) throw new Error(dbError.message)
 
-    if (dbError) {
-      return new Response(
-        JSON.stringify({ error: dbError.message }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      )
-    }
-
-    return new Response(
-      JSON.stringify({ course }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    )
+    return json({ course })
   } catch (err) {
-    return new Response(
-      JSON.stringify({ error: (err as Error).message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    )
+    return errorResponse(err)
   }
 })
