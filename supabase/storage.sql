@@ -1,8 +1,11 @@
 -- Run this in the Supabase SQL Editor to create the avatars storage bucket.
 -- Safe to run several times.
-insert into storage.buckets (id, name, public)
-values ('avatars', 'avatars', true)
-on conflict (id) do nothing;
+-- Images only, 2 MB max
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('avatars', 'avatars', true, 2097152, array['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
+on conflict (id) do update
+  set file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
 
 -- Allow users to upload their own avatar
 drop policy if exists "Users can upload their own avatar" on storage.objects;

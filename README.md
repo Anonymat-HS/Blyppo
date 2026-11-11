@@ -59,6 +59,7 @@ supabase/
     extract-course/      # PDF/TXT/MD → text extraction
     generate-quiz/       # LLM → quiz questions → DB
     generate-flashcards/ # LLM → flashcards → DB
+    delete-account/      # Deletes the caller's account and data
     _shared/http.ts      # CORS, auth and error helpers shared by the functions
     _shared/llm/         # LLM abstraction: prompts, text sampling, output validation, providers
 ```
@@ -87,7 +88,7 @@ pnpm dev
 2. Run `supabase/schema.sql` then `supabase/storage.sql` in the SQL Editor
    (existing database: run the files in `supabase/migrations/` instead)
 3. Deploy the Edge Functions with the CLI — they import `_shared/`, which the Dashboard editor cannot bundle:
-   `supabase functions deploy extract-course generate-quiz generate-flashcards --project-ref <ref>`
+   `supabase functions deploy extract-course generate-quiz generate-flashcards delete-account --project-ref <ref>`
 4. Set secrets: `supabase secrets set LLM_PROVIDER=groq GROQ_API_KEY=<your-key> --project-ref <ref>`
 
 ## Environment Variables
@@ -102,6 +103,7 @@ pnpm dev
 | `GEMINI_API_KEY` | Gemini API key (if using Gemini) |
 | `OLLAMA_URL` | Ollama endpoint (if using Ollama) |
 | `LLM_MAX_INPUT_WORDS` | Optional. Words of course text sent to the LLM (default 2200) |
+| `ALLOWED_ORIGINS` | Comma-separated app origins allowed to call the functions (e.g. `https://my-app.vercel.app`). Unset = any origin, for development only |
 | `DAILY_COURSE_LIMIT` | Optional. Courses a user can create per 24 h (default 10) |
 
 ## Project Context
