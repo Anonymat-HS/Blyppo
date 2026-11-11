@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { Logo } from "@/components/ui/Logo"
 
 /** Centered logo + card used by the password screens. */
 export default function AuthCard({
@@ -16,8 +17,7 @@ export default function AuthCard({
     <div className="min-h-screen flex items-center justify-center px-4 bg-[#0F0F12]">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2.5 mb-8">
-          <img src="/android-chrome-192x192.png" alt="StudyForge" className="w-12 h-12 rounded-xl" />
-          <span className="font-black text-xl tracking-tight text-white">StudyForge</span>
+          <Logo size="lg" />
         </div>
 
         <div className="p-8 rounded-2xl bg-white/[0.03] border border-white/[0.07]">

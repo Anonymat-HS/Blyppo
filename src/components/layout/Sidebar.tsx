@@ -7,6 +7,7 @@ import {
   X,
 } from "lucide-react"
 import type { Screen } from "@/App"
+import { Logo } from "@/components/ui/Logo"
 
 interface SidebarProps {
   screen: Screen
@@ -56,14 +57,7 @@ export default function Sidebar({
           className="flex items-center gap-3 px-5 py-5"
           style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
         >
-          <img
-            src="/android-chrome-192x192.png"
-            alt="StudyForge"
-            className="w-10 h-10 rounded-xl shrink-0"
-          />
-          <span className="font-black text-base tracking-tight text-white">
-            StudyForge
-          </span>
+          <Logo size="md" />
           <button
             onClick={onToggle}
             aria-label="Close menu"

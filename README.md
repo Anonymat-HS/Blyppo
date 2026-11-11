@@ -1,10 +1,10 @@
-# StudyForge
+# Kwizo
 
 > Turn your course material into AI-generated quizzes and flashcards for active learning.
 
-StudyForge is an AI-powered study tool that transforms course notes, slides, and documents into interactive revision resources. It solves the problem of passive, time-consuming revision by automating the creation of practice materials and pushing students towards active recall — the method proven to be most effective for long-term retention. 
+Kwizo is an AI-powered study tool that transforms course notes, slides, and documents into interactive revision resources. It solves the problem of passive, time-consuming revision by automating the creation of practice materials and pushing students towards active recall — the method proven to be most effective for long-term retention. 
 
-Born out of a personal need — revising networking, Java, and API development coursework as a first-year CS student — StudyForge is designed to grow into a tool usable by any student or institution.
+Born out of a personal need — revising networking, Java, and API development coursework as a first-year CS student — Kwizo is designed to grow into a tool usable by any student or institution.
 
 ## Features
 
@@ -74,8 +74,8 @@ supabase/
 ## Getting Started
 
 ```bash
-git clone https://github.com/Anonymat-HS/StudyForge-v1.0.0.git
-cd StudyForge
+git clone https://github.com/Anonymat-HS/Kwizo.git
+cd Kwizo
 pnpm install
 cp .env.example .env
 # Configure VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY, LLM_PROVIDER, GROQ_API_KEY

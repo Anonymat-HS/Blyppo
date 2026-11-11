@@ -1,4 +1,5 @@
-import { ArrowRight, Upload, Sparkles, Brain, CheckCircle } from "lucide-react"
+import { ArrowRight, Upload, Sparkles, Brain, CheckCircle, Zap, CalendarClock, Target, Flame, Keyboard } from "lucide-react"
+import { Logo } from "@/components/ui/Logo"
 
 export default function Landing({ onEnter }: { onEnter: () => void }) {
   return (
@@ -8,14 +9,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
     >
       {/* Nav */}
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <img
-            src="/android-chrome-192x192.png"
-            alt="StudyForge"
-            className="w-10 h-10 rounded-xl"
-          />
-          <span className="font-black text-lg tracking-tight">StudyForge</span>
-        </div>
+        <Logo size="md" />
 
         <div
           className="hidden md:flex items-center gap-8 text-sm"
@@ -67,28 +61,28 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium mb-8"
             style={{
-              background: "rgba(124,92,255,0.1)",
-              border: "1px solid rgba(124,92,255,0.28)",
-              color: "#C4B5FD",
+              background: "rgba(255,200,61,0.1)",
+              border: "1px solid rgba(255,200,61,0.3)",
+              color: "#FFD873",
             }}
           >
-            <Sparkles size={13} />
-            AI-powered learning, reimagined
+            <Zap size={13} />
+            Your notes in, a quiz out
           </div>
 
           <h1 className="text-3xl sm:text-5xl md:text-[72px] font-black leading-[1.0] tracking-tighter mb-6">
-            Upload your notes.
+            Quiz yourself.
             <br />
             <span
               style={{
                 background:
-                  "linear-gradient(135deg, #ffffff 0%, #C4B5FD 45%, #7C5CFF 100%)",
+                  "linear-gradient(135deg, #FFD873 0%, #C4B5FD 50%, #7C5CFF 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
               }}
             >
-              Master any subject.
+              Ace the exam.
             </span>
           </h1>
 
@@ -96,9 +90,9 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
             className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-10"
             style={{ color: "rgba(255,255,255,0.48)" }}
           >
-            StudyForge reads your PDFs and lecture notes, then instantly
-            generates targeted quizzes and spaced-repetition flashcards — built
-            for students who actually want to learn.
+            Kwizo turns your PDFs and lecture notes into quizzes and
+            flashcards. Answer, see what you missed, and come back tomorrow
+            to keep your streak alive.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-5">
@@ -106,18 +100,18 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
               onClick={onEnter}
               className="group flex items-center gap-2 px-8 py-3.5 rounded-2xl font-semibold text-white transition-all duration-200 bg-[#7C5CFF] hover:bg-[#8B6BFF] hover:shadow-[0_0_36px_rgba(124,92,255,0.45)]"
             >
-              Start for free
+              Start my first quiz
               <ArrowRight
                 size={17}
                 className="group-hover:translate-x-0.5 transition-transform"
               />
             </button>
-            <button
-              onClick={onEnter}
+            <a
+              href="#features"
               className="flex items-center gap-2 px-8 py-3.5 rounded-2xl font-medium transition-all duration-200 border border-[rgba(255,255,255,0.1)] text-[rgba(255,255,255,0.6)] hover:border-[rgba(255,255,255,0.22)] hover:text-[rgba(255,255,255,0.9)] hover:bg-[rgba(255,255,255,0.04)]"
             >
               See how it works
-            </button>
+            </a>
           </div>
 
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>
@@ -219,14 +213,14 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
           <div
             className="hidden sm:flex absolute -bottom-4 right-8 px-4 py-2 rounded-xl text-sm font-semibold items-center gap-2"
             style={{
-              background: "rgba(0,217,255,0.1)",
-              border: "1px solid rgba(0,217,255,0.25)",
-              color: "#00D9FF",
+              background: "rgba(255,200,61,0.1)",
+              border: "1px solid rgba(255,200,61,0.3)",
+              color: "#FFC83D",
               backdropFilter: "blur(8px)",
             }}
           >
-            <Sparkles size={13} />
-            42 questions generated in 4s
+            <Flame size={13} />
+            5-day streak · keep it going
           </div>
         </div>
       </section>
@@ -248,21 +242,21 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
               step: "01",
               icon: Upload,
               title: "Upload your materials",
-              desc: "Drop in any PDF, Word doc, or paste lecture notes directly. StudyForge supports all major academic formats.",
+              desc: "Drop in a PDF, a Word doc, or paste your lecture notes. One course, one upload.",
               color: "#7C5CFF",
             },
             {
               step: "02",
               icon: Sparkles,
-              title: "AI generates your content",
-              desc: "Our model reads your material and instantly creates targeted quiz questions and spaced-repetition flashcard decks.",
+              title: "Get a quiz and a deck",
+              desc: "Kwizo reads your material and writes quiz questions and flashcards straight from it, not from the internet.",
               color: "#00D9FF",
             },
             {
               step: "03",
-              icon: Brain,
-              title: "Study smarter, retain more",
-              desc: "Take quizzes, flip flashcards, and track your progress as StudyForge adapts to your learning patterns over time.",
+              icon: Keyboard,
+              title: "Play, miss, retry",
+              desc: "Answer with 1-4 on the keyboard, review your mistakes, and let the flashcards come back when you need them.",
               color: "#22C55E",
             },
           ].map(({ step, icon: Icon, title, desc, color }) => (
@@ -296,6 +290,52 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
         </div>
       </section>
 
+      {/* Why it works */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-8">
+        <div className="text-center mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight mb-3">
+            Why a quiz beats re-reading
+          </h2>
+          <p className="text-base sm:text-lg max-w-2xl mx-auto" style={{ color: "rgba(255,255,255,0.38)" }}>
+            Highlighting feels productive, but memory is built by pulling answers out of your head.
+            That is exactly what a quiz does.
+          </p>
+        </div>
+        <div className="grid sm:grid-cols-3 gap-5">
+          {[
+            {
+              icon: Brain,
+              title: "Answer first",
+              desc: "Every question makes you commit to an answer before you see the solution.",
+              color: "#7C5CFF",
+            },
+            {
+              icon: CalendarClock,
+              title: "Spaced repetition",
+              desc: "Cards return on a schedule that follows how well you knew them.",
+              color: "#00D9FF",
+            },
+            {
+              icon: Target,
+              title: "Learn from misses",
+              desc: "At the end of a quiz, review the questions you missed with the right answer.",
+              color: "#F59E0B",
+            },
+          ].map(({ icon: Icon, title, desc, color }) => (
+            <div key={title} className="p-6 rounded-2xl text-left bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.07)]">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
+                style={{ background: color + "1A", border: `1px solid ${color}2E` }}
+              >
+                <Icon size={18} style={{ color }} />
+              </div>
+              <h3 className="text-base font-bold mb-2">{title}</h3>
+              <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.4)" }}>{desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Pricing */}
       <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24 text-center">
         <div
@@ -316,7 +356,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
             Free during beta
           </div>
           <h2 className="text-2xl sm:text-3xl font-black mb-3">
-            StudyForge is free right now
+            Kwizo is free right now
           </h2>
           <p style={{ color: "rgba(255,255,255,0.45)" }}>
             No credit card, no hidden fees. We're building this for students first — pricing details coming soon.
@@ -334,7 +374,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
           }}
         >
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-black mb-3">
-            Ready to study smarter?
+            Your first quiz is one upload away
           </h2>
           <p className="mb-8" style={{ color: "rgba(255,255,255,0.45)" }}>
             Upload your first course and get a quiz and flashcards in minutes.
@@ -352,16 +392,9 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
       {/* Footer */}
       <footer style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <img
-              src="/android-chrome-192x192.png"
-              alt="StudyForge"
-              className="w-9 h-9 rounded-lg"
-            />
-            <span className="font-black text-sm">StudyForge</span>
-          </div>
+          <Logo size="sm" />
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.28)" }}>
-            © 2026 StudyForge. Built for serious learners.
+            © 2026 Kwizo. Quiz yourself, ace the exam.
           </p>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.18)" }}>
             Crafted with care by <span style={{ color: "rgba(124,92,255,0.5)" }}>H.S Company</span>

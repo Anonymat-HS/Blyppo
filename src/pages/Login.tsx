@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
 import { useAuth } from "@/lib/supabase/auth"
+import { Logo } from "@/components/ui/Logo"
 
 export default function Login({
   onSwitchToSignup,
@@ -33,14 +34,7 @@ export default function Login({
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2.5 mb-8">
-          <img
-            src="/android-chrome-192x192.png"
-            alt="StudyForge"
-            className="w-12 h-12 rounded-xl"
-          />
-          <span className="font-black text-xl tracking-tight text-white">
-            StudyForge
-          </span>
+          <Logo size="lg" />
         </div>
 
         <div

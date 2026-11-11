@@ -4,7 +4,7 @@ const ALLOWED_HEADERS = "authorization, x-client-info, apikey, content-type"
 
 /**
  * CORS headers for a request. ALLOWED_ORIGINS is a comma-separated list of
- * app origins (e.g. "https://studyforge.vercel.app,http://localhost:8443").
+ * app origins (e.g. "https://kwizo.vercel.app,http://localhost:8443").
  * When it is not set every origin is accepted, which is only meant for development.
  */
 function corsHeaders(req: Request): Record<string, string> {
