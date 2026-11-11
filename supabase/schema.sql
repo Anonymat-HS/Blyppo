@@ -81,6 +81,29 @@ create table study_events (
   created_at timestamptz not null default now()
 );
 
+-- Plan limits. The free row is the historical baseline; paid rows are tuned
+-- with a plain UPDATE (see migrations/003_plans.sql).
+create table plans (
+  id text primary key,
+  max_file_mb int not null check (max_file_mb > 0),
+  daily_courses int not null check (daily_courses > 0),
+  max_questions int not null check (max_questions > 0),
+  max_cards int not null check (max_cards > 0)
+);
+
+insert into plans (id, max_file_mb, daily_courses, max_questions, max_cards) values
+  ('free',      20,  10, 20, 30),
+  ('premium',   50,  50, 30, 60),
+  ('business', 100, 200, 40, 80),
+  ('bold',     200, 500, 50, 100);
+
+-- No row means the free plan. Written by the service role only.
+create table user_plans (
+  user_id uuid primary key references auth.users on delete cascade,
+  plan text not null default 'free' references plans (id),
+  updated_at timestamptz not null default now()
+);
+
 -- =============================================
 -- INDEXES
 -- =============================================
@@ -106,8 +129,19 @@ alter table user_progress enable row level security;
 alter table flashcard_progress enable row level security;
 alter table quiz_attempts enable row level security;
 alter table study_events enable row level security;
+alter table plans enable row level security;
+alter table user_plans enable row level security;
 -- No policy: only the service role can use it
 alter table course_generations enable row level security;
+
+create policy "Plans are readable by signed-in users"
+  on plans for select
+  to authenticated
+  using (true);
+
+create policy "Users can read own plan"
+  on user_plans for select
+  using (user_id = auth.uid());
 
 -- Courses, questions and cards are written by the Edge Functions only (service role),
 -- where size limits, quotas and validation apply. The app reads and deletes them.

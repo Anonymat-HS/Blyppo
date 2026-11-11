@@ -79,8 +79,14 @@ export async function deleteAccount(): Promise<void> {
   await supabase.auth.signOut({ scope: "local" })
 }
 
+export interface UploadResult {
+  courseId: string
+  /** Uploads used in the last 24 h and the plan limit, as counted server-side. */
+  quota: { used: number; limit: number } | null
+}
+
 /**
- * Sends a course file to the extract-course function and returns the new course id.
+ * Sends a course file to the extract-course function.
  * `onProgress` receives the real upload progress (0 to 100); text extraction
  * happens server-side afterwards and has no measurable progress.
  */
@@ -89,7 +95,7 @@ export async function uploadCourseFile(
   title: string,
   onProgress: (percent: number) => void,
   timeoutMs = 120_000
-): Promise<string> {
+): Promise<UploadResult> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error("Not authenticated")
 
@@ -112,13 +118,17 @@ export async function uploadCourseFile(
     xhr.upload.onload = () => onProgress(100)
 
     xhr.onload = () => {
-      const body = (xhr.response ?? {}) as { error?: string; course?: { id?: string } }
+      const body = (xhr.response ?? {}) as {
+        error?: string
+        course?: { id?: string }
+        quota?: { used: number; limit: number } | null
+      }
       if (xhr.status < 200 || xhr.status >= 300) {
         reject(new Error(body.error || `Upload failed (error ${xhr.status})`))
       } else if (!body.course?.id) {
         reject(new Error("No course ID returned"))
       } else {
-        resolve(body.course.id)
+        resolve({ courseId: body.course.id, quota: body.quota ?? null })
       }
     }
     xhr.onerror = () => reject(new Error("Could not reach the server. Check your connection and try again."))

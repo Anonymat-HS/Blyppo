@@ -10,10 +10,8 @@ import {
   CreditCard,
 } from "lucide-react"
 import { callGenerateFunction, uploadCourseFile } from "@/lib/supabase/functions"
-import { fetchRecentCourses } from "@/lib/api"
-import type { CourseSummary } from "@/lib/types"
-
-const MAX_FILE_MB = 20
+import { fetchMyPlan, fetchRecentCourses } from "@/lib/api"
+import type { CourseSummary, PlanLimits } from "@/lib/types"
 
 type UploadState = "idle" | "dragover" | "processing" | "generating" | "done" | "error"
 
@@ -24,10 +22,14 @@ export default function Upload({ onBack }: { onBack: () => void }) {
   const [titre, setTitre] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
   const [recentCourses, setRecentCourses] = useState<CourseSummary[]>([])
+  const [plan, setPlan] = useState<PlanLimits | null>(null)
+  const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null)
   const [quizError, setQuizError] = useState<string | null>(null)
   const [flashcardError, setFlashcardError] = useState<string | null>(null)
   const [retryingMsg, setRetryingMsg] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const maxFileMb = plan?.max_file_mb ?? 20
 
   // The list is a convenience: the page stays usable if it cannot be loaded
   const loadRecentCourses = useCallback(() => {
@@ -36,6 +38,7 @@ export default function Upload({ onBack }: { onBack: () => void }) {
 
   useEffect(() => {
     loadRecentCourses()
+    fetchMyPlan().then(setPlan).catch(() => {})
   }, [loadRecentCourses])
 
   const generateContent = async (courseId: string) => {
@@ -75,8 +78,8 @@ export default function Upload({ onBack }: { onBack: () => void }) {
       return
     }
 
-    if (file.size > MAX_FILE_MB * 1024 * 1024) {
-      setErrorMessage(`File exceeds the ${MAX_FILE_MB} MB limit.`)
+    if (file.size > maxFileMb * 1024 * 1024) {
+      setErrorMessage(`File exceeds the ${maxFileMb} MB limit of your plan.`)
       setState("error")
       return
     }
@@ -94,13 +97,14 @@ export default function Upload({ onBack }: { onBack: () => void }) {
     setErrorMessage("")
 
     try {
-      const courseId = await uploadCourseFile(file, title.trim(), setProgress)
+      const { courseId, quota } = await uploadCourseFile(file, title.trim(), setProgress)
+      if (quota) setQuota(quota)
       await generateContent(courseId)
     } catch (err) {
       setErrorMessage((err as Error).message)
       setState("error")
     }
-  }, [])
+  }, [maxFileMb])
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -219,10 +223,16 @@ export default function Upload({ onBack }: { onBack: () => void }) {
                 ))}
               </div>
               <p
-                className="text-xs"
+                className="text-xs text-center"
                 style={{ color: "rgba(255,255,255,0.22)" }}
               >
-                Max {MAX_FILE_MB} MB
+                Max {maxFileMb} MB · text only, no scanned PDFs
+              </p>
+              <p className="text-xs text-center" style={{ color: "rgba(255,255,255,0.22)" }}>
+                <span className="capitalize">{plan?.id ?? "free"}</span> plan ·{" "}
+                {quota
+                  ? `${Math.max(0, quota.limit - quota.used)} of ${quota.limit} uploads left today`
+                  : `up to ${plan?.daily_courses ?? 10} uploads per 24 h`}
               </p>
             </div>
             <input

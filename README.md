@@ -104,7 +104,11 @@ pnpm dev
 | `OLLAMA_URL` | Ollama endpoint (if using Ollama) |
 | `LLM_MAX_INPUT_WORDS` | Optional. Words of course text sent to the LLM (default 2200) |
 | `ALLOWED_ORIGINS` | Comma-separated app origins allowed to call the functions (e.g. `https://my-app.vercel.app`). Unset = any origin, for development only |
-| `DAILY_COURSE_LIMIT` | Optional. Courses a user can create per 24 h (default 10) |
+
+Upload size, daily course quota and generation sizes are per plan: they live in
+the `plans` table (`MAX` values in `supabase/migrations/003_plans.sql`), so they
+change with an `UPDATE` and need no redeploy. A user with no row in `user_plans`
+is on the free plan; assigning a paid plan is a service-role write.
 
 ## Project Context
 
