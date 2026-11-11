@@ -19,7 +19,9 @@ It started as a personal need: revising networking, Java and API coursework as a
 - **Upload a course**: PDF (text-based), TXT or Markdown, with a real upload progress bar
 - **AI-generated quiz**: multiple-choice questions with explanations; options are shuffled
 - **Answer from the keyboard**: `1`-`4` or `A`-`D` to pick, `Enter` / `Space` for the next question
-- **Mistake review**: at the end of a quiz, see every missed question with the right answer
+- **Mistake review**: at the end of a quiz, see every missed question with the right answer, and replay only those
+- **Fresh sessions**: each quiz picks up to 10 questions, never-played first, then missed ones, in a new order
+- **New questions on demand**: ask for another set of questions or cards, different from the existing ones
 - **AI-generated flashcards** rated *Again / Hard / Good / Easy*; the rating schedules the next review, and a card rated *Again* comes back before the session ends
 
 **Track**
@@ -159,12 +161,16 @@ The frontend is deployed on Vercel from `main`; `vercel.json` adds the security 
 
 Upload size, daily course quota and generation sizes are per plan. They live in the `plans` table (`supabase/migrations/003_plans.sql`), so they change with an `UPDATE` and need no redeploy.
 
-| Plan | Max file | Courses / 24 h | Questions / quiz | Cards / deck |
-|---|---|---|---|---|
-| `free` | 20 MB | 10 | 20 | 30 |
-| `premium` | 50 MB | 50 | 30 | 60 |
-| `business` | 100 MB | 200 | 40 | 80 |
-| `bold` | 200 MB | 500 | 50 | 100 |
+| Plan | Max file | Courses / 24 h | Questions / quiz | Cards / deck | Sets per course |
+|---|---|---|---|---|---|
+| `free` | 20 MB | 10 | 20 | 30 | 3 |
+| `premium` | 50 MB | 50 | 30 | 60 | 10 |
+| `business` | 100 MB | 200 | 40 | 80 | 25 |
+| `bold` | 200 MB | 500 | 50 | 100 | 50 |
+
+A *set* is one generation round: the upload creates set 1, and each **New questions** /
+**More cards** click adds one (`plans.max_rounds`, migration `004_rounds.sql`). A new set
+gets the existing questions to avoid and a different excerpt of long courses.
 
 A user with no row in `user_plans` is on `free`. Assigning a plan is a service-role write (billing or an admin), never a client one:
 
@@ -178,7 +184,6 @@ The seeded numbers are placeholders; adjust them with `update plans`. Limits are
 
 ## Known limitations
 
-- One generation per course: retrying a quiz shows the same questions ([#8](https://github.com/Anonymat-HS/Kwizo/issues/8))
 - Text-based PDFs only (no OCR for scanned documents)
 - 2200 words of course text are sent to the LLM per generation
 - No payment integration yet: plans are assigned manually

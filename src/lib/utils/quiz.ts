@@ -29,7 +29,7 @@ export function findCorrectIndex(q: Pick<QuizQuestion, "options" | "bonne_repons
   return partial.length === 1 ? partial[0] : -1
 }
 
-function shuffled<T>(items: T[]): T[] {
+export function shuffled<T>(items: T[]): T[] {
   const copy = [...items]
   for (let i = copy.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
@@ -51,4 +51,26 @@ export function prepareQuestions(questions: QuizQuestion[]): QuizQuestion[] {
     prepared.push({ ...q, bonne_reponse: q.options[idx], options: shuffled(q.options) })
   }
   return prepared
+}
+
+/** Questions per quiz session */
+export const SESSION_SIZE = 10
+
+/**
+ * Picks the questions of a session from every question of the course:
+ * never answered first, then the ones last answered wrong, then the ones
+ * already known, at random within each group. The pick is shuffled again so
+ * the new questions are not always the first ones.
+ * `lastCorrect` holds the latest answer to each question id (absent = never answered).
+ */
+export function pickSession<T extends { id: string }>(
+  questions: T[],
+  lastCorrect: Record<string, boolean>,
+  size = SESSION_SIZE
+): T[] {
+  const unseen = questions.filter((q) => !(q.id in lastCorrect))
+  const missed = questions.filter((q) => lastCorrect[q.id] === false)
+  const known = questions.filter((q) => lastCorrect[q.id] === true)
+  const picked = [...shuffled(unseen), ...shuffled(missed), ...shuffled(known)].slice(0, size)
+  return shuffled(picked)
 }

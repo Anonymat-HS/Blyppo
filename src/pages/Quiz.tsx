@@ -1,14 +1,16 @@
 import { useState, useEffect, useCallback } from "react"
-import { ChevronLeft, CheckCircle, XCircle, ArrowRight, RotateCcw, BookOpen, Brain, Target, Zap } from "lucide-react"
+import { ChevronLeft, CheckCircle, XCircle, ArrowRight, RotateCcw, BookOpen, Brain, Target, Zap, Sparkles, Loader2 } from "lucide-react"
 import { useAuth } from "@/lib/supabase/auth"
 import {
   fetchCourses,
   fetchQuizCountsByCourses,
   fetchQuestionsForCourse,
+  fetchLastAnswers,
   recordQuizAnswer,
   recordQuizAttempt,
 } from "@/lib/api"
-import { findCorrectIndex, prepareQuestions } from "@/lib/utils/quiz"
+import { findCorrectIndex, pickSession, prepareQuestions, SESSION_SIZE } from "@/lib/utils/quiz"
+import { callGenerateFunction } from "@/lib/supabase/functions"
 import ErrorState from "@/components/ui/ErrorState"
 import SaveWarning from "@/components/ui/SaveWarning"
 import { BackButton, EmptyState, LoadingState, primaryButton, secondaryButton } from "@/components/ui/PageStates"
@@ -42,7 +44,16 @@ export default function Quiz({
   const { user } = useAuth()
   const [courses, setCourses] = useState<CourseWithCount[]>([])
   const [selectedCourse, setSelectedCourse] = useState<CourseWithCount | null>(null)
+  // Every question of the course, and the ones of the current session
+  const [pool, setPool] = useState<QuizQuestion[]>([])
   const [questions, setQuestions] = useState<QuizQuestion[]>([])
+  // Latest answer to each question (absent = never answered), to pick what to ask next
+  const [lastCorrect, setLastCorrect] = useState<Record<string, boolean>>({})
+  // "New questions": generation in progress, its error, and how many were added
+  const [generating, setGenerating] = useState(false)
+  const [generateMsg, setGenerateMsg] = useState<string | null>(null)
+  const [moreError, setMoreError] = useState<string | null>(null)
+  const [added, setAdded] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadingQuiz, setLoadingQuiz] = useState(false)
 
@@ -71,32 +82,50 @@ export default function Quiz({
     } finally {
       setLoading(false)
     }
-  }, [initialCourseId])
+    // startQuiz only uses state setters and the signed-in user
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCourseId, user?.id])
 
   useEffect(() => {
     loadCourses()
   }, [loadCourses])
 
+  /** Starts a session with the given questions (options reshuffled). */
+  function beginSession(list: QuizQuestion[]) {
+    setQuestions(prepareQuestions(list))
+    setCurrent(0)
+    setScore(0)
+    setFinished(false)
+    setSelected(null)
+    setAnswers([])
+    setSaveFailed(false)
+  }
+
+  /** Every question of a course with the user's latest answers. */
+  async function loadPool(courseId: string) {
+    const all = prepareQuestions(await fetchQuestionsForCourse(courseId))
+    const last = user ? await fetchLastAnswers(user.id, all.map((x) => x.id)) : {}
+    setPool(all)
+    setLastCorrect(last)
+    return { all, last }
+  }
+
   async function startQuiz(course: CourseWithCount) {
     setSelectedCourse(course)
     setLoadingQuiz(true)
     setLoadError(null)
-    setSaveFailed(false)
+    setMoreError(null)
+    setAdded(null)
 
     try {
-      const data = await fetchQuestionsForCourse(course.id)
-      setQuestions(prepareQuestions(data))
+      const { all, last } = await loadPool(course.id)
+      beginSession(pickSession(all, last))
     } catch (err) {
       setSelectedCourse(null)
       setLoadError((err as Error).message)
     } finally {
       setLoadingQuiz(false)
     }
-    setCurrent(0)
-    setScore(0)
-    setFinished(false)
-    setSelected(null)
-    setAnswers([])
   }
 
   const q = questions[current]
@@ -109,6 +138,7 @@ export default function Quiz({
     setAnswers((a) => [...a, idx])
     const isCorrect = idx === correctIndex
     if (isCorrect) setScore((s) => s + 1)
+    setLastCorrect((last) => ({ ...last, [q.id]: isCorrect }))
 
     if (!user || !q) return
     recordQuizAnswer(user.id, q.id, isCorrect).catch(() => setSaveFailed(true))
@@ -128,14 +158,40 @@ export default function Quiz({
     }
   }
 
-  const reset = () => {
-    setCurrent(0)
-    setSelected(null)
-    setScore(0)
-    setFinished(false)
-    setSaveFailed(false)
-    setAnswers([])
-    setQuestions((qs) => prepareQuestions(qs))
+  /** A new session: never-played questions first, then the missed ones. */
+  const playAgain = () => {
+    setAdded(null)
+    beginSession(pickSession(pool, lastCorrect))
+  }
+
+  /** Asks Kwizo for a new set of questions, then plays them. */
+  const generateMore = async () => {
+    if (!selectedCourse) return
+    setGenerating(true)
+    setMoreError(null)
+    try {
+      await callGenerateFunction(
+        "generate-quiz",
+        selectedCourse.id,
+        "numberOfQuestions",
+        10,
+        setGenerateMsg,
+        { more: true }
+      )
+      const before = new Set(pool.map((x) => x.id))
+      const { all, last } = await loadPool(selectedCourse.id)
+      const fresh = all.filter((x) => !before.has(x.id))
+      setAdded(fresh.length)
+      setCourses((list) =>
+        list.map((c) => (c.id === selectedCourse.id ? { ...c, quiz_count: all.length } : c))
+      )
+      beginSession(fresh.length ? pickSession(fresh, {}) : pickSession(all, last))
+    } catch (err) {
+      setMoreError((err as Error).message)
+    } finally {
+      setGenerating(false)
+      setGenerateMsg(null)
+    }
   }
 
   // Keyboard: 1-4 or A-D to answer, Enter or Space for the next question
@@ -217,6 +273,7 @@ export default function Quiz({
 
   if (finished) {
     const pct = Math.round((score / total) * 100)
+    const unseen = pool.filter((x) => !(x.id in lastCorrect)).length
     const mistakes = questions
       .map((question, i) => ({ question, picked: question.options[answers[i]] }))
       .filter(({ question, picked }) => picked !== undefined && picked !== question.bonne_reponse)
@@ -253,14 +310,61 @@ export default function Quiz({
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 mb-10">
-          <button onClick={reset} className={primaryButton}>
+        <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 mb-6">
+          <button onClick={playAgain} className={primaryButton} disabled={generating}>
             <RotateCcw size={15} />
-            Play again
+            {unseen > 0 ? `Play again · ${Math.min(unseen, SESSION_SIZE)} new` : "Play again"}
           </button>
-          <button onClick={() => setSelectedCourse(null)} className={secondaryButton}>
+          {mistakes.length > 0 && (
+            <button
+              onClick={() => beginSession(mistakes.map((m) => m.question))}
+              className={secondaryButton}
+              disabled={generating}
+            >
+              <Target size={15} />
+              Retry my {mistakes.length} miss{mistakes.length !== 1 ? "es" : ""}
+            </button>
+          )}
+          <button onClick={() => setSelectedCourse(null)} className={secondaryButton} disabled={generating}>
             Choose another course
           </button>
+        </div>
+
+        {/* New questions */}
+        <div className="w-full mb-10 p-5 rounded-2xl text-left border border-spark/25 bg-spark/[0.06]">
+          <div className="flex items-start gap-3 flex-wrap">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-spark/15 text-spark">
+              <Sparkles size={18} />
+            </div>
+            <div className="flex-1 min-w-[12rem]">
+              <p className="font-bold text-white text-sm">
+                {unseen > 0 ? "Want even more questions?" : "You have played every question"}
+              </p>
+              <p className="text-xs text-white/50 mt-0.5">
+                {pool.length} question{pool.length !== 1 ? "s" : ""} in this course
+                {unseen > 0 ? ` · ${unseen} not played yet` : ""}. Kwizo can write 10 new ones, different
+                from the ones you already have.
+              </p>
+            </div>
+            <button
+              onClick={generateMore}
+              disabled={generating}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all bg-spark text-[#16161D] hover:bg-spark-soft disabled:opacity-60"
+            >
+              {generating ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
+              {generating ? "Writing new questions..." : "New questions"}
+            </button>
+          </div>
+          {generating && (
+            <p className="text-xs text-white/40 mt-3" role="status">
+              {generateMsg ?? "This takes about 10 to 20 seconds."}
+            </p>
+          )}
+          {moreError && (
+            <p className="text-xs text-[#FCA5A5] mt-3" role="alert">
+              {moreError}
+            </p>
+          )}
         </div>
 
         {mistakes.length > 0 && (
@@ -345,6 +449,15 @@ export default function Quiz({
       </div>
 
       {saveFailed && <SaveWarning message={SAVE_WARNING} />}
+
+      {added !== null && current === 0 && selected === null && (
+        <div className="animate-rise mb-5 px-4 py-3 rounded-xl text-sm flex items-center gap-2 bg-spark/10 border border-spark/25 text-spark" role="status">
+          <Sparkles size={15} className="shrink-0" />
+          {added > 0
+            ? `${added} new question${added !== 1 ? "s" : ""} added. Here they are!`
+            : "No new question this time: here is a fresh mix instead."}
+        </div>
+      )}
 
       <h2 key={q.id} className="animate-rise text-xl md:text-2xl font-bold leading-snug text-white mb-7">
         {q.question}

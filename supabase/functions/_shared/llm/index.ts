@@ -4,7 +4,7 @@ import { groqProvider } from "./providers/groq.ts"
 import { ollamaProvider } from "./providers/ollama.ts"
 import { flashcardPrompt, quizPrompt } from "./prompts.ts"
 import { parseFlashcards, parseQuiz } from "./parse.ts"
-import { sampleText } from "./text.ts"
+import { avoidList, maxWords, sampleText } from "./text.ts"
 
 export type { GeneratedFlashcard, GeneratedQuizItem, LLMProvider } from "./types.ts"
 
@@ -26,15 +26,37 @@ export function getLLMProvider(): LLMProvider {
   return provider
 }
 
-export async function generateQuiz(courseText: string, n: number): Promise<GeneratedQuizItem[]> {
-  const raw = await getLLMProvider().complete(quizPrompt(n, sampleText(courseText)))
+export interface RoundOptions {
+  /** Generation round (1 at upload); later rounds read other parts of a long course */
+  round?: number
+  /** Questions or card fronts the course already has */
+  avoid?: string[]
+}
+
+/** Course-text budget once the avoid list has taken its share of the prompt. */
+function courseBudget(avoid: string[]): number {
+  const avoidWords = avoid.join(" ").split(/\s+/).filter(Boolean).length
+  return Math.max(500, maxWords() - avoidWords)
+}
+
+export async function generateQuiz(
+  courseText: string,
+  n: number,
+  { round = 1, avoid = [] }: RoundOptions = {}
+): Promise<GeneratedQuizItem[]> {
+  const list = avoidList(avoid)
+  const text = sampleText(courseText, courseBudget(list), round)
+  const raw = await getLLMProvider().complete(quizPrompt(n, text, list))
   return parseQuiz(raw).slice(0, n)
 }
 
 export async function generateFlashcards(
   courseText: string,
-  n: number
+  n: number,
+  { round = 1, avoid = [] }: RoundOptions = {}
 ): Promise<GeneratedFlashcard[]> {
-  const raw = await getLLMProvider().complete(flashcardPrompt(n, sampleText(courseText)))
+  const list = avoidList(avoid)
+  const text = sampleText(courseText, courseBudget(list), round)
+  const raw = await getLLMProvider().complete(flashcardPrompt(n, text, list))
   return parseFlashcards(raw).slice(0, n)
 }

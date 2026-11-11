@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from "vitest"
-import { sampleText } from "./text"
+import { avoidList, sampleText } from "./text"
 
 const words = (n: number, prefix = "w") => Array.from({ length: n }, (_, i) => `${prefix}${i}`)
 
@@ -47,5 +47,49 @@ describe("sampleText", () => {
     const text = words(2500).join(" ")
     // default is 2200 words: the text is sampled, not returned whole
     expect(sampleText(text)).not.toBe(text)
+  })
+})
+
+describe("sampleText rounds", () => {
+  const text = words(800).join(" ") // 100 words per section, 10 kept per section
+
+  it("round 1 reads the start of each section, like before", () => {
+    expect(sampleText(text, 80, 1)).toBe(sampleText(text, 80))
+  })
+
+  it("a later round reads further into each section", () => {
+    const round2 = sampleText(text, 80, 2)
+    expect(round2).toContain("w10") // section 1, second excerpt
+    expect(round2).toContain("w410") // section 5, second excerpt
+    expect(round2.split(/\s+/)).not.toContain("w0")
+  })
+
+  it("stays inside the section and under the budget", () => {
+    const round10 = sampleText(text, 80, 10)
+    expect(round10).toContain("w90")
+    expect(round10.split(/\s+/)).not.toContain("w100")
+    expect(round10.split(/\s+/).filter((w) => w !== "[...]").length).toBeLessThanOrEqual(80)
+  })
+
+  it("wraps around once every part of a section has been used", () => {
+    expect(sampleText(text, 80, 11)).toBe(sampleText(text, 80, 1))
+  })
+})
+
+describe("avoidList", () => {
+  it("keeps the 30 most recent items", () => {
+    const items = Array.from({ length: 40 }, (_, i) => `Question ${i}`)
+    const list = avoidList(items)
+    expect(list).toHaveLength(30)
+    expect(list[0]).toBe("Question 10")
+    expect(list[29]).toBe("Question 39")
+  })
+
+  it("collapses whitespace, drops blanks and shortens long items", () => {
+    const list = avoidList(["  What   is\nTCP? ", "   ", "x".repeat(300)])
+    expect(list[0]).toBe("What is TCP?")
+    expect(list).toHaveLength(2)
+    expect(list[1].length).toBe(140)
+    expect(list[1].endsWith("…")).toBe(true)
   })
 })
