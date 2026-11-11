@@ -3,7 +3,7 @@ import { geminiProvider } from "./providers/gemini.ts"
 import { groqProvider } from "./providers/groq.ts"
 import { ollamaProvider } from "./providers/ollama.ts"
 import { flashcardPrompt, quizPrompt } from "./prompts.ts"
-import { parseFlashcards, parseQuiz } from "./parse.ts"
+import { limitQuestions, parseFlashcards, parseQuiz } from "./parse.ts"
 import { avoidList, maxWords, sampleText } from "./text.ts"
 
 export type { GeneratedFlashcard, GeneratedQuizItem, LLMProvider } from "./types.ts"
@@ -47,7 +47,7 @@ export async function generateQuiz(
   const list = avoidList(avoid)
   const text = sampleText(courseText, courseBudget(list), round)
   const raw = await getLLMProvider().complete(quizPrompt(n, text, list))
-  return parseQuiz(raw).slice(0, n)
+  return limitQuestions(parseQuiz(raw), n)
 }
 
 export async function generateFlashcards(

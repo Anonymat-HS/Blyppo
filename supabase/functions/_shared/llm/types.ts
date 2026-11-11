@@ -1,8 +1,24 @@
+/**
+ * Question types (quizzes.type):
+ * - single      4 options, one right (answers = [option])
+ * - multiple    4-5 options, 2-3 right (answers = the right options)
+ * - true_false  a statement; options = ["true", "false"], answers = ["true"] or ["false"]
+ * - short       typed answer; answers = accepted spellings, options = []
+ * - cloze       sentence with one "___" blank; answers = accepted words, options = []
+ * - order       options = the items IN THE RIGHT ORDER (the app shuffles them), answers = same
+ */
+export type QuestionType = "single" | "multiple" | "true_false" | "short" | "cloze" | "order"
+
 export interface GeneratedQuizItem {
+  type: QuestionType
   question: string
   options: string[]
+  answers: string[]
+  /** Readable right answer, also used by older app versions */
   bonne_reponse: string
   explication: string
+  /** Text the question is about (a passage, a case study); questions sharing it are played together */
+  passage?: string
 }
 
 export interface GeneratedFlashcard {

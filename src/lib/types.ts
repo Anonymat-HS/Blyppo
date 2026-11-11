@@ -24,10 +24,19 @@ export interface QuizItem {
   created_at: string;
 }
 
-export type QuizQuestion = Pick<
-  QuizItem,
-  "id" | "question" | "options" | "bonne_reponse" | "explication"
->;
+/** single | multiple | true_false | short | cloze | order (see migration 007). */
+export type QuestionType = "single" | "multiple" | "true_false" | "short" | "cloze" | "order";
+
+/** A question as played in a quiz. `type`, `answers` and `passage` are absent on older rows. */
+export interface QuizQuestion
+  extends Pick<QuizItem, "id" | "question" | "options" | "bonne_reponse" | "explication"> {
+  course_id?: string;
+  type?: QuestionType;
+  /** Right options / accepted spellings / items in the right order, depending on the type */
+  answers?: string[] | null;
+  /** Text the question is about, shared by the questions of the same passage */
+  passage?: { id: string; text: string } | null;
+}
 
 export interface Flashcard {
   id: string;

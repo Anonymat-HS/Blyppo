@@ -14,13 +14,30 @@ create table courses (
   created_at timestamptz default now()
 );
 
+-- A short text or case study that several questions are about (migration 007)
+create table quiz_passages (
+  id uuid primary key default gen_random_uuid(),
+  course_id uuid not null references courses on delete cascade,
+  round int not null default 1 check (round > 0),
+  text text not null check (char_length(text) between 1 and 2000),
+  created_at timestamptz not null default now()
+);
+
 create table quizzes (
   id uuid primary key default gen_random_uuid(),
   course_id uuid not null references courses on delete cascade,
+  -- single | multiple | true_false | short | cloze | order (migration 007)
+  type text not null default 'single'
+    constraint quizzes_type_check check (type in ('single', 'multiple', 'true_false', 'short', 'cloze', 'order')),
   question text not null,
+  -- Options to show; for "order", the items in the right order (the app shuffles them)
   options jsonb not null,
+  -- Readable right answer (also used by questions created before migration 007)
   bonne_reponse text not null,
+  -- Right options / accepted spellings / items in order, depending on the type
+  answers jsonb,
   explication text,
+  passage_id uuid references quiz_passages on delete cascade,
   -- Generation round that created it (1 at upload, +1 per "new questions")
   round int not null default 1 check (round > 0),
   created_at timestamptz default now()
@@ -116,6 +133,8 @@ create table user_plans (
 
 create index idx_courses_user_id on courses(user_id);
 create index idx_quizzes_course_id on quizzes(course_id);
+create index idx_quizzes_passage_id on quizzes(passage_id);
+create index idx_quiz_passages_course_id on quiz_passages(course_id);
 create index idx_flashcards_course_id on flashcards(course_id);
 create index idx_user_progress_user_id on user_progress(user_id);
 create index idx_user_progress_quiz_id on user_progress(quiz_id);
@@ -130,6 +149,7 @@ create index idx_study_events_user_created on study_events(user_id, created_at);
 
 alter table courses enable row level security;
 alter table quizzes enable row level security;
+alter table quiz_passages enable row level security;
 alter table flashcards enable row level security;
 alter table user_progress enable row level security;
 alter table flashcard_progress enable row level security;
@@ -171,6 +191,12 @@ create policy "Users can view quizzes for own courses"
   );
 
 -- No delete policy: questions / cards go only with their course (migration 006)
+
+-- quiz_passages: readable by the course owner, written by the Edge Functions only
+create policy "Users can view passages of own courses"
+  on quiz_passages for select
+  to authenticated
+  using (course_id in (select id from courses where user_id = auth.uid()));
 
 -- flashcards: accessible via course ownership
 create policy "Users can view flashcards for own courses"

@@ -137,9 +137,8 @@ export async function generateOnce<T extends object>(
       "You have generated a lot in the last hour. Please try again a bit later."
     )
     const items = await generate()
-    const { error: insertError } = await supabase
-      .from(table)
-      .insert(items.map((item) => ({ course_id: courseId, round, ...item })))
+    const rows = await toRows(supabase, kind, courseId, round, items)
+    const { error: insertError } = await supabase.from(table).insert(rows)
     if (insertError) throw new Error(insertError.message)
     return json({ [kind]: items, round })
   } catch (err) {
@@ -152,4 +151,37 @@ export async function generateOnce<T extends object>(
       .eq("round", round)
     throw err
   }
+}
+
+/**
+ * Database rows for generated items. Quiz questions about a passage get the
+ * passage stored first (one row per distinct text) and point to it.
+ */
+async function toRows<T extends object>(
+  supabase: SupabaseClient,
+  kind: Kind,
+  courseId: string,
+  round: number,
+  items: T[]
+): Promise<Record<string, unknown>[]> {
+  if (kind !== "quiz") return items.map((item) => ({ course_id: courseId, round, ...item }))
+
+  const passageIds = new Map<string, string>()
+  for (const item of items as { passage?: string }[]) {
+    if (!item.passage || passageIds.has(item.passage)) continue
+    const { data, error } = await supabase
+      .from("quiz_passages")
+      .insert({ course_id: courseId, round, text: item.passage })
+      .select("id")
+      .single()
+    if (error || !data) throw new Error(error?.message ?? "Could not store a passage")
+    passageIds.set(item.passage, data.id)
+  }
+
+  return (items as { passage?: string }[]).map(({ passage, ...item }) => ({
+    course_id: courseId,
+    round,
+    ...item,
+    passage_id: passage ? passageIds.get(passage) : null,
+  }))
 }

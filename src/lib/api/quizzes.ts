@@ -14,14 +14,22 @@ export async function fetchQuizCountsByCourses(
   return counts
 }
 
-export async function fetchQuestionsForCourse(
-  courseId: string
-): Promise<QuizQuestion[]> {
+const QUESTION_COLUMNS =
+  "id, course_id, type, question, options, bonne_reponse, answers, explication, passage:quiz_passages(id, text)"
+
+/** Every question of a course, with its passage when it has one. */
+export async function fetchQuestionsForCourse(courseId: string): Promise<QuizQuestion[]> {
+  return fetchQuestionsForCourses([courseId])
+}
+
+/** Every question of several courses (mixed quiz), in creation order. */
+export async function fetchQuestionsForCourses(courseIds: string[]): Promise<QuizQuestion[]> {
+  if (!courseIds.length) return []
   return retryQuery<QuizQuestion>(
     supabase
       .from("quizzes")
-      .select("id, question, options, bonne_reponse, explication")
-      .eq("course_id", courseId)
+      .select(QUESTION_COLUMNS)
+      .in("course_id", courseIds)
       .order("created_at", { ascending: true })
   )
 }
