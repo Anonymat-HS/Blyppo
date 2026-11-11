@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { ArrowRight } from "lucide-react"
 import type { IconType } from "@/components/ui/PageStates"
 import type { CourseSummary } from "@/lib/types"
@@ -12,6 +13,7 @@ export default function CoursePicker<T extends CourseSummary>({
   count,
   unit,
   onPick,
+  children,
 }: {
   title: string
   subtitle: string
@@ -22,6 +24,8 @@ export default function CoursePicker<T extends CourseSummary>({
   /** "question" or "card", pluralised with an "s" */
   unit: string
   onPick: (course: T) => void
+  /** Shown between the title and the list, e.g. session settings */
+  children?: ReactNode
 }) {
   return (
     <>
@@ -34,6 +38,8 @@ export default function CoursePicker<T extends CourseSummary>({
           <p className="text-sm text-white/40">{subtitle}</p>
         </div>
       </div>
+
+      {children && <div className="mb-5">{children}</div>}
 
       <div className="space-y-2.5">
         {courses.map((course, i) => {

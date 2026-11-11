@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
-import { ChevronLeft, RotateCcw, BookOpen, CheckCircle, Layers, Sparkles, Loader2 } from "lucide-react"
+import { ChevronLeft, RotateCcw, BookOpen, CheckCircle, Layers, Sparkles, Loader2, Flag } from "lucide-react"
 import { useAuth } from "@/lib/supabase/auth"
 import {
   fetchCourses,
@@ -16,6 +16,7 @@ import SaveWarning from "@/components/ui/SaveWarning"
 import { BackButton, EmptyState, LoadingState, primaryButton, secondaryButton } from "@/components/ui/PageStates"
 import CoursePicker from "@/components/study/CoursePicker"
 import Confetti from "@/components/study/Confetti"
+import FeedbackDialog from "@/components/ui/FeedbackDialog"
 import type { CourseSummary, FlashcardReviewCard } from "@/lib/types"
 
 interface CourseWithCount extends CourseSummary {
@@ -67,6 +68,7 @@ export default function Flashcards({
   const [generating, setGenerating] = useState(false)
   const [generateMsg, setGenerateMsg] = useState<string | null>(null)
   const [moreError, setMoreError] = useState<string | null>(null)
+  const [reporting, setReporting] = useState(false)
 
   const loadCourses = useCallback(async () => {
     setLoading(true)
@@ -446,6 +448,25 @@ export default function Flashcards({
           </button>
         ))}
       </div>
+
+      {flipped && (
+        <div className="flex justify-center mt-4">
+          <button
+            onClick={() => setReporting(true)}
+            className="inline-flex items-center gap-1 text-xs transition-colors duration-150 text-white/30 hover:text-white/70"
+          >
+            <Flag size={12} />
+            Report this card
+          </button>
+        </div>
+      )}
+
+      {reporting && (
+        <FeedbackDialog
+          target={{ kind: "flashcard", id: card.id, text: `${card.recto} → ${card.verso}` }}
+          onClose={() => setReporting(false)}
+        />
+      )}
 
       {!flipped && current > 0 && (
         <div className="flex justify-center mt-4">

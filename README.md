@@ -22,6 +22,9 @@ It started as a personal need: revising networking, Java and API coursework as a
 - **Mistake review**: at the end of a quiz, see every missed question with the right answer, and replay only those
 - **Fresh sessions**: each quiz picks up to 10 questions, never-played first, then missed ones, in a new order
 - **New questions on demand**: ask for another set of questions or cards, different from the existing ones
+- **Quiz length**: 5, 10 or 20 questions per round, remembered on the device
+- **Report a question or a card** that is wrong or unclear, in one click
+- **Give feedback** from the account menu (rating + message)
 - **AI-generated flashcards** rated *Again / Hard / Good / Easy*; the rating schedules the next review, and a card rated *Again* comes back before the session ends
 
 **Track**
@@ -149,6 +152,13 @@ CI runs typecheck, lint, tests and build on every pull request.
 | `OLLAMA_URL` | Ollama endpoint (when using Ollama) |
 | `LLM_MAX_INPUT_WORDS` | Optional. Words of course text sent to the LLM (default 2200) |
 | `ALLOWED_ORIGINS` | Comma-separated app origins allowed to call the functions (e.g. `https://kwizo.vercel.app,http://localhost:8443`). Unset = any origin, for development only |
+
+## Reading reports and feedback
+
+Reports and feedback land in the `feedback` table (migration `005_feedback.sql`). Users can only write
+their own rows; read them in the Supabase dashboard (**Table editor → feedback**), newest first. A
+report keeps a `snapshot` of the question so it stays readable if the course is deleted. Each user can
+send at most 30 messages a day.
 
 ## Deployment
 
