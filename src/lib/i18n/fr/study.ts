@@ -119,10 +119,10 @@ const fr: Record<string, string> = {
   "Typo or formatting": "Faute de frappe ou mise en forme",
   "Something else": "Autre chose",
   "Tell us what you think": "Dis-nous ce que tu en penses",
-  "Thanks for helping us fix it. H.S Company reads every report.":
-    "Merci de nous aider à corriger ça. H.S Company lit chaque signalement.",
-  "A bug, an idea, something you love: it goes straight to the H.S Company team.":
-    "Un bug, une idée, un truc que tu adores : ça arrive direct à l'équipe H.S Company.",
+  "Thanks for helping us fix it. H.S reads every report.":
+    "Merci de nous aider à corriger ça. H.S lit chaque signalement.",
+  "A bug, an idea, something you love: it goes straight to the H.S team.":
+    "Un bug, une idée, un truc que tu adores : ça arrive direct à l'équipe H.S.",
   "Close": "Fermer",
   "Thank you!": "Merci !",
   "We'll look at this one.": "On va regarder ça de près.",

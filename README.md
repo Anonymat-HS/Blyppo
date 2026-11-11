@@ -1,48 +1,124 @@
-# Kwizo
+<p align="center">
+  <img src="public/logo.svg" alt="Kwizo logo" width="96" height="96" />
+</p>
 
-> **Quiz yourself. Ace the exam.** Turn your course notes into AI-generated quizzes and spaced-repetition flashcards.
->
-> A product of **H.S Company**.
+<h1 align="center">Kwizo</h1>
 
-[![CI](https://github.com/Anonymat-HS/Kwizo/actions/workflows/ci.yml/badge.svg)](https://github.com/Anonymat-HS/Kwizo/actions/workflows/ci.yml)
-[Live app: kwizo.vercel.app](https://kwizo.vercel.app)
+<p align="center">
+  <b>Quiz yourself. Ace the exam.</b><br />
+  Turn your course notes into AI-generated quizzes and spaced-repetition flashcards.
+</p>
 
-Kwizo is a study tool for students. Upload a course (PDF, TXT or Markdown) and Kwizo writes a multiple-choice quiz and a flashcard deck straight from your own material. Then it keeps you practising: you answer before you see the solution, you review what you missed, and flashcards come back on a spaced-repetition schedule.
+<p align="center">
+  <a href="https://github.com/Anonymat-HS/Kwizo/actions/workflows/ci.yml"><img src="https://github.com/Anonymat-HS/Kwizo/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <img src="https://img.shields.io/badge/license-proprietary-7C5CFF" alt="License: proprietary" />
+  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React 19" />
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Supabase-Postgres%20%2B%20Edge-3ECF8E?logo=supabase&logoColor=white" alt="Supabase" />
+  <img src="https://img.shields.io/badge/UI-FR%20%7C%20EN-FFC83D" alt="French and English" />
+</p>
 
-Re-reading and highlighting feel productive but are weak for long-term memory. Retrieving an answer from your head (active recall), spaced over time, is what makes knowledge stick. Kwizo automates the boring part, writing the questions, so students spend their time on that.
+<p align="center">
+  <a href="https://kwizo.vercel.app"><b>Live app</b></a> ·
+  <a href="#screenshots">Screenshots</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#getting-started">Getting started</a> ·
+  <a href="#security">Security</a>
+</p>
 
-It started as a personal need: revising networking, Java and API coursework as a first-year CS student. It is built to grow into a tool for any student or institution.
+<p align="center"><sub>A product of <b>H.S</b></sub></p>
+
+<p align="center">
+  <img src="docs/screenshots/landing.png" alt="Kwizo landing page" width="900" />
+</p>
+
+---
+
+## Why Kwizo
+
+Re-reading and highlighting *feel* productive, but they are weak for long-term memory. What makes knowledge stick is **pulling the answer out of your own head** (active recall), again and again, **spaced over time**.
+
+Kwizo automates the boring part, writing the questions:
+
+1. **Upload** a course: PDF, TXT or Markdown.
+2. **Kwizo writes** a varied quiz and a flashcard deck **from your own material**, not from the internet.
+3. **Practise**: answer before you see the solution, review what you missed, and let flashcards come back right before you forget them.
+
+It started as a personal need, revising networking, Java and API coursework as a first-year CS student, and is built to grow into a tool for any student or institution.
+
+<a id="screenshots"></a>
+
+## Screenshots
+
+> The UI is in French by default (an FR / EN switch is always one click away). Screenshots use demo data.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/dashboard.png" alt="Dashboard" /><br /><b>Dashboard</b>: streak, quick play, every course one click away</td>
+    <td width="50%"><img src="docs/screenshots/quiz-multiple.png" alt="Multiple-answer question" /><br /><b>Several right answers</b>: tick them all, then validate</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/quiz-passage.png" alt="Reading passage" /><br /><b>Reading passage</b>: a short text or case study, then questions on it</td>
+    <td><img src="docs/screenshots/quiz-order.png" alt="Put in order" /><br /><b>Put in order</b>: tap the items in sequence (phone-friendly)</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/quiz-cloze.png" alt="Fill in the blank" /><br /><b>Fill in the blank</b>: typed answers forgive case, accents and small typos</td>
+    <td><img src="docs/screenshots/quiz-results.png" alt="Results" /><br /><b>Results</b>: score, replay, retry your misses or ask for new questions</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/flashcards.png" alt="Flashcards" /><br /><b>Flashcards</b>: 3D flip and spaced-repetition rating</td>
+    <td><img src="docs/screenshots/progress.png" alt="Progress" /><br /><b>Progress</b>: streak, scores over time, per-course breakdown</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/quiz-mixed.png" alt="Mixed quiz" /><br /><b>Mixed quiz</b>: one session across several courses</td>
+    <td>
+      <p align="center">
+        <img src="docs/screenshots/mobile-landing.png" alt="Mobile landing" width="45%" />
+        <img src="docs/screenshots/mobile-quiz.png" alt="Mobile quiz" width="45%" />
+      </p>
+      <b>Mobile</b>: every screen works at phone width
+    </td>
+  </tr>
+</table>
+
+<a id="features"></a>
 
 ## Features
 
-**Study**
-- **Upload a course**: PDF (text-based), TXT or Markdown, with a real upload progress bar
-- **AI-generated quiz** mixing 6 question types: single answer, **several right answers**, true / false,
-  short typed answer (lenient on case, accents and small typos), fill in the blank, and put in order
-- **Reading passages**: a short text or case study followed by 2-3 questions, always played together
+### Six question types, mixed by the AI
+
+| Type | How you answer | Grading |
+|---|---|---|
+| Single answer | tap one of 4 options (or press `1`-`4` / `A`-`D`) | — |
+| **Several right answers** | tick 2-3 of 4-5 options, then validate | all-or-nothing |
+| True / False | two big buttons | — |
+| Short answer | type it | lenient: case, accents, punctuation, a leading article ignored, 1-2 typos forgiven on words; numbers exact |
+| Fill in the blank | type the missing word in the sentence | same as short answer |
+| Put in order | tap the items in sequence | exact order |
+
+Plus **reading passages**: a short text or case study followed by 2-3 questions, always played together.
+
+### Study
+- **Fresh sessions**: each quiz picks 5, 10 or 20 questions, never-played first, then missed ones, in a new order
+- **Mistake review** at the end of a quiz, and **"Retry my misses"** to replay only those
+- **New questions on demand**: another set of questions or cards, different from the ones you have
 - **Mixed quiz**: tick several courses and play one quiz across all of them
-- **Answer from the keyboard**: `1`-`4` or `A`-`D` to pick, `Enter` / `Space` for the next question
-- **Mistake review**: at the end of a quiz, see every missed question with the right answer, and replay only those
-- **Fresh sessions**: each quiz picks up to 10 questions, never-played first, then missed ones, in a new order
-- **New questions on demand**: ask for another set of questions or cards, different from the existing ones
-- **Quiz length**: 5, 10 or 20 questions per round, remembered on the device
-- **Report a question or a card** that is wrong or unclear, in one click
-- **Give feedback** from the account menu (rating + message)
-- **AI-generated flashcards** rated *Again / Hard / Good / Easy*; the rating schedules the next review, and a card rated *Again* comes back before the session ends
+- **Flashcards** rated *Again / Hard / Good / Easy*: the rating schedules the next review
+- **Keyboard first**: answer, validate and move on without the mouse
 
-**Track**
-- **Progress page**: streak, average score, per-course breakdown and weekly activity
-- **Dashboard**: search, sort, rename and delete courses; jump straight into a course's quiz or flashcards
+### Track
+- **Streak**, average score, scores over time and per-course breakdown
+- **Dashboard** with quick play, search, sort, rename and delete
 
-**Account**
-- Sign up, log in and reset your password (Supabase Auth)
-- Profile with avatar, plus self-service account deletion
+### Care
+- **Report** a wrong or unclear question or card in one click
+- **Give feedback** from the account menu (rating + message), read by the team in Supabase
 
-**Platform**
+### Platform
+- **French and English**, French by default
 - **Plans and quotas** stored in the database (see [Plans and limits](#plans-and-limits))
 - **Swappable LLM provider**: Groq (default), Gemini or Ollama
-- Responsive dark UI, accessible labels and visible keyboard focus, respects `prefers-reduced-motion`
-- **French and English**: French by default, FR / EN switch on the landing, auth pages and account menu
+- Responsive dark UI, accessible labels, visible keyboard focus, respects `prefers-reduced-motion`
 
 ## Tech stack
 

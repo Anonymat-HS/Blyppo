@@ -44,9 +44,9 @@ const SIZES = {
 } as const
 
 /** The company behind Kwizo, shown with the logo and in footers. */
-export const COMPANY = "H.S Company"
+export const COMPANY = "H.S"
 
-/** Mark + wordmark. The "o" picks up the spark's yellow. `byline` adds "by H.S Company" under it. */
+/** Mark + wordmark. The "o" picks up the spark's yellow. `byline` adds "by H.S" under it. */
 export function Logo({
   size = "md",
   byline = false,
@@ -75,7 +75,7 @@ export function Logo({
   )
 }
 
-/** "H.S Company" badge with its monogram. */
+/** "H.S" badge with its monogram. */
 export function CompanyBadge({ label = "A product of" }: { label?: string }) {
   const { t } = useT()
   return (
