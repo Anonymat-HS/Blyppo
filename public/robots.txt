@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://blyppo.vercel.app/sitemap.xml

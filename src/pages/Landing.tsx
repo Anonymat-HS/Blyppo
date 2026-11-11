@@ -396,6 +396,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 flex flex-col items-center gap-5 text-center">
           <Logo size="md" byline />
           <CompanyBadge label="Designed and built by" />
+          <p className="text-sm text-white/45">{t("Blyppo is pronounced “blip-oh”, like the sound of a right answer.")}</p>
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
             {t("© 2026 Blyppo, a product of H.S. All rights reserved.")}
           </p>

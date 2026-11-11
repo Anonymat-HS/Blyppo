@@ -53,6 +53,7 @@ const fr: Record<string, string> = {
     "© 2026 Blyppo, un produit de H.S. Tous droits réservés.",
   "Designed and built by": "Conçu et développé par",
   "Start": "Commencer",
+  "Blyppo is pronounced “blip-oh”, like the sound of a right answer.": "Blyppo, ça se prononce « blipo », comme le petit son d'une bonne réponse.",
 }
 
 export default fr
