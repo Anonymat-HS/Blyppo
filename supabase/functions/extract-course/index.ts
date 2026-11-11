@@ -28,6 +28,10 @@ serve((req) =>
     }
 
     // Each course costs two LLM calls: cap how many a user can create per day.
+    // Checked before reading the file, extracting text or calling the LLM, so a
+    // blocked upload costs nothing.
+    // shortcut: count-then-insert is not atomic, so parallel uploads can exceed the
+    // quota; add a DB-level guard if that ever matters.
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
     const { count, error: countError } = await supabase
       .from("courses")
