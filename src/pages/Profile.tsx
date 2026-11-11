@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/supabase/auth"
 import { useUserStats } from "@/hooks/useUserStats"
 import ErrorState from "@/components/ui/ErrorState"
+import DeleteAccount from "@/components/ui/DeleteAccount"
 
 const MAX_AVATAR_MB = 2
 
@@ -63,8 +64,8 @@ export default function Profile({ onBack }: { onBack: () => void }) {
     if (!file || !user) return
     setAvatarError(null)
 
-    if (!file.type.startsWith("image/")) {
-      setAvatarError("Please choose an image file.")
+    if (!["image/png", "image/jpeg", "image/webp", "image/gif"].includes(file.type)) {
+      setAvatarError("Please choose a PNG, JPEG, WebP or GIF image.")
       return
     }
     if (file.size > MAX_AVATAR_MB * 1024 * 1024) {
@@ -176,7 +177,7 @@ export default function Profile({ onBack }: { onBack: () => void }) {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/png,image/jpeg,image/webp,image/gif"
             className="hidden"
             onChange={handleAvatarUpload}
           />
@@ -310,6 +311,8 @@ export default function Profile({ onBack }: { onBack: () => void }) {
           </div>
         )}
       </div>
+
+      <DeleteAccount />
     </div>
   )
 }

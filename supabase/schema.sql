@@ -46,10 +46,10 @@ create table flashcard_progress (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users on delete cascade,
   flashcard_id uuid not null references flashcards on delete cascade,
-  niveau text default 'nouveau',
+  niveau text default 'nouveau' check (niveau in ('nouveau', 'difficile', 'bien', 'facile')),
   last_reviewed timestamptz default now(),
   next_review timestamptz,
-  intervalle_jours real not null default 0,
+  intervalle_jours real not null default 0 check (intervalle_jours >= 0),
   unique (user_id, flashcard_id)
 );
 
@@ -60,7 +60,17 @@ create table quiz_attempts (
   course_id uuid not null references courses on delete cascade,
   score int not null,
   total int not null,
+  check (total > 0 and score >= 0 and score <= total),
   created_at timestamptz not null default now()
+);
+
+-- Claims the generation of a course's quiz or flashcards, so that concurrent
+-- requests cannot generate the same content twice. Used by the Edge Functions only.
+create table course_generations (
+  course_id uuid not null references courses on delete cascade,
+  kind text not null check (kind in ('quiz', 'flashcards')),
+  created_at timestamptz not null default now(),
+  primary key (course_id, kind)
 );
 
 -- Append-only activity log (streak + activity grid)
@@ -96,18 +106,15 @@ alter table user_progress enable row level security;
 alter table flashcard_progress enable row level security;
 alter table quiz_attempts enable row level security;
 alter table study_events enable row level security;
+-- No policy: only the service role can use it
+alter table course_generations enable row level security;
 
--- courses: user can only see/modify their own
+-- Courses, questions and cards are written by the Edge Functions only (service role),
+-- where size limits, quotas and validation apply. The app reads and deletes them.
+
+-- courses: user can only see/delete their own
 create policy "Users can view own courses"
   on courses for select
-  using (user_id = auth.uid());
-
-create policy "Users can insert own courses"
-  on courses for insert
-  with check (user_id = auth.uid());
-
-create policy "Users can update own courses"
-  on courses for update
   using (user_id = auth.uid());
 
 create policy "Users can delete own courses"
@@ -117,22 +124,6 @@ create policy "Users can delete own courses"
 -- quizzes: accessible via course ownership
 create policy "Users can view quizzes for own courses"
   on quizzes for select
-  using (
-    course_id in (
-      select id from courses where user_id = auth.uid()
-    )
-  );
-
-create policy "Users can insert quizzes for own courses"
-  on quizzes for insert
-  with check (
-    course_id in (
-      select id from courses where user_id = auth.uid()
-    )
-  );
-
-create policy "Users can update quizzes for own courses"
-  on quizzes for update
   using (
     course_id in (
       select id from courses where user_id = auth.uid()
@@ -156,22 +147,6 @@ create policy "Users can view flashcards for own courses"
     )
   );
 
-create policy "Users can insert flashcards for own courses"
-  on flashcards for insert
-  with check (
-    course_id in (
-      select id from courses where user_id = auth.uid()
-    )
-  );
-
-create policy "Users can update flashcards for own courses"
-  on flashcards for update
-  using (
-    course_id in (
-      select id from courses where user_id = auth.uid()
-    )
-  );
-
 create policy "Users can delete flashcards for own courses"
   on flashcards for delete
   using (
@@ -187,11 +162,24 @@ create policy "Users can view own progress"
 
 create policy "Users can insert own progress"
   on user_progress for insert
-  with check (user_id = auth.uid());
+  with check (
+    user_id = auth.uid()
+    and quiz_id in (
+      select q.id from quizzes q join courses c on c.id = q.course_id
+      where c.user_id = auth.uid()
+    )
+  );
 
 create policy "Users can update own progress"
   on user_progress for update
-  using (user_id = auth.uid());
+  using (user_id = auth.uid())
+  with check (
+    user_id = auth.uid()
+    and quiz_id in (
+      select q.id from quizzes q join courses c on c.id = q.course_id
+      where c.user_id = auth.uid()
+    )
+  );
 
 create policy "Users can delete own progress"
   on user_progress for delete
@@ -204,11 +192,24 @@ create policy "Users can view own flashcard progress"
 
 create policy "Users can insert own flashcard progress"
   on flashcard_progress for insert
-  with check (user_id = auth.uid());
+  with check (
+    user_id = auth.uid()
+    and flashcard_id in (
+      select f.id from flashcards f join courses c on c.id = f.course_id
+      where c.user_id = auth.uid()
+    )
+  );
 
 create policy "Users can update own flashcard progress"
   on flashcard_progress for update
-  using (user_id = auth.uid());
+  using (user_id = auth.uid())
+  with check (
+    user_id = auth.uid()
+    and flashcard_id in (
+      select f.id from flashcards f join courses c on c.id = f.course_id
+      where c.user_id = auth.uid()
+    )
+  );
 
 create policy "Users can delete own flashcard progress"
   on flashcard_progress for delete
@@ -221,7 +222,10 @@ create policy "Users can view own quiz attempts"
 
 create policy "Users can insert own quiz attempts"
   on quiz_attempts for insert
-  with check (user_id = auth.uid());
+  with check (
+    user_id = auth.uid()
+    and course_id in (select id from courses where user_id = auth.uid())
+  );
 
 create policy "Users can delete own quiz attempts"
   on quiz_attempts for delete

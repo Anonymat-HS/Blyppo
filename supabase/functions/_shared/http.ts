@@ -1,17 +1,42 @@
 import { createClient, type SupabaseClient, type User } from "https://esm.sh/@supabase/supabase-js@2"
 
-export const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+const ALLOWED_HEADERS = "authorization, x-client-info, apikey, content-type"
+
+/**
+ * CORS headers for a request. ALLOWED_ORIGINS is a comma-separated list of
+ * app origins (e.g. "https://studyforge.vercel.app,http://localhost:8443").
+ * When it is not set every origin is accepted, which is only meant for development.
+ */
+function corsHeaders(req: Request): Record<string, string> {
+  const allowed = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
+    .split(",")
+    .map((o) => o.trim().replace(/\/$/, ""))
+    .filter(Boolean)
+  const headers: Record<string, string> = {
+    "Access-Control-Allow-Headers": ALLOWED_HEADERS,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  }
+
+  if (!allowed.length) {
+    headers["Access-Control-Allow-Origin"] = "*"
+    return headers
+  }
+
+  headers["Vary"] = "Origin"
+  const origin = req.headers.get("Origin") ?? ""
+  // A browser on another site gets no Allow-Origin header and blocks the response
+  if (allowed.includes(origin)) headers["Access-Control-Allow-Origin"] = origin
+  return headers
 }
 
 export function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
   })
 }
 
+/** An error whose message is safe to show to the user. */
 export class HttpError extends Error {
   constructor(public status: number, message: string) {
     super(message)
@@ -34,12 +59,42 @@ export async function authenticate(
   return { supabase, user }
 }
 
-/** Maps any thrown error to a JSON response, keeping 429 visible to the client. */
-export function errorResponse(err: unknown): Response {
+/**
+ * Internal errors are logged, never sent to the client: they can contain
+ * provider responses or database details.
+ */
+function errorResponse(err: unknown): Response {
   if (err instanceof HttpError) return json({ error: err.message }, err.status)
+
   const message = err instanceof Error ? err.message : String(err)
-  const isRateLimit = /\b429\b|rate limit/i.test(message)
-  return json({ error: message }, isRateLimit ? 429 : 500)
+  console.error(message)
+
+  if (/\b429\b|rate limit/i.test(message)) {
+    // The frontend reads "try again in Xs" to schedule its retry
+    const wait = message.match(/try again in ([\d.]+)s/)
+    const hint = wait ? ` Please try again in ${wait[1]}s.` : " Please try again in a minute."
+    return json({ error: `The AI service is busy.${hint}` }, 429)
+  }
+  return json({ error: "Something went wrong on our side. Please try again." }, 500)
+}
+
+/** Wraps a POST handler: CORS preflight, method check, error mapping, CORS headers. */
+export async function handle(
+  req: Request,
+  handler: (req: Request) => Promise<Response>
+): Promise<Response> {
+  const cors = corsHeaders(req)
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors })
+
+  let res: Response
+  try {
+    if (req.method !== "POST") throw new HttpError(405, "Method not allowed")
+    res = await handler(req)
+  } catch (err) {
+    res = errorResponse(err)
+  }
+  for (const [name, value] of Object.entries(cors)) res.headers.set(name, value)
+  return res
 }
 
 /** Integer in [min, max]; falls back to `fallback` when the input is not a number. */

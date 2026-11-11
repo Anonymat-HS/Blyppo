@@ -58,3 +58,23 @@ export async function callGenerateFunction(
     setRetrying
   )
 }
+/** Permanently deletes the signed-in user's account and all their data, then signs out. */
+export async function deleteAccount(): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error("Not authenticated")
+
+  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    },
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.error || "Could not delete the account")
+  }
+
+  // The account no longer exists server-side: only the local session is left to clear
+  await supabase.auth.signOut({ scope: "local" })
+}

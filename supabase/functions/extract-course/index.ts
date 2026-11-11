@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts"
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@1.6.2"
-import { authenticate, corsHeaders, errorResponse, HttpError, json } from "../_shared/http.ts"
+import { authenticate, handle, HttpError, json } from "../_shared/http.ts"
 
 const MAX_FILE_BYTES = 20 * 1024 * 1024
 const MAX_TITLE_CHARS = 200
@@ -13,12 +13,8 @@ function dailyCourseLimit(): number {
   return Number.isFinite(fromEnv) && fromEnv > 0 ? fromEnv : DEFAULT_DAILY_COURSE_LIMIT
 }
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders })
-  }
-
-  try {
+serve((req) =>
+  handle(req, async () => {
     const { supabase, user } = await authenticate(req)
 
     const formData = await req.formData().catch(() => null)
@@ -50,9 +46,13 @@ serve(async (req) => {
     const bytes = new Uint8Array(await file.arrayBuffer())
     let texteExtrait = ""
     if (isPdf) {
-      const pdf = await getDocumentProxy(bytes)
-      const { text } = await extractText(pdf, { mergePages: true })
-      texteExtrait = text
+      try {
+        const pdf = await getDocumentProxy(bytes)
+        const { text } = await extractText(pdf, { mergePages: true })
+        texteExtrait = text
+      } catch {
+        throw new HttpError(422, "This PDF could not be read. It may be damaged or password-protected.")
+      }
     } else {
       texteExtrait = new TextDecoder().decode(bytes)
     }
@@ -75,7 +75,5 @@ serve(async (req) => {
     if (dbError) throw new Error(dbError.message)
 
     return json({ course })
-  } catch (err) {
-    return errorResponse(err)
-  }
-})
+  })
+)
