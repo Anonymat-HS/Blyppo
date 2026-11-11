@@ -1,9 +1,9 @@
 import { useId } from "react"
 
-/** The Revizo mark: a review loop around a check. Same drawing as public/logo.svg. */
+/** The Kwizo mark: a quiz bubble with a spark. Same drawing as public/logo.svg. */
 export function LogoMark({ size = 40, className = "" }: { size?: number; className?: string }) {
   // Each mark on the page needs its own gradient id
-  const gradientId = `rz-bg-${useId()}`
+  const gradientId = `kz-bg-${useId()}`
   return (
     <svg
       width={size}
@@ -19,16 +19,19 @@ export function LogoMark({ size = 40, className = "" }: { size?: number; classNa
         </linearGradient>
       </defs>
       <rect width="64" height="64" rx="16" fill={`url(#${gradientId})`} />
-      <path d="M48 32 A16 16 0 1 1 41.9 19.3" fill="none" stroke="#fff" strokeWidth="4.5" strokeLinecap="round" />
-      <path d="M46.6 23.4 L46.1 14.9 L37.9 22.9 Z" fill="#fff" stroke="#fff" strokeWidth="2" strokeLinejoin="round" />
       <path
-        d="M24.5 32.5 L30 38 L40 27.5"
-        fill="none"
-        stroke="#00D9FF"
-        strokeWidth="4.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        d="M22 13 H42 A10 10 0 0 1 52 23 V35 A10 10 0 0 1 42 45 H28 L18 53 V44.2 A10 10 0 0 1 12 35 V23 A10 10 0 0 1 22 13 Z"
+        fill="#fff"
       />
+      <path
+        d="M26.5 24.5 A5.5 5.5 0 1 1 34.5 29.4 C32.8 30.3 32 31.3 32 33.3"
+        fill="none"
+        stroke="#6D4CFF"
+        strokeWidth="4.6"
+        strokeLinecap="round"
+      />
+      <circle cx="32" cy="39.2" r="2.7" fill="#6D4CFF" />
+      <path d="M51 6 L52.6 10.4 L57 12 L52.6 13.6 L51 18 L49.4 13.6 L45 12 L49.4 10.4 Z" fill="#FFC83D" />
     </svg>
   )
 }
@@ -39,14 +42,14 @@ const SIZES = {
   lg: { mark: 48, text: "text-2xl" },
 } as const
 
-/** Mark + wordmark. The "o" picks up the check's cyan. */
+/** Mark + wordmark. The "o" picks up the spark's yellow. */
 export function Logo({ size = "md", className = "" }: { size?: keyof typeof SIZES; className?: string }) {
   const s = SIZES[size]
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
       <LogoMark size={s.mark} />
       <span className={`font-black tracking-tight text-white ${s.text}`}>
-        Reviz<span className="text-[#00D9FF]">o</span>
+        Kwiz<span className="text-[#FFC83D]">o</span>
       </span>
     </span>
   )

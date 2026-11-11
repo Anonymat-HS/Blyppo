@@ -1,4 +1,4 @@
-import { ArrowRight, Upload, Sparkles, Brain, CheckCircle, RotateCcw, CalendarClock, Target } from "lucide-react"
+import { ArrowRight, Upload, Sparkles, Brain, CheckCircle, Zap, CalendarClock, Target, Flame, Keyboard } from "lucide-react"
 import { Logo } from "@/components/ui/Logo"
 
 export default function Landing({ onEnter }: { onEnter: () => void }) {
@@ -61,28 +61,28 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium mb-8"
             style={{
-              background: "rgba(124,92,255,0.1)",
-              border: "1px solid rgba(124,92,255,0.28)",
-              color: "#C4B5FD",
+              background: "rgba(255,200,61,0.1)",
+              border: "1px solid rgba(255,200,61,0.3)",
+              color: "#FFD873",
             }}
           >
-            <RotateCcw size={13} />
-            Active recall + spaced repetition
+            <Zap size={13} />
+            Your notes in, a quiz out
           </div>
 
           <h1 className="text-3xl sm:text-5xl md:text-[72px] font-black leading-[1.0] tracking-tighter mb-6">
-            Revise less.
+            Quiz yourself.
             <br />
             <span
               style={{
                 background:
-                  "linear-gradient(135deg, #ffffff 0%, #C4B5FD 45%, #7C5CFF 100%)",
+                  "linear-gradient(135deg, #FFD873 0%, #C4B5FD 50%, #7C5CFF 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
               }}
             >
-              Remember more.
+              Ace the exam.
             </span>
           </h1>
 
@@ -90,9 +90,9 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
             className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-10"
             style={{ color: "rgba(255,255,255,0.48)" }}
           >
-            Revizo turns your PDFs and lecture notes into quizzes and
-            flashcards, then brings back each card right before you would
-            forget it.
+            Kwizo turns your PDFs and lecture notes into quizzes and
+            flashcards. Answer, see what you missed, and come back tomorrow
+            to keep your streak alive.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-5">
@@ -100,7 +100,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
               onClick={onEnter}
               className="group flex items-center gap-2 px-8 py-3.5 rounded-2xl font-semibold text-white transition-all duration-200 bg-[#7C5CFF] hover:bg-[#8B6BFF] hover:shadow-[0_0_36px_rgba(124,92,255,0.45)]"
             >
-              Start for free
+              Start my first quiz
               <ArrowRight
                 size={17}
                 className="group-hover:translate-x-0.5 transition-transform"
@@ -213,14 +213,14 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
           <div
             className="hidden sm:flex absolute -bottom-4 right-8 px-4 py-2 rounded-xl text-sm font-semibold items-center gap-2"
             style={{
-              background: "rgba(0,217,255,0.1)",
-              border: "1px solid rgba(0,217,255,0.25)",
-              color: "#00D9FF",
+              background: "rgba(255,200,61,0.1)",
+              border: "1px solid rgba(255,200,61,0.3)",
+              color: "#FFC83D",
               backdropFilter: "blur(8px)",
             }}
           >
-            <CalendarClock size={13} />
-            Next review: tomorrow · 6 cards
+            <Flame size={13} />
+            5-day streak · keep it going
           </div>
         </div>
       </section>
@@ -249,14 +249,14 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
               step: "02",
               icon: Sparkles,
               title: "Get a quiz and a deck",
-              desc: "Revizo reads your material and writes quiz questions and flashcards straight from it, not from the internet.",
+              desc: "Kwizo reads your material and writes quiz questions and flashcards straight from it, not from the internet.",
               color: "#00D9FF",
             },
             {
               step: "03",
-              icon: Brain,
-              title: "Revise at the right time",
-              desc: "Rate each card and Revizo schedules the next review: hard cards come back sooner, easy ones later.",
+              icon: Keyboard,
+              title: "Play, miss, retry",
+              desc: "Answer with 1-4 on the keyboard, review your mistakes, and let the flashcards come back when you need them.",
               color: "#22C55E",
             },
           ].map(({ step, icon: Icon, title, desc, color }) => (
@@ -294,19 +294,19 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-8">
         <div className="text-center mb-12">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight mb-3">
-            Why re-reading is not revising
+            Why a quiz beats re-reading
           </h2>
           <p className="text-base sm:text-lg max-w-2xl mx-auto" style={{ color: "rgba(255,255,255,0.38)" }}>
             Highlighting feels productive, but memory is built by pulling answers out of your head.
-            Revizo is designed around that.
+            That is exactly what a quiz does.
           </p>
         </div>
         <div className="grid sm:grid-cols-3 gap-5">
           {[
             {
               icon: Brain,
-              title: "Active recall",
-              desc: "Every question makes you answer before you see the solution.",
+              title: "Answer first",
+              desc: "Every question makes you commit to an answer before you see the solution.",
               color: "#7C5CFF",
             },
             {
@@ -317,7 +317,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
             },
             {
               icon: Target,
-              title: "Learn from mistakes",
+              title: "Learn from misses",
               desc: "At the end of a quiz, review the questions you missed with the right answer.",
               color: "#F59E0B",
             },
@@ -356,7 +356,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
             Free during beta
           </div>
           <h2 className="text-2xl sm:text-3xl font-black mb-3">
-            Revizo is free right now
+            Kwizo is free right now
           </h2>
           <p style={{ color: "rgba(255,255,255,0.45)" }}>
             No credit card, no hidden fees. We're building this for students first — pricing details coming soon.
@@ -374,7 +374,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
           }}
         >
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-black mb-3">
-            Your next exam starts with one upload
+            Your first quiz is one upload away
           </h2>
           <p className="mb-8" style={{ color: "rgba(255,255,255,0.45)" }}>
             Upload your first course and get a quiz and flashcards in minutes.
@@ -394,7 +394,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <Logo size="sm" />
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.28)" }}>
-            © 2026 Revizo. Revise less, remember more.
+            © 2026 Kwizo. Quiz yourself, ace the exam.
           </p>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.18)" }}>
             Crafted with care by <span style={{ color: "rgba(124,92,255,0.5)" }}>H.S Company</span>
