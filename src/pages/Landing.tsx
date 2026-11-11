@@ -242,7 +242,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
               step: "01",
               icon: Upload,
               title: "Upload your materials",
-              desc: "Drop in a PDF, a Word doc, or paste your lecture notes. One course, one upload.",
+              desc: "Drop in a PDF, a text file or Markdown notes. One course, one upload.",
               color: "#7C5CFF",
             },
             {
