@@ -2,6 +2,8 @@ import { useState } from "react"
 import { useAuth } from "@/lib/supabase/auth"
 import { supabase } from "@/lib/supabase/client"
 import { CompanyBadge, Logo } from "@/components/ui/Logo"
+import LanguageSwitch from "@/components/ui/LanguageSwitch"
+import { useT } from "@/lib/i18n"
 
 export default function CompleteProfile({
   onComplete,
@@ -9,6 +11,7 @@ export default function CompleteProfile({
   onComplete: () => void
 }) {
   const { user } = useAuth()
+  const { t } = useT()
   const [fullName, setFullName] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -18,7 +21,7 @@ export default function CompleteProfile({
     setError("")
 
     if (!fullName.trim()) {
-      setError("Please enter your name")
+      setError(t("Please enter your name"))
       return
     }
 
@@ -41,9 +44,10 @@ export default function CompleteProfile({
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4"
+      className="relative min-h-screen flex items-center justify-center px-4"
       style={{ background: "#0F0F12" }}
     >
+      <LanguageSwitch className="absolute top-4 right-4" />
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2.5 mb-8">
@@ -57,9 +61,9 @@ export default function CompleteProfile({
             border: "1px solid rgba(255,255,255,0.07)",
           }}
         >
-          <h1 className="text-xl font-bold text-white mb-1">Complete your profile</h1>
+          <h1 className="text-xl font-bold text-white mb-1">{t("Complete your profile")}</h1>
           <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.4)" }}>
-            Just one more thing — what should we call you?
+            {t("Just one more thing — what should we call you?")}
           </p>
 
           {error && (
@@ -78,7 +82,7 @@ export default function CompleteProfile({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="profile-full-name" className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.5)" }}>
-                Full name
+                {t("Full name")}
               </label>
               <input
                 id="profile-full-name"
@@ -97,7 +101,7 @@ export default function CompleteProfile({
               disabled={loading}
               className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 disabled:opacity-50 bg-[#7C5CFF] enabled:hover:bg-[#8B6BFF] enabled:hover:shadow-[0_0_20px_rgba(124,92,255,0.4)]"
             >
-              {loading ? "Saving..." : "Continue"}
+              {loading ? t("Saving...") : t("Continue")}
             </button>
           </form>
         </div>

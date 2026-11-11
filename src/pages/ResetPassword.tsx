@@ -1,11 +1,13 @@
 import { useState } from "react"
 import { useAuth } from "@/lib/supabase/auth"
 import AuthCard, { AuthError, authButtonClass, authInputClass } from "@/components/ui/AuthCard"
+import { useT } from "@/lib/i18n"
 
 const MIN_LENGTH = 8
 
 export default function ResetPassword() {
   const { updatePassword } = useAuth()
+  const { t } = useT()
   const [password, setPassword] = useState("")
   const [confirm, setConfirm] = useState("")
   const [error, setError] = useState("")
@@ -16,11 +18,11 @@ export default function ResetPassword() {
     setError("")
 
     if (password.length < MIN_LENGTH) {
-      setError(`Password must be at least ${MIN_LENGTH} characters`)
+      setError(t("Password must be at least {n} characters", { n: MIN_LENGTH }))
       return
     }
     if (password !== confirm) {
-      setError("The two passwords do not match")
+      setError(t("The two passwords do not match"))
       return
     }
 
@@ -32,13 +34,13 @@ export default function ResetPassword() {
   }
 
   return (
-    <AuthCard title="Choose a new password" subtitle="You will stay signed in afterwards">
+    <AuthCard title={t("Choose a new password")} subtitle={t("You will stay signed in afterwards")}>
       {error && <AuthError message={error} />}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="new-password" className="block text-xs font-semibold mb-1.5 text-white/50">
-            New password
+            {t("New password")}
           </label>
           <input
             id="new-password"
@@ -49,14 +51,14 @@ export default function ResetPassword() {
             minLength={MIN_LENGTH}
             autoFocus
             autoComplete="new-password"
-            placeholder="8+ characters"
+            placeholder={t("8+ characters")}
             className={authInputClass}
           />
         </div>
 
         <div>
           <label htmlFor="confirm-password" className="block text-xs font-semibold mb-1.5 text-white/50">
-            Confirm password
+            {t("Confirm password")}
           </label>
           <input
             id="confirm-password"
@@ -70,7 +72,7 @@ export default function ResetPassword() {
         </div>
 
         <button type="submit" disabled={loading} className={authButtonClass}>
-          {loading ? "Saving..." : "Save new password"}
+          {loading ? t("Saving...") : t("Save new password")}
         </button>
       </form>
     </AuthCard>

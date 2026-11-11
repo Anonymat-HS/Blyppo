@@ -15,6 +15,7 @@ import { useAuth } from "@/lib/supabase/auth"
 import { useUserStats } from "@/hooks/useUserStats"
 import { countByDay, localDayKey } from "@/lib/utils/stats"
 import ErrorState from "@/components/ui/ErrorState"
+import { useT } from "@/lib/i18n"
 import type { QuizAttempt, StudyEvent } from "@/lib/types"
 
 const CustomTooltip = ({
@@ -76,7 +77,7 @@ const BarTooltip = ({
 }
 
 /** Average score of the quizzes finished each day (last 12 active days). */
-function computeScoreHistory(attempts: QuizAttempt[]) {
+function computeScoreHistory(attempts: QuizAttempt[], locale: string) {
   const byDate: Record<string, { score: number; total: number }> = {}
   for (const a of attempts) {
     const day = localDayKey(a.created_at)
@@ -89,7 +90,7 @@ function computeScoreHistory(attempts: QuizAttempt[]) {
     .sort(([a], [b]) => a.localeCompare(b))
     .slice(-12)
     .map(([date, { score, total }]) => ({
-      date: new Date(`${date}T00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      date: new Date(`${date}T00:00`).toLocaleDateString(locale, { month: "short", day: "numeric" }),
       score: Math.round((score / total) * 100),
     }))
 }
@@ -113,6 +114,7 @@ function computeActivityGrid(events: StudyEvent[]) {
 
 export default function Progress() {
   const { user } = useAuth()
+  const { t, locale } = useT()
   const {
     loading,
     error,
@@ -127,7 +129,7 @@ export default function Progress() {
     flashcardsReviewed,
   } = useUserStats(user?.id)
 
-  const scoreHistory = useMemo(() => computeScoreHistory(attempts), [attempts])
+  const scoreHistory = useMemo(() => computeScoreHistory(attempts, locale), [attempts, locale])
   const activityWeeks = useMemo(() => computeActivityGrid(events), [events])
   const courseStats = useMemo(
     () =>
@@ -151,7 +153,7 @@ export default function Progress() {
       <div className="p-6 md:p-8 max-w-5xl mx-auto flex items-center justify-center" style={{ minHeight: "60vh" }}>
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto" style={{ borderColor: "#7C5CFF", borderTopColor: "transparent" }} />
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.38)" }}>Loading progress…</p>
+          <p className="text-sm" style={{ color: "rgba(255,255,255,0.38)" }}>{t("Loading progress…")}</p>
         </div>
       </div>
     )
@@ -160,9 +162,9 @@ export default function Progress() {
   if (!hasData) {
     return (
       <div className="p-6 md:p-8 max-w-5xl mx-auto">
-        <h1 className="text-2xl md:text-3xl font-black text-white mb-1.5">Progress</h1>
+        <h1 className="text-2xl md:text-3xl font-black text-white mb-1.5">{t("Progress")}</h1>
         <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.38)" }}>
-          Your learning journey at a glance
+          {t("Your learning journey at a glance")}
         </p>
         <div
           className="p-10 rounded-2xl text-center"
@@ -172,9 +174,9 @@ export default function Progress() {
           }}
         >
           <Brain size={40} className="mx-auto mb-3" style={{ color: "rgba(124,92,255,0.4)" }} />
-          <p className="font-bold text-sm text-white mb-1">No progress yet</p>
+          <p className="font-bold text-sm text-white mb-1">{t("No progress yet")}</p>
           <p className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.4)" }}>
-            Complete your first quiz to see your progress here.
+            {t("Complete your first quiz to see your progress here.")}
           </p>
         </div>
       </div>
@@ -184,10 +186,10 @@ export default function Progress() {
   return (
     <div className="p-6 md:p-8 max-w-5xl mx-auto">
       <h1 className="text-2xl md:text-3xl font-black text-white mb-1.5">
-        Progress
+        {t("Progress")}
       </h1>
       <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.38)" }}>
-        Your learning journey at a glance
+        {t("Your learning journey at a glance")}
       </p>
 
       {/* Stats */}
@@ -198,28 +200,33 @@ export default function Progress() {
             value: String(streak),
             icon: Flame,
             color: "#FCD34D",
-            sub: streak > 0 ? "Keep going!" : "Start studying today",
+            sub: streak > 0 ? t("Keep going!") : t("Start studying today"),
           },
           {
             label: "Quizzes taken",
             value: String(quizzesTaken),
             icon: Brain,
             color: "#A78BFA",
-            sub: quizzesTaken > 0 ? `${answeredCount} questions answered` : "Finish your first quiz",
+            sub:
+              quizzesTaken > 0
+                ? answeredCount === 1
+                  ? t("{n} question answered", { n: answeredCount })
+                  : t("{n} questions answered", { n: answeredCount })
+                : t("Finish your first quiz"),
           },
           {
             label: "Avg score",
             value: answeredCount ? `${avgScore}%` : "—",
             icon: Target,
             color: "#4ADE80",
-            sub: answeredCount > 0 ? "Latest answer to each question" : "No data yet",
+            sub: answeredCount > 0 ? t("Latest answer to each question") : t("No data yet"),
           },
           {
             label: "Flashcards reviewed",
             value: String(flashcardsReviewed),
             icon: TrendingUp,
             color: "#00D9FF",
-            sub: flashcardsReviewed > 0 ? "Distinct cards" : "Review your first flashcard",
+            sub: flashcardsReviewed > 0 ? t("Distinct cards") : t("Review your first flashcard"),
           },
         ].map(({ label, value, icon: Icon, color, sub }) => (
           <div
@@ -236,7 +243,7 @@ export default function Progress() {
                 className="text-[11px] font-semibold tracking-wider"
                 style={{ color: "rgba(255,255,255,0.35)" }}
               >
-                {label.toUpperCase()}
+                {t(label).toUpperCase()}
               </p>
             </div>
             <p className="text-2xl font-black" style={{ color }}>
@@ -261,12 +268,12 @@ export default function Progress() {
             border: "1px solid rgba(255,255,255,0.07)",
           }}
         >
-          <h2 className="font-bold text-white mb-0.5">Quiz Scores Over Time</h2>
+          <h2 className="font-bold text-white mb-0.5">{t("Quiz Scores Over Time")}</h2>
           <p
             className="text-xs mb-6"
             style={{ color: "rgba(255,255,255,0.38)" }}
           >
-            Average score of the quizzes finished each day
+            {t("Average score of the quizzes finished each day")}
           </p>
           <ResponsiveContainer width="100%" height={160}>
             <AreaChart
@@ -322,12 +329,12 @@ export default function Progress() {
               border: "1px solid rgba(255,255,255,0.07)",
             }}
           >
-            <h2 className="font-bold text-white mb-0.5">Score by Course</h2>
+            <h2 className="font-bold text-white mb-0.5">{t("Score by Course")}</h2>
             <p
               className="text-xs mb-6"
               style={{ color: "rgba(255,255,255,0.38)" }}
             >
-              Questions currently answered correctly
+              {t("Questions currently answered correctly")}
             </p>
             <ResponsiveContainer width="100%" height={150}>
               <BarChart
@@ -366,10 +373,10 @@ export default function Progress() {
             border: "1px solid rgba(255,255,255,0.07)",
           }}
         >
-          <h2 className="font-bold text-white mb-5">Course Breakdown</h2>
+          <h2 className="font-bold text-white mb-5">{t("Course Breakdown")}</h2>
           {breakdown.length === 0 ? (
             <p className="text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
-              No courses yet. Upload material to get started.
+              {t("No courses yet. Upload material to get started.")}
             </p>
           ) : (
             <div className="space-y-5">
@@ -390,7 +397,7 @@ export default function Progress() {
                           className="text-[11px]"
                           style={{ color: "rgba(255,255,255,0.3)" }}
                         >
-                          {c.quizCount} questions · {c.flashcardCount} flashcards
+                          {t("{n} questions · {m} flashcards", { n: c.quizCount, m: c.flashcardCount })}
                         </p>
                       </div>
                     </div>
@@ -429,7 +436,7 @@ export default function Progress() {
             border: "1px solid rgba(255,255,255,0.07)",
           }}
         >
-          <h2 className="font-bold text-white mb-5">Activity (last 12 months)</h2>
+          <h2 className="font-bold text-white mb-5">{t("Activity (last 12 months)")}</h2>
           <div className="overflow-x-auto pb-2 -mx-2 px-2">
             <div className="flex gap-1">
               {activityWeeks.map((week, wi) => (
@@ -446,7 +453,11 @@ export default function Progress() {
                         key={di}
                         className="w-3 h-3 rounded-sm"
                         style={{ background: `rgba(124,92,255,${opacity})` }}
-                        title={`${count} answer${count !== 1 ? "s" : ""} and review${count !== 1 ? "s" : ""}`}
+                        title={
+                          count === 1
+                            ? t("{n} answer and review", { n: count })
+                            : t("{n} answers and reviews", { n: count })
+                        }
                       />
                     )
                   })}
@@ -456,7 +467,7 @@ export default function Progress() {
           </div>
           <div className="flex items-center gap-2 mt-3">
             <span className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>
-              Less
+              {t("Less")}
             </span>
             {[0.07, 0.22, 0.4, 0.9].map((o) => (
               <div
@@ -466,7 +477,7 @@ export default function Progress() {
               />
             ))}
             <span className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>
-              More
+              {t("More")}
             </span>
           </div>
         </div>

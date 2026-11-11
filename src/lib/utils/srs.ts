@@ -45,8 +45,15 @@ export function scheduleReview(
   }
 }
 
-/** Short label for a rating button: "< 1m", "3d", "2mo", "1y". */
-export function formatInterval(days: number): string {
+/** Short label for a rating button: "< 1m", "3d", "2mo", "1y" (French: "< 1 min", "3 j", "2 mois", "1 an"). */
+export function formatInterval(days: number, lang: "en" | "fr" = "en"): string {
+  if (lang === "fr") {
+    if (days < 1) return "< 1 min"
+    if (days < 30) return `${days} j`
+    if (days < 365) return `${Math.round(days / 30)} mois`
+    const years = Math.round(days / 365)
+    return `${years} an${years > 1 ? "s" : ""}`
+  }
   if (days < 1) return "< 1m"
   if (days < 30) return `${days}d`
   if (days < 365) return `${Math.round(days / 30)}mo`

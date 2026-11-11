@@ -1,4 +1,5 @@
 import { useId } from "react"
+import { useT } from "@/lib/i18n"
 
 /** The Kwizo mark: a quiz bubble with a spark. Same drawing as public/logo.svg. */
 export function LogoMark({ size = 40, className = "" }: { size?: number; className?: string }) {
@@ -55,6 +56,7 @@ export function Logo({
   byline?: boolean
   className?: string
 }) {
+  const { t } = useT()
   const s = SIZES[size]
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
@@ -64,8 +66,8 @@ export function Logo({
           Kwiz<span className="text-[#FFC83D]">o</span>
         </span>
         {byline && (
-          <span className="mt-1 text-[10px] font-bold tracking-[0.12em] uppercase text-white/55">
-            by <span className="text-[#FFC83D]">{COMPANY}</span>
+          <span className="mt-1 whitespace-nowrap text-[10px] font-bold tracking-[0.12em] uppercase text-white/55">
+            {t("by")} <span className="text-[#FFC83D]">{COMPANY}</span>
           </span>
         )}
       </span>
@@ -75,6 +77,7 @@ export function Logo({
 
 /** "H.S Company" badge with its monogram. */
 export function CompanyBadge({ label = "A product of" }: { label?: string }) {
+  const { t } = useT()
   return (
     <span className="inline-flex items-center gap-2.5 pl-1.5 pr-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/10">
       <span
@@ -84,7 +87,7 @@ export function CompanyBadge({ label = "A product of" }: { label?: string }) {
         H.S
       </span>
       <span className="text-xs text-white/50">
-        {label} <span className="font-bold text-white">{COMPANY}</span>
+        {t(label)} <span className="font-bold text-white">{COMPANY}</span>
       </span>
     </span>
   )

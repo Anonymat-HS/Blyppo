@@ -17,6 +17,7 @@ import { BackButton, EmptyState, LoadingState, primaryButton, secondaryButton } 
 import CoursePicker from "@/components/study/CoursePicker"
 import Confetti from "@/components/study/Confetti"
 import FeedbackDialog from "@/components/ui/FeedbackDialog"
+import { useT } from "@/lib/i18n"
 import type { CourseSummary, FlashcardReviewCard } from "@/lib/types"
 
 interface CourseWithCount extends CourseSummary {
@@ -45,6 +46,7 @@ export default function Flashcards({
   initialCourseId?: string
 }) {
   const { user } = useAuth()
+  const { t, locale, lang } = useT()
   const [courses, setCourses] = useState<CourseWithCount[]>([])
   const [selectedCourse, setSelectedCourse] = useState<CourseWithCount | null>(null)
   const [loading, setLoading] = useState(true)
@@ -173,10 +175,12 @@ export default function Flashcards({
           <Sparkles size={18} />
         </div>
         <div className="flex-1 min-w-[11rem]">
-          <p className="font-bold text-white text-sm">Want more cards?</p>
+          <p className="font-bold text-white text-sm">{t("Want more cards?")}</p>
           <p className="text-xs text-white/50 mt-0.5">
-            {allCards.length} card{allCards.length !== 1 ? "s" : ""} in this deck. Kwizo can add 15 new ones,
-            different from these.
+            {allCards.length === 1
+              ? t("{n} card in this deck.", { n: allCards.length })
+              : t("{n} cards in this deck.", { n: allCards.length })}{" "}
+            {t("Kwizo can add 15 new ones, different from these.")}
           </p>
         </div>
         <button
@@ -185,12 +189,12 @@ export default function Flashcards({
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all bg-spark text-[#16161D] hover:bg-spark-soft disabled:opacity-60"
         >
           {generating ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
-          {generating ? "Writing new cards..." : "More cards"}
+          {generating ? t("Writing new cards...") : t("More cards")}
         </button>
       </div>
       {generating && (
         <p className="text-xs text-white/40 mt-3" role="status">
-          {generateMsg ?? "This takes about 10 to 20 seconds."}
+          {generateMsg ?? t("This takes about 10 to 20 seconds.")}
         </p>
       )}
       {moreError && (
@@ -255,7 +259,7 @@ export default function Flashcards({
   }
 
   if (loading) {
-    return <LoadingState label="Loading courses..." />
+    return <LoadingState label={t("Loading courses...")} />
   }
 
   if (courses.length === 0) {
@@ -264,8 +268,8 @@ export default function Flashcards({
         <BackButton onClick={onBack} />
         <EmptyState
           icon={BookOpen}
-          title="No courses yet"
-          text="Upload a course first, then Kwizo makes a flashcard deck from it."
+          title={t("No courses yet")}
+          text={t("Upload a course first, then Kwizo makes a flashcard deck from it.")}
         />
       </div>
     )
@@ -276,12 +280,13 @@ export default function Flashcards({
       <div className="p-6 md:p-8 max-w-lg mx-auto">
         <BackButton onClick={onBack} />
         <CoursePicker
-          title="Pick a deck"
-          subtitle="Cards that are due come first"
+          title={t("Pick a deck")}
+          subtitle={t("Cards that are due come first")}
           icon={Layers}
           courses={courses}
           count={(c) => c.flashcard_count}
-          unit="card"
+          countLabel={(n) => (n === 1 ? t("{n} card", { n }) : t("{n} cards", { n }))}
+          emptyLabel={t("No cards yet")}
           onPick={(c) => startReview(c)}
         />
       </div>
@@ -289,18 +294,18 @@ export default function Flashcards({
   }
 
   if (loadingCards) {
-    return <LoadingState label="Shuffling your deck..." />
+    return <LoadingState label={t("Shuffling your deck...")} />
   }
 
   if (allCards.length === 0) {
     return (
       <div className="p-6 md:p-8 max-w-lg mx-auto">
-        <BackButton onClick={() => setSelectedCourse(null)} label="Back to courses" />
+        <BackButton onClick={() => setSelectedCourse(null)} label={t("Back to courses")} />
         <EmptyState
           icon={BookOpen}
           tone="spark"
-          title="No flashcards yet"
-          text="Generate the flashcards for this course from the Dashboard first."
+          title={t("No flashcards yet")}
+          text={t("Generate the flashcards for this course from the Dashboard first.")}
         />
       </div>
     )
@@ -313,19 +318,21 @@ export default function Flashcards({
         <div className="animate-pop w-20 h-20 rounded-3xl flex items-center justify-center mb-5 bg-ok/10 border border-ok/25">
           <CheckCircle size={38} className="text-ok" />
         </div>
-        <h2 className="text-2xl font-black text-white mb-2">You're all caught up</h2>
+        <h2 className="text-2xl font-black text-white mb-2">{t("You're all caught up")}</h2>
         <p className="mb-8 text-sm text-white/45">
           {nextDue
-            ? `Next cards are due ${nextDue.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}`
-            : "No card is due for this course."}
+            ? t("Next cards are due {date}", {
+                date: nextDue.toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" }),
+              })
+            : t("No card is due for this course.")}
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
           <button onClick={() => startReview(selectedCourse, true)} className={primaryButton}>
             <RotateCcw size={15} />
-            Review all {allCards.length} cards anyway
+            {t("Review all {n} cards anyway", { n: allCards.length })}
           </button>
           <button onClick={() => setSelectedCourse(null)} className={secondaryButton}>
-            Choose another deck
+            {t("Choose another deck")}
           </button>
         </div>
         {moreCardsPanel}
@@ -344,18 +351,18 @@ export default function Flashcards({
         <div className="animate-pop w-20 h-20 rounded-3xl flex items-center justify-center mb-5 bg-spark/10 border border-spark/30 text-4xl">
           <span aria-hidden="true">🎉</span>
         </div>
-        <h2 className="text-3xl font-black text-white mb-2">Deck complete!</h2>
+        <h2 className="text-3xl font-black text-white mb-2">{t("Deck complete!")}</h2>
         <p className="mb-8 text-white/45">
-          {new Set(cards.map((c) => c.id)).size} cards reviewed · {known} you knew well
+          {t("{n} cards reviewed · {known} you knew well", { n: new Set(cards.map((c) => c.id)).size, known })}
         </p>
 
-        {saveFailed && <SaveWarning message="Some reviews could not be saved. Check your connection." />}
+        {saveFailed && <SaveWarning message={t("Some reviews could not be saved. Check your connection.")} />}
 
         <div className="grid grid-cols-4 gap-2 sm:gap-3 w-full max-w-sm mb-10">
           {ratings.map(({ r, label, color, bg, border }) => (
             <div key={r} className="p-3 rounded-2xl text-center" style={{ background: bg, border: `1px solid ${border}` }}>
               <p className="text-xl font-black" style={{ color }}>{counts[r]}</p>
-              <p className="text-[11px] mt-0.5 text-white/40">{label}</p>
+              <p className="text-[11px] mt-0.5 text-white/40">{t(label)}</p>
             </div>
           ))}
         </div>
@@ -363,10 +370,10 @@ export default function Flashcards({
         <div className="flex flex-col sm:flex-row gap-3">
           <button onClick={() => startReview(selectedCourse, true)} className={primaryButton}>
             <RotateCcw size={15} />
-            Review again
+            {t("Review again")}
           </button>
           <button onClick={() => setSelectedCourse(null)} className={secondaryButton}>
-            Choose another deck
+            {t("Choose another deck")}
           </button>
         </div>
         {moreCardsPanel}
@@ -376,7 +383,7 @@ export default function Flashcards({
 
   return (
     <div className="p-6 md:p-8 max-w-lg mx-auto">
-      <BackButton onClick={() => setSelectedCourse(null)} label="Exit" />
+      <BackButton onClick={() => setSelectedCourse(null)} label={t("Exit")} />
 
       <div className="flex items-center justify-between mb-2">
         <p className="text-[11px] font-semibold tracking-wider text-white/30 truncate">
@@ -394,7 +401,7 @@ export default function Flashcards({
         />
       </div>
 
-      {saveFailed && <SaveWarning message="Some reviews could not be saved. Check your connection." />}
+      {saveFailed && <SaveWarning message={t("Some reviews could not be saved. Check your connection.")} />}
 
       {/* Flashcard: a 3D card that turns over */}
       <div
@@ -403,19 +410,19 @@ export default function Flashcards({
         // Space / Enter flipping is handled by the page-level keyboard listener
         role="button"
         tabIndex={0}
-        aria-label={flipped ? "Show the question" : "Show the answer"}
+        aria-label={flipped ? t("Show the question") : t("Show the answer")}
       >
         {/* The appear animation sits on a wrapper: it would override the flip's transform */}
         <div key={card.id} className="animate-rise">
         <div className="kz-flip-inner min-h-[290px]" data-flipped={flipped}>
           <div className="kz-face rounded-3xl p-8 flex flex-col items-center justify-center text-center bg-panel border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
-            <span className="absolute top-4 left-5 text-[11px] font-bold tracking-widest text-brand-soft/70">QUESTION</span>
+            <span className="absolute top-4 left-5 text-[11px] font-bold tracking-widest text-brand-soft/70">{t("QUESTION")}</span>
             <Layers size={18} className="absolute top-4 right-5 text-white/15" />
             <p className="text-xl md:text-2xl font-bold text-white leading-snug">{card.recto}</p>
-            <p className="absolute bottom-5 text-xs text-white/25">Tap or press Space to flip</p>
+            <p className="absolute bottom-5 text-xs text-white/25">{t("Tap or press Space to flip")}</p>
           </div>
           <div className="kz-face kz-face-back rounded-3xl p-8 flex flex-col items-center justify-center text-center bg-gradient-to-br from-brand/25 to-[#16161D] border border-brand/35 shadow-[0_20px_60px_rgba(124,92,255,0.18)]">
-            <span className="absolute top-4 left-5 text-[11px] font-bold tracking-widest text-spark">ANSWER</span>
+            <span className="absolute top-4 left-5 text-[11px] font-bold tracking-widest text-spark">{t("ANSWER")}</span>
             <p className="text-base md:text-lg leading-relaxed text-white/90">{card.verso}</p>
           </div>
         </div>
@@ -423,7 +430,7 @@ export default function Flashcards({
       </div>
 
       <p className="text-center text-xs mb-4 text-white/30">
-        {flipped ? "How well did you know it?" : "Think of the answer, then flip the card"}
+        {flipped ? t("How well did you know it?") : t("Think of the answer, then flip the card")}
       </p>
 
       {/* Rating buttons */}
@@ -441,9 +448,9 @@ export default function Flashcards({
             style={{ background: bg, border: `1px solid ${border}` }}
           >
             <span className="hidden sm:block absolute top-1.5 right-2 text-[10px] font-bold text-white/25">{i + 1}</span>
-            <span className="text-sm font-bold" style={{ color }}>{label}</span>
+            <span className="text-sm font-bold" style={{ color }}>{t(label)}</span>
             <span className="text-[11px]" style={{ color: color + "A0" }}>
-              {formatInterval(nextIntervalDays(r, intervals[card.id] ?? 0))}
+              {formatInterval(nextIntervalDays(r, intervals[card.id] ?? 0), lang)}
             </span>
           </button>
         ))}
@@ -456,7 +463,7 @@ export default function Flashcards({
             className="inline-flex items-center gap-1 text-xs transition-colors duration-150 text-white/30 hover:text-white/70"
           >
             <Flag size={12} />
-            Report this card
+            {t("Report this card")}
           </button>
         </div>
       )}
@@ -475,7 +482,7 @@ export default function Flashcards({
             className="inline-flex items-center gap-1 text-xs transition-colors duration-150 text-white/30 hover:text-white/65"
           >
             <ChevronLeft size={13} />
-            Previous card
+            {t("Previous card")}
           </button>
         </div>
       )}

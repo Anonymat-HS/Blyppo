@@ -2,6 +2,8 @@ import { useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
 import { useAuth } from "@/lib/supabase/auth"
 import { CompanyBadge, Logo } from "@/components/ui/Logo"
+import LanguageSwitch from "@/components/ui/LanguageSwitch"
+import { useT } from "@/lib/i18n"
 
 export default function Login({
   onSwitchToSignup,
@@ -11,6 +13,7 @@ export default function Login({
   onForgotPassword: () => void
 }) {
   const { signIn } = useAuth()
+  const { t } = useT()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -28,9 +31,10 @@ export default function Login({
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4"
+      className="relative min-h-screen flex items-center justify-center px-4"
       style={{ background: "#0F0F12" }}
     >
+      <LanguageSwitch className="absolute top-4 right-4" />
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2.5 mb-8">
@@ -44,9 +48,9 @@ export default function Login({
             border: "1px solid rgba(255,255,255,0.07)",
           }}
         >
-          <h1 className="text-xl font-bold text-white mb-1">Welcome back</h1>
+          <h1 className="text-xl font-bold text-white mb-1">{t("Welcome back")}</h1>
           <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.38)" }}>
-            Sign in to continue learning
+            {t("Sign in to continue learning")}
           </p>
 
           {error && (
@@ -65,7 +69,7 @@ export default function Login({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="login-email" className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.5)" }}>
-                Email
+                {t("Email")}
               </label>
               <input
                 id="login-email"
@@ -81,14 +85,14 @@ export default function Login({
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label htmlFor="login-password" className="block text-xs font-semibold" style={{ color: "rgba(255,255,255,0.5)" }}>
-                  Password
+                  {t("Password")}
                 </label>
                 <button
                   type="button"
                   onClick={onForgotPassword}
                   className="text-xs font-medium text-[#A78BFA] hover:text-[#C4B5FD] transition-colors duration-150"
                 >
-                  Forgot password?
+                  {t("Forgot password?")}
                 </button>
               </div>
               <div className="relative">
@@ -104,7 +108,7 @@ export default function Login({
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={showPassword ? t("Hide password") : t("Show password")}
                   className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors text-[rgba(255,255,255,0.3)] hover:text-[rgba(255,255,255,0.7)]"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -117,18 +121,18 @@ export default function Login({
               disabled={loading}
               className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 disabled:opacity-50 bg-[#7C5CFF] enabled:hover:bg-[#8B6BFF] enabled:hover:shadow-[0_0_20px_rgba(124,92,255,0.4)]"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? t("Signing in...") : t("Sign in")}
             </button>
           </form>
         </div>
 
         <p className="text-center text-sm mt-5" style={{ color: "rgba(255,255,255,0.35)" }}>
-          Don't have an account?{" "}
+          {t("Don't have an account?")}{" "}
           <button
             onClick={onSwitchToSignup}
             className="font-semibold transition-colors duration-150 text-[#A78BFA] hover:text-[#C4B5FD]"
           >
-            Sign up
+            {t("Sign up")}
           </button>
         </p>
 

@@ -10,6 +10,7 @@ import { EmptyState, LoadingState, primaryButton } from "@/components/ui/PageSta
 import CourseBadge from "@/components/study/CourseBadge"
 import { useStreak } from "@/hooks/useStreak"
 import type { CourseWithCounts } from "@/lib/types"
+import { useT } from "@/lib/i18n"
 
 export default function Dashboard({
   onNavigate,
@@ -17,6 +18,7 @@ export default function Dashboard({
   onNavigate: Navigate
 }) {
   const { user } = useAuth()
+  const { t, locale } = useT()
   const streak = useStreak(user?.id)
   const [quote] = useState(() => getRandomQuote())
   const [courses, setCourses] = useState<CourseWithCounts[]>([])
@@ -30,7 +32,7 @@ export default function Dashboard({
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null)
   const [deletingCourse, setDeletingCourse] = useState<string | null>(null)
 
-  const displayName = user?.user_metadata?.full_name?.split(" ")[0] ?? user?.email?.split("@")[0] ?? "there"
+  const displayName = user?.user_metadata?.full_name?.split(" ")[0] ?? user?.email?.split("@")[0] ?? t("there")
 
   const loadCourses = async () => {
     const coursesData = await fetchCourses()
@@ -88,7 +90,7 @@ export default function Dashboard({
       await deleteCourse(courseId)
       setCourses((list) => list.filter((c) => c.id !== courseId))
     } catch (err) {
-      setRetryError(`Could not delete the course: ${(err as Error).message}`)
+      setRetryError(t("Could not delete the course: {error}", { error: (err as Error).message }))
     } finally {
       setDeletingCourse(null)
       setConfirmingDelete(null)
@@ -114,12 +116,12 @@ export default function Dashboard({
 
   const greeting = (() => {
     const h = new Date().getHours()
-    if (h < 12) return "Good morning"
-    if (h < 18) return "Good afternoon"
-    return "Good evening"
+    if (h < 12) return t("Good morning, {name}", { name: displayName })
+    if (h < 18) return t("Good afternoon, {name}", { name: displayName })
+    return t("Good evening, {name}", { name: displayName })
   })()
 
-  const today = new Date().toLocaleDateString("en-US", {
+  const today = new Date().toLocaleDateString(locale, {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -131,7 +133,7 @@ export default function Dashboard({
   }
 
   if (loading) {
-    return <LoadingState label="Loading your dashboard..." />
+    return <LoadingState label={t("Loading your dashboard...")} />
   }
 
   return (
@@ -140,7 +142,7 @@ export default function Dashboard({
       <div className="flex items-start justify-between mb-8 flex-wrap gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-white">
-            {greeting}, {displayName} 👋
+            {greeting} 👋
           </h1>
           <p className="mt-1 text-sm" style={{ color: "rgba(255,255,255,0.38)" }}>
             {today}
@@ -149,7 +151,7 @@ export default function Dashboard({
         {streak !== null && streak > 0 && (
           <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-bold bg-spark/10 border border-spark/25 text-spark">
             <Flame size={15} />
-            {streak}-day streak
+            {streak === 1 ? t("1-day streak") : t("{n}-day streak", { n: streak })}
           </div>
         )}
       </div>
@@ -161,15 +163,15 @@ export default function Dashboard({
           <div className="relative flex items-center gap-4 flex-wrap">
             <CourseBadge id={playable.id} title={playable.titre} size={52} />
             <div className="flex-1 min-w-[10rem]">
-              <p className="text-[11px] font-bold tracking-wider text-spark">QUICK PLAY</p>
+              <p className="text-[11px] font-bold tracking-wider text-spark">{t("QUICK PLAY")}</p>
               <p className="text-lg font-black text-white leading-tight truncate">{playable.titre}</p>
               <p className="text-xs text-white/45 mt-0.5">
-                {playable.quiz_count} questions · about {Math.max(1, Math.round(playable.quiz_count / 2))} min
+                {t("{n} questions · about {min} min", { n: playable.quiz_count, min: Math.max(1, Math.round(playable.quiz_count / 2)) })}
               </p>
             </div>
             <button onClick={() => onNavigate("quiz", playable.id)} className={primaryButton}>
               <Play size={15} className="fill-current" />
-              Play quiz
+              {t("Play quiz")}
             </button>
           </div>
         </div>
@@ -192,7 +194,7 @@ export default function Dashboard({
               </div>
               <div className="min-w-0">
                 <p className="text-2xl font-black leading-none text-white">{value}</p>
-                <p className="text-[10px] sm:text-[11px] font-semibold mt-1 uppercase tracking-wider text-white/35 truncate">{label}</p>
+                <p className="text-[10px] sm:text-[11px] font-semibold mt-1 uppercase tracking-wider text-white/35 truncate">{t(label)}</p>
               </div>
             </div>
           ))}
@@ -204,7 +206,7 @@ export default function Dashboard({
         <div className="flex flex-wrap gap-2.5 mb-8">
           <button onClick={() => onNavigate("upload")} className={`${primaryButton} px-4 py-2.5`}>
             <Upload size={15} />
-            Upload new course
+            {t("Upload new course")}
           </button>
           {courses.length > 0 && [
             { screen: "quiz" as Screen, icon: Brain, label: "Start a quiz" },
@@ -216,7 +218,7 @@ export default function Dashboard({
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 border border-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.6)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[rgba(255,255,255,0.9)] hover:border-[rgba(255,255,255,0.15)]"
             >
               <Icon size={15} />
-              {label}
+              {t(label)}
             </button>
           ))}
         </div>
@@ -241,12 +243,12 @@ export default function Dashboard({
       {courses.length === 0 ? (
         <EmptyState
           icon={BookOpen}
-          title="Your first quiz is one upload away"
-          text="Upload a course (PDF, TXT or Markdown) and Kwizo writes a quiz and a flashcard deck from it."
+          title={t("Your first quiz is one upload away")}
+          text={t("Upload a course (PDF, TXT or Markdown) and Kwizo writes a quiz and a flashcard deck from it.")}
           action={
             <button onClick={() => onNavigate("upload")} className={primaryButton}>
               <Upload size={15} />
-              Upload a course
+              {t("Upload a course")}
             </button>
           }
         />
@@ -255,7 +257,7 @@ export default function Dashboard({
           {/* Recent courses */}
           <div>
             <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-              <h2 className="text-base font-bold">Your courses</h2>
+              <h2 className="text-base font-bold">{t("Your courses")}</h2>
               {courses.length > 1 && (
                 <div className="flex items-center gap-2">
                   <div className="relative">
@@ -264,26 +266,26 @@ export default function Dashboard({
                       type="search"
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Search courses"
-                      aria-label="Search courses"
+                      placeholder={t("Search courses")}
+                      aria-label={t("Search courses")}
                       className="w-44 sm:w-56 pl-8 pr-3 py-1.5 rounded-lg text-sm text-white outline-none bg-white/5 border border-white/10 focus:border-[#7C5CFF]/50 placeholder:text-white/30"
                     />
                   </div>
                   <select
                     value={sort}
                     onChange={(e) => setSort(e.target.value as "recent" | "name")}
-                    aria-label="Sort courses"
+                    aria-label={t("Sort courses")}
                     className="px-2.5 py-1.5 rounded-lg text-sm text-white/80 outline-none bg-[#1A1A23] border border-white/10 focus:border-[#7C5CFF]/50"
                   >
-                    <option value="recent">Most recent</option>
-                    <option value="name">Name (A-Z)</option>
+                    <option value="recent">{t("Most recent")}</option>
+                    <option value="name">{t("Name (A-Z)")}</option>
                   </select>
                 </div>
               )}
             </div>
 
             {visibleCourses.length === 0 && (
-              <p className="text-sm text-white/40">No course matches "{query.trim()}".</p>
+              <p className="text-sm text-white/40">{t("No course matches \"{query}\".", { query: query.trim() })}</p>
             )}
 
             <div className="grid md:grid-cols-2 gap-4">
@@ -309,7 +311,7 @@ export default function Dashboard({
                             className="text-xs mt-0.5"
                             style={{ color: "rgba(255,255,255,0.38)" }}
                           >
-                            {new Date(course.created_at).toLocaleDateString()}
+                            {new Date(course.created_at).toLocaleDateString(locale)}
                           </p>
                         </div>
                       </div>
@@ -321,21 +323,21 @@ export default function Dashboard({
                             disabled={deletingCourse === course.id}
                             className="px-2.5 py-1 rounded-lg font-semibold text-white bg-red-600 hover:bg-red-500 disabled:opacity-50 transition-colors"
                           >
-                            {deletingCourse === course.id ? "Deleting..." : "Delete"}
+                            {deletingCourse === course.id ? t("Deleting...") : t("Delete")}
                           </button>
                           <button
                             onClick={() => setConfirmingDelete(null)}
                             disabled={deletingCourse === course.id}
                             className="px-2.5 py-1 rounded-lg text-white/60 border border-white/10 hover:bg-white/5 transition-colors"
                           >
-                            Cancel
+                            {t("Cancel")}
                           </button>
                         </div>
                       ) : (
                         <button
                           onClick={() => setConfirmingDelete(course.id)}
-                          aria-label={`Delete ${course.titre}`}
-                          title="Delete course"
+                          aria-label={t("Delete {course}", { course: course.titre })}
+                          title={t("Delete course")}
                           className="shrink-0 p-1.5 rounded-lg text-white/25 hover:text-[#FCA5A5] hover:bg-red-500/10 transition-colors"
                         >
                           <Trash2 size={15} />
@@ -345,7 +347,7 @@ export default function Dashboard({
 
                     {confirmingDelete === course.id && (
                       <p className="text-xs mb-3 text-[#FCA5A5]">
-                        This deletes the course, its questions, flashcards and your progress on it.
+                        {t("This deletes the course, its questions, flashcards and your progress on it.")}
                       </p>
                     )}
 
@@ -359,16 +361,16 @@ export default function Dashboard({
                           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all bg-spark/10 border border-spark/25 text-spark hover:bg-spark/20"
                         >
                           <Sparkles size={11} />
-                          Generate quiz
+                          {t("Generate quiz")}
                         </button>
                       ) : isRetryingQuiz ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ background: "rgba(124,92,255,0.12)", color: "#A78BFA" }}>
                           <div className="w-3 h-3 border border-t-transparent rounded-full animate-spin" style={{ borderColor: "#A78BFA", borderTopColor: "transparent" }} />
-                          Generating quiz...
+                          {t("Generating quiz...")}
                         </span>
                       ) : (
                         <span style={{ color: "rgba(255,255,255,0.4)" }}>
-                          {course.quiz_count} question{course.quiz_count !== 1 ? "s" : ""}
+                          {course.quiz_count === 1 ? t("{n} question", { n: course.quiz_count }) : t("{n} questions", { n: course.quiz_count })}
                         </span>
                       )}
 
@@ -380,16 +382,16 @@ export default function Dashboard({
                           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all bg-spark/10 border border-spark/25 text-spark hover:bg-spark/20"
                         >
                           <Sparkles size={11} />
-                          Generate flashcards
+                          {t("Generate flashcards")}
                         </button>
                       ) : isRetryingFlashcard ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ background: "rgba(124,92,255,0.12)", color: "#A78BFA" }}>
                           <div className="w-3 h-3 border border-t-transparent rounded-full animate-spin" style={{ borderColor: "#A78BFA", borderTopColor: "transparent" }} />
-                          Generating flashcards...
+                          {t("Generating flashcards...")}
                         </span>
                       ) : (
                         <span style={{ color: "rgba(255,255,255,0.4)" }}>
-                          {course.flashcard_count} flashcard{course.flashcard_count !== 1 ? "s" : ""}
+                          {course.flashcard_count === 1 ? t("{n} flashcard", { n: course.flashcard_count }) : t("{n} flashcards", { n: course.flashcard_count })}
                         </span>
                       )}
                     </div>
@@ -402,7 +404,7 @@ export default function Dashboard({
                             className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white bg-brand hover:bg-brand-hover transition-colors"
                           >
                             <Play size={12} className="fill-current" />
-                            Play quiz
+                            {t("Play quiz")}
                           </button>
                         )}
                         {!needsFlashcard && (
@@ -411,7 +413,7 @@ export default function Dashboard({
                             className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-white/70 border border-white/10 hover:bg-white/5 transition-colors"
                           >
                             <Layers size={13} />
-                            Flashcards
+                            {t("Flashcards")}
                           </button>
                         )}
                       </div>

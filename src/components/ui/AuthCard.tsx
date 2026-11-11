@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
 import { CompanyBadge, Logo } from "@/components/ui/Logo"
+import LanguageSwitch from "@/components/ui/LanguageSwitch"
 
 /** Centered logo + card used by the password screens. */
 export default function AuthCard({
@@ -14,7 +15,8 @@ export default function AuthCard({
   footer?: ReactNode
 }) {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-[#0F0F12]">
+    <div className="relative min-h-screen flex items-center justify-center px-4 bg-[#0F0F12]">
+      <LanguageSwitch className="absolute top-4 right-4" />
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2.5 mb-8">
           <Logo size="lg" byline />

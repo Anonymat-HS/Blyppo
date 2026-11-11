@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react"
+import { useT } from "@/lib/i18n"
 
 /** Circular score that fills up when it appears. */
 export default function ScoreRing({ pct, color, size = 148 }: { pct: number; color: string; size?: number }) {
+  const { t } = useT()
   const [shown, setShown] = useState(0)
   useEffect(() => {
     // Start empty, then fill on the next frame so the transition runs
@@ -34,7 +36,7 @@ export default function ScoreRing({ pct, color, size = 148 }: { pct: number; col
         <span className="text-4xl font-black" style={{ color }}>
           {pct}%
         </span>
-        <span className="text-[11px] font-semibold tracking-wider text-white/35">SCORE</span>
+        <span className="text-[11px] font-semibold tracking-wider text-white/35">{t("SCORE")}</span>
       </div>
     </div>
   )
