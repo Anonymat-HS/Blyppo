@@ -56,6 +56,18 @@ select pg_temp.expect('alice deletes bob course', (select count(*) from courses 
 select pg_temp.expect('alice moves bob avatar', (select count(*) from storage.objects where name like '22222222%') = 1);
 rollback;
 
+\echo 'reading passages are private and server-written'
+begin; set local role authenticated; set local request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
+select pg_temp.expect('alice sees her passage only', (select count(*) = 1 and bool_and(text = 'Alice case study') from quiz_passages));
+select pg_temp.expect_error('alice writes a passage',
+  $$insert into quiz_passages (course_id, text) values ('aaaaaaaa-0000-0000-0000-000000000001', 'x')$$);
+select pg_temp.expect_error('alice writes a question',
+  $$insert into quizzes (course_id, question, options, bonne_reponse) values ('aaaaaaaa-0000-0000-0000-000000000001','q','[]','a')$$);
+rollback;
+begin; set local role anon;
+select pg_temp.expect('anon reads passages', (select count(*) from quiz_passages) = 0);
+rollback;
+
 \echo 'a user cannot give themselves a plan or more quota'
 begin; set local role authenticated; set local request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
 select pg_temp.expect_error('alice grants herself a plan', $$insert into user_plans (user_id, plan) values (auth.uid(),'bold')$$);

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { findCorrectIndex, pickSession, prepareQuestions } from "./quiz"
+import { findCorrectIndex, grade, levenshtein, matchesTyped, normalizeTyped, pickSession, prepareQuestions } from "./quiz"
 import type { QuizQuestion } from "@/lib/types"
 
 function question(options: string[], bonne_reponse: string): QuizQuestion {
@@ -98,5 +98,130 @@ describe("pickSession", () => {
       Array.from({ length: 20 }, () => pickSession(pool.slice(0, 6), {}, 6).map((q) => q.id).join())
     )
     expect(orders.size).toBeGreaterThan(1)
+  })
+})
+
+describe("prepareQuestions with question types", () => {
+  const base = { id: "q", question: "Q", bonne_reponse: "", explication: null }
+
+  it("fills answers on an older single-answer row", () => {
+    const [q] = prepareQuestions([{ ...base, options: ["a", "b", "c", "d"], bonne_reponse: "c" }])
+    expect(q.type).toBe("single")
+    expect(q.answers).toEqual(["c"])
+  })
+
+  it("drops a multiple-answer question whose answers are not options", () => {
+    expect(prepareQuestions([{ ...base, type: "multiple", options: ["a", "b", "c", "d"], answers: ["a", "z"] }])).toEqual([])
+  })
+
+  it("keeps true / false in order", () => {
+    const [q] = prepareQuestions([{ ...base, type: "true_false", options: ["true", "false"], answers: ["false"] }])
+    expect(q.options).toEqual(["true", "false"])
+  })
+
+  it("never shows the items to order already in the right order", () => {
+    for (let i = 0; i < 20; i++) {
+      const [q] = prepareQuestions([{ ...base, type: "order", options: ["1st", "2nd", "3rd"], answers: ["1st", "2nd", "3rd"] }])
+      expect(q.options).not.toEqual(["1st", "2nd", "3rd"])
+      expect([...q.options].sort()).toEqual(["1st", "2nd", "3rd"])
+    }
+  })
+
+  it("drops a written question without accepted answers", () => {
+    expect(prepareQuestions([{ ...base, type: "short", options: [], answers: [] }])).toEqual([])
+  })
+})
+
+describe("grade", () => {
+  const base = { id: "q", question: "Q", bonne_reponse: "", explication: null }
+  const pick = (...picked: number[]) => ({ kind: "choice" as const, picked })
+
+  it("grades a single answer", () => {
+    const q = { ...base, type: "single" as const, options: ["a", "b", "c", "d"], answers: ["c"] }
+    expect(grade(q, pick(2))).toBe(true)
+    expect(grade(q, pick(1))).toBe(false)
+    expect(grade(q, pick(1, 2))).toBe(false)
+  })
+
+  it("grades multiple answers all-or-nothing, in any order", () => {
+    const q = { ...base, type: "multiple" as const, options: ["a", "b", "c", "d"], answers: ["a", "c"] }
+    expect(grade(q, pick(2, 0))).toBe(true)
+    expect(grade(q, pick(0))).toBe(false)
+    expect(grade(q, pick(0, 1, 2))).toBe(false)
+  })
+
+  it("grades true / false", () => {
+    const q = { ...base, type: "true_false" as const, options: ["true", "false"], answers: ["false"] }
+    expect(grade(q, pick(1))).toBe(true)
+    expect(grade(q, pick(0))).toBe(false)
+  })
+
+  it("grades an order", () => {
+    const q = { ...base, type: "order" as const, options: ["b", "a", "c"], answers: ["a", "b", "c"] }
+    expect(grade(q, { kind: "order", sequence: ["a", "b", "c"] })).toBe(true)
+    expect(grade(q, { kind: "order", sequence: ["b", "a", "c"] })).toBe(false)
+    expect(grade(q, { kind: "order", sequence: ["a", "b"] })).toBe(false)
+  })
+
+  it("grades a typed answer leniently", () => {
+    const q = { ...base, type: "short" as const, options: [], answers: ["Transmission Control Protocol", "TCP"] }
+    expect(grade(q, { kind: "text", value: "tcp" })).toBe(true)
+    expect(grade(q, { kind: "text", value: "Transmision control protocol" })).toBe(true)
+    expect(grade(q, { kind: "text", value: "UDP" })).toBe(false)
+    expect(grade(q, pick(0))).toBe(false)
+  })
+})
+
+describe("matchesTyped", () => {
+  it("ignores case, accents, punctuation and a leading article", () => {
+    expect(normalizeTyped("  L'Équateur ! ")).toBe("equateur")
+    expect(matchesTyped("la mitochondrie", ["Mitochondrie"])).toBe(true)
+    expect(matchesTyped("The router", ["router"])).toBe(true)
+  })
+
+  it("forgives a typo on longer words, not on short ones", () => {
+    expect(matchesTyped("mitocondrie", ["mitochondrie"])).toBe(true)
+    expect(matchesTyped("mitocndrie", ["mitochondrie"])).toBe(true) // 2 edits, 12 letters
+    expect(matchesTyped("ip", ["ARP"])).toBe(false)
+    expect(matchesTyped("arp", ["ARP"])).toBe(true)
+  })
+
+  it("requires numbers to be exact", () => {
+    expect(matchesTyped("443", ["443"])).toBe(true)
+    expect(matchesTyped("444", ["443"])).toBe(false)
+    expect(matchesTyped("1789", ["1798"])).toBe(false)
+  })
+
+  it("rejects an empty answer", () => {
+    expect(matchesTyped("   ", ["x"])).toBe(false)
+  })
+
+  it("computes edit distances", () => {
+    expect(levenshtein("kitten", "sitting")).toBe(3)
+    expect(levenshtein("", "abc")).toBe(3)
+  })
+})
+
+describe("pickSession with passages", () => {
+  const P = { id: "p1", text: "passage" }
+  const pool = [
+    { id: "a", passage: null },
+    { id: "b", passage: null },
+    { id: "p1-1", passage: P },
+    { id: "p1-2", passage: P },
+    { id: "p1-3", passage: P },
+  ]
+
+  it("keeps the questions of a passage together and complete", () => {
+    for (let i = 0; i < 20; i++) {
+      const ids = pickSession(pool, {}, 5).map((q) => q.id)
+      const start = ids.indexOf("p1-1")
+      expect(ids.slice(start, start + 3)).toEqual(["p1-1", "p1-2", "p1-3"])
+    }
+  })
+
+  it("skips a passage that does not fit, unless nothing else is picked", () => {
+    expect(pickSession(pool, { "p1-1": true, "p1-2": true, "p1-3": true }, 2).map((q) => q.id).sort()).toEqual(["a", "b"])
+    expect(pickSession(pool.slice(2), {}, 2)).toHaveLength(3)
   })
 })

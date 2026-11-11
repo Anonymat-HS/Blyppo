@@ -17,7 +17,10 @@ It started as a personal need: revising networking, Java and API coursework as a
 
 **Study**
 - **Upload a course**: PDF (text-based), TXT or Markdown, with a real upload progress bar
-- **AI-generated quiz**: multiple-choice questions with explanations; options are shuffled
+- **AI-generated quiz** mixing 6 question types: single answer, **several right answers**, true / false,
+  short typed answer (lenient on case, accents and small typos), fill in the blank, and put in order
+- **Reading passages**: a short text or case study followed by 2-3 questions, always played together
+- **Mixed quiz**: tick several courses and play one quiz across all of them
 - **Answer from the keyboard**: `1`-`4` or `A`-`D` to pick, `Enter` / `Space` for the next question
 - **Mistake review**: at the end of a quiz, see every missed question with the right answer, and replay only those
 - **Fresh sessions**: each quiz picks up to 10 questions, never-played first, then missed ones, in a new order
