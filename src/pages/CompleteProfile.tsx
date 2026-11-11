@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useAuth } from "@/lib/supabase/auth"
 import { supabase } from "@/lib/supabase/client"
-import { Logo } from "@/components/ui/Logo"
+import { CompanyBadge, Logo } from "@/components/ui/Logo"
 
 export default function CompleteProfile({
   onComplete,
@@ -47,7 +47,7 @@ export default function CompleteProfile({
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2.5 mb-8">
-          <Logo size="lg" />
+          <Logo size="lg" byline />
         </div>
 
         <div
@@ -100,6 +100,10 @@ export default function CompleteProfile({
               {loading ? "Saving..." : "Continue"}
             </button>
           </form>
+        </div>
+
+        <div className="flex justify-center mt-8">
+          <CompanyBadge />
         </div>
       </div>
     </div>

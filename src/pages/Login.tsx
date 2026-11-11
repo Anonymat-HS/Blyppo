@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
 import { useAuth } from "@/lib/supabase/auth"
-import { Logo } from "@/components/ui/Logo"
+import { CompanyBadge, Logo } from "@/components/ui/Logo"
 
 export default function Login({
   onSwitchToSignup,
@@ -34,7 +34,7 @@ export default function Login({
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2.5 mb-8">
-          <Logo size="lg" />
+          <Logo size="lg" byline />
         </div>
 
         <div
@@ -131,6 +131,10 @@ export default function Login({
             Sign up
           </button>
         </p>
+
+        <div className="flex justify-center mt-8">
+          <CompanyBadge />
+        </div>
       </div>
     </div>
   )

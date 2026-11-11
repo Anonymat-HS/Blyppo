@@ -42,14 +42,49 @@ const SIZES = {
   lg: { mark: 48, text: "text-2xl" },
 } as const
 
-/** Mark + wordmark. The "o" picks up the spark's yellow. */
-export function Logo({ size = "md", className = "" }: { size?: keyof typeof SIZES; className?: string }) {
+/** The company behind Kwizo, shown with the logo and in footers. */
+export const COMPANY = "H.S Company"
+
+/** Mark + wordmark. The "o" picks up the spark's yellow. `byline` adds "by H.S Company" under it. */
+export function Logo({
+  size = "md",
+  byline = false,
+  className = "",
+}: {
+  size?: keyof typeof SIZES
+  byline?: boolean
+  className?: string
+}) {
   const s = SIZES[size]
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
       <LogoMark size={s.mark} />
-      <span className={`font-black tracking-tight text-white ${s.text}`}>
-        Kwiz<span className="text-[#FFC83D]">o</span>
+      <span className="flex flex-col items-start text-left leading-none">
+        <span className={`font-black tracking-tight text-white ${s.text}`}>
+          Kwiz<span className="text-[#FFC83D]">o</span>
+        </span>
+        {byline && (
+          <span className="mt-1 text-[10px] font-bold tracking-[0.12em] uppercase text-white/55">
+            by <span className="text-[#FFC83D]">{COMPANY}</span>
+          </span>
+        )}
+      </span>
+    </span>
+  )
+}
+
+/** "H.S Company" badge with its monogram. */
+export function CompanyBadge({ label = "A product of" }: { label?: string }) {
+  return (
+    <span className="inline-flex items-center gap-2.5 pl-1.5 pr-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/10">
+      <span
+        aria-hidden="true"
+        className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black text-[#16161D] bg-gradient-to-br from-[#FFD873] to-[#FFC83D]"
+      >
+        H.S
+      </span>
+      <span className="text-xs text-white/50">
+        {label} <span className="font-bold text-white">{COMPANY}</span>
       </span>
     </span>
   )

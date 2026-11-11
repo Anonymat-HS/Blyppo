@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { Logo } from "@/components/ui/Logo"
+import { CompanyBadge, Logo } from "@/components/ui/Logo"
 
 /** Centered logo + card used by the password screens. */
 export default function AuthCard({
@@ -17,7 +17,7 @@ export default function AuthCard({
     <div className="min-h-screen flex items-center justify-center px-4 bg-[#0F0F12]">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2.5 mb-8">
-          <Logo size="lg" />
+          <Logo size="lg" byline />
         </div>
 
         <div className="p-8 rounded-2xl bg-white/[0.03] border border-white/[0.07]">
@@ -27,6 +27,10 @@ export default function AuthCard({
         </div>
 
         {footer && <div className="text-center text-sm mt-5">{footer}</div>}
+
+        <div className="flex justify-center mt-8">
+          <CompanyBadge />
+        </div>
       </div>
     </div>
   )

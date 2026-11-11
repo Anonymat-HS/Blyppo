@@ -64,7 +64,7 @@ export default function Sidebar({
           className="flex items-center gap-3 px-5 py-5"
           style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
         >
-          <Logo size="md" />
+          <Logo size="md" byline />
           <button
             onClick={onToggle}
             aria-label="Close menu"
