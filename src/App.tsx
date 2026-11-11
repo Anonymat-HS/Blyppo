@@ -15,6 +15,7 @@ import Progress from "@/pages/Progress"
 import Profile from "@/pages/Profile"
 import Sidebar from "@/components/layout/Sidebar"
 import AvatarMenu from "@/components/layout/AvatarMenu"
+import { Logo } from "@/components/ui/Logo"
 
 export type Screen =
   | "landing"
@@ -135,7 +136,7 @@ function AppContent() {
           >
             <Menu size={20} />
           </button>
-          <span className="font-black text-base">StudyForge</span>
+          <Logo size="sm" />
           <div className="ml-auto">
             <AvatarMenu onNavigate={setScreen} />
           </div>

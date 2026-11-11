@@ -1,4 +1,5 @@
-import { ArrowRight, Upload, Sparkles, Brain, CheckCircle } from "lucide-react"
+import { ArrowRight, Upload, Sparkles, Brain, CheckCircle, RotateCcw, CalendarClock, Target } from "lucide-react"
+import { Logo } from "@/components/ui/Logo"
 
 export default function Landing({ onEnter }: { onEnter: () => void }) {
   return (
@@ -8,14 +9,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
     >
       {/* Nav */}
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <img
-            src="/android-chrome-192x192.png"
-            alt="StudyForge"
-            className="w-10 h-10 rounded-xl"
-          />
-          <span className="font-black text-lg tracking-tight">StudyForge</span>
-        </div>
+        <Logo size="md" />
 
         <div
           className="hidden md:flex items-center gap-8 text-sm"
@@ -72,12 +66,12 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
               color: "#C4B5FD",
             }}
           >
-            <Sparkles size={13} />
-            AI-powered learning, reimagined
+            <RotateCcw size={13} />
+            Active recall + spaced repetition
           </div>
 
           <h1 className="text-3xl sm:text-5xl md:text-[72px] font-black leading-[1.0] tracking-tighter mb-6">
-            Upload your notes.
+            Revise less.
             <br />
             <span
               style={{
@@ -88,7 +82,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
                 backgroundClip: "text",
               }}
             >
-              Master any subject.
+              Remember more.
             </span>
           </h1>
 
@@ -96,9 +90,9 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
             className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-10"
             style={{ color: "rgba(255,255,255,0.48)" }}
           >
-            StudyForge reads your PDFs and lecture notes, then instantly
-            generates targeted quizzes and spaced-repetition flashcards — built
-            for students who actually want to learn.
+            Revizo turns your PDFs and lecture notes into quizzes and
+            flashcards, then brings back each card right before you would
+            forget it.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-5">
@@ -112,12 +106,12 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
                 className="group-hover:translate-x-0.5 transition-transform"
               />
             </button>
-            <button
-              onClick={onEnter}
+            <a
+              href="#features"
               className="flex items-center gap-2 px-8 py-3.5 rounded-2xl font-medium transition-all duration-200 border border-[rgba(255,255,255,0.1)] text-[rgba(255,255,255,0.6)] hover:border-[rgba(255,255,255,0.22)] hover:text-[rgba(255,255,255,0.9)] hover:bg-[rgba(255,255,255,0.04)]"
             >
               See how it works
-            </button>
+            </a>
           </div>
 
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>
@@ -225,8 +219,8 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
               backdropFilter: "blur(8px)",
             }}
           >
-            <Sparkles size={13} />
-            42 questions generated in 4s
+            <CalendarClock size={13} />
+            Next review: tomorrow · 6 cards
           </div>
         </div>
       </section>
@@ -248,21 +242,21 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
               step: "01",
               icon: Upload,
               title: "Upload your materials",
-              desc: "Drop in any PDF, Word doc, or paste lecture notes directly. StudyForge supports all major academic formats.",
+              desc: "Drop in a PDF, a Word doc, or paste your lecture notes. One course, one upload.",
               color: "#7C5CFF",
             },
             {
               step: "02",
               icon: Sparkles,
-              title: "AI generates your content",
-              desc: "Our model reads your material and instantly creates targeted quiz questions and spaced-repetition flashcard decks.",
+              title: "Get a quiz and a deck",
+              desc: "Revizo reads your material and writes quiz questions and flashcards straight from it, not from the internet.",
               color: "#00D9FF",
             },
             {
               step: "03",
               icon: Brain,
-              title: "Study smarter, retain more",
-              desc: "Take quizzes, flip flashcards, and track your progress as StudyForge adapts to your learning patterns over time.",
+              title: "Revise at the right time",
+              desc: "Rate each card and Revizo schedules the next review: hard cards come back sooner, easy ones later.",
               color: "#22C55E",
             },
           ].map(({ step, icon: Icon, title, desc, color }) => (
@@ -296,6 +290,52 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
         </div>
       </section>
 
+      {/* Why it works */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-8">
+        <div className="text-center mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight mb-3">
+            Why re-reading is not revising
+          </h2>
+          <p className="text-base sm:text-lg max-w-2xl mx-auto" style={{ color: "rgba(255,255,255,0.38)" }}>
+            Highlighting feels productive, but memory is built by pulling answers out of your head.
+            Revizo is designed around that.
+          </p>
+        </div>
+        <div className="grid sm:grid-cols-3 gap-5">
+          {[
+            {
+              icon: Brain,
+              title: "Active recall",
+              desc: "Every question makes you answer before you see the solution.",
+              color: "#7C5CFF",
+            },
+            {
+              icon: CalendarClock,
+              title: "Spaced repetition",
+              desc: "Cards return on a schedule that follows how well you knew them.",
+              color: "#00D9FF",
+            },
+            {
+              icon: Target,
+              title: "Learn from mistakes",
+              desc: "At the end of a quiz, review the questions you missed with the right answer.",
+              color: "#F59E0B",
+            },
+          ].map(({ icon: Icon, title, desc, color }) => (
+            <div key={title} className="p-6 rounded-2xl text-left bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.07)]">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
+                style={{ background: color + "1A", border: `1px solid ${color}2E` }}
+              >
+                <Icon size={18} style={{ color }} />
+              </div>
+              <h3 className="text-base font-bold mb-2">{title}</h3>
+              <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.4)" }}>{desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Pricing */}
       <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24 text-center">
         <div
@@ -316,7 +356,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
             Free during beta
           </div>
           <h2 className="text-2xl sm:text-3xl font-black mb-3">
-            StudyForge is free right now
+            Revizo is free right now
           </h2>
           <p style={{ color: "rgba(255,255,255,0.45)" }}>
             No credit card, no hidden fees. We're building this for students first — pricing details coming soon.
@@ -334,7 +374,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
           }}
         >
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-black mb-3">
-            Ready to study smarter?
+            Your next exam starts with one upload
           </h2>
           <p className="mb-8" style={{ color: "rgba(255,255,255,0.45)" }}>
             Upload your first course and get a quiz and flashcards in minutes.
@@ -352,16 +392,9 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
       {/* Footer */}
       <footer style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <img
-              src="/android-chrome-192x192.png"
-              alt="StudyForge"
-              className="w-9 h-9 rounded-lg"
-            />
-            <span className="font-black text-sm">StudyForge</span>
-          </div>
+          <Logo size="sm" />
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.28)" }}>
-            © 2026 StudyForge. Built for serious learners.
+            © 2026 Revizo. Revise less, remember more.
           </p>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.18)" }}>
             Crafted with care by <span style={{ color: "rgba(124,92,255,0.5)" }}>H.S Company</span>
