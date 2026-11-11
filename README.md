@@ -189,4 +189,5 @@ The seeded numbers are placeholders; adjust them with `update plans`. Limits are
 
 ## License
 
-MIT
+Proprietary. Copyright (c) 2026 Herimihaja Steevy RASOAMIARAMANANA. All rights reserved.
+No use, copy, modification or distribution without written permission. See [`LICENSE`](./LICENSE).
