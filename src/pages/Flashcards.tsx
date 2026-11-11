@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
-import { ChevronLeft, RotateCcw, BookOpen, Loader2, CheckCircle } from "lucide-react"
+import { ChevronLeft, RotateCcw, BookOpen, CheckCircle, Layers } from "lucide-react"
 import { useAuth } from "@/lib/supabase/auth"
 import {
   fetchCourses,
@@ -11,6 +11,9 @@ import {
 import { formatInterval, nextIntervalDays, type FlashcardRating } from "@/lib/utils/srs"
 import ErrorState from "@/components/ui/ErrorState"
 import SaveWarning from "@/components/ui/SaveWarning"
+import { BackButton, EmptyState, LoadingState, primaryButton, secondaryButton } from "@/components/ui/PageStates"
+import CoursePicker from "@/components/study/CoursePicker"
+import Confetti from "@/components/study/Confetti"
 import type { CourseSummary, FlashcardReviewCard } from "@/lib/types"
 
 interface CourseWithCount extends CourseSummary {
@@ -183,126 +186,54 @@ export default function Flashcards({
     return <ErrorState message={loadError} onRetry={loadCourses} />
   }
 
-  // Loading
   if (loading) {
-    return (
-      <div className="p-6 md:p-8 max-w-lg mx-auto flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <Loader2 size={24} className="animate-spin mx-auto mb-3" style={{ color: "#7C5CFF" }} />
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Loading courses...</p>
-        </div>
-      </div>
-    )
+    return <LoadingState label="Loading courses..." />
   }
 
-  // No courses
   if (courses.length === 0) {
     return (
       <div className="p-6 md:p-8 max-w-lg mx-auto">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150 text-[rgba(255,255,255,0.38)] hover:text-[rgba(255,255,255,0.8)]"
-        >
-          <ChevronLeft size={15} />
-          Back
-        </button>
-        <div
-          className="p-8 rounded-2xl text-center"
-          style={{
-            background: "rgba(124,92,255,0.05)",
-            border: "1px dashed rgba(124,92,255,0.25)",
-          }}
-        >
-          <BookOpen size={36} className="mx-auto mb-3" style={{ color: "rgba(124,92,255,0.5)" }} />
-          <p className="font-bold text-sm text-white mb-1">No courses yet</p>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
-            Upload a course first, then generate flashcards from it.
-          </p>
-        </div>
+        <BackButton onClick={onBack} />
+        <EmptyState
+          icon={BookOpen}
+          title="No courses yet"
+          text="Upload a course first, then Kwizo makes a flashcard deck from it."
+        />
       </div>
     )
   }
 
-  // Course selection
   if (!selectedCourse) {
     return (
       <div className="p-6 md:p-8 max-w-lg mx-auto">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150 text-[rgba(255,255,255,0.38)] hover:text-[rgba(255,255,255,0.8)]"
-        >
-          <ChevronLeft size={15} />
-          Back
-        </button>
-
-        <h1 className="text-xl font-bold text-white mb-1">Select a course</h1>
-        <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.38)" }}>
-          Choose which flashcards to review
-        </p>
-
-        <div className="space-y-3">
-          {courses.map((course) => (
-            <button
-              key={course.id}
-              onClick={() => startReview(course)}
-              className="w-full p-4 rounded-xl text-left transition-all duration-200 bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.07)] hover:bg-[rgba(255,255,255,0.06)] hover:border-[rgba(124,92,255,0.3)]"
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-sm text-white">{course.titre}</span>
-                <span
-                  className="text-xs px-2 py-1 rounded-lg"
-                  style={{
-                    background: course.flashcard_count > 0 ? "rgba(34,197,94,0.1)" : "rgba(245,158,11,0.1)",
-                    color: course.flashcard_count > 0 ? "#4ADE80" : "#FCD34D",
-                    border: `1px solid ${course.flashcard_count > 0 ? "rgba(34,197,94,0.2)" : "rgba(245,158,11,0.2)"}`,
-                  }}
-                >
-                  {course.flashcard_count} cards
-                </span>
-              </div>
-            </button>
-          ))}
-        </div>
+        <BackButton onClick={onBack} />
+        <CoursePicker
+          title="Pick a deck"
+          subtitle="Cards that are due come first"
+          icon={Layers}
+          courses={courses}
+          count={(c) => c.flashcard_count}
+          unit="card"
+          onPick={(c) => startReview(c)}
+        />
       </div>
     )
   }
 
-  // Loading cards
   if (loadingCards) {
-    return (
-      <div className="p-6 md:p-8 max-w-lg mx-auto flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <Loader2 size={24} className="animate-spin mx-auto mb-3" style={{ color: "#7C5CFF" }} />
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Loading flashcards...</p>
-        </div>
-      </div>
-    )
+    return <LoadingState label="Shuffling your deck..." />
   }
 
-  // No cards
   if (allCards.length === 0) {
     return (
       <div className="p-6 md:p-8 max-w-lg mx-auto">
-        <button
-          onClick={() => setSelectedCourse(null)}
-          className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150 text-[rgba(255,255,255,0.38)] hover:text-[rgba(255,255,255,0.8)]"
-        >
-          <ChevronLeft size={15} />
-          Back to courses
-        </button>
-        <div
-          className="p-8 rounded-2xl text-center"
-          style={{
-            background: "rgba(245,158,11,0.05)",
-            border: "1px dashed rgba(245,158,11,0.25)",
-          }}
-        >
-          <BookOpen size={20} className="mx-auto mb-3" style={{ color: "rgba(245,158,11,0.5)" }} />
-          <p className="font-bold text-sm text-white mb-1">No flashcards yet</p>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.38)" }}>
-            Generate flashcards from the Dashboard first.
-          </p>
-        </div>
+        <BackButton onClick={() => setSelectedCourse(null)} label="Back to courses" />
+        <EmptyState
+          icon={BookOpen}
+          tone="spark"
+          title="No flashcards yet"
+          text="Generate the flashcards for this course from the Dashboard first."
+        />
       </div>
     )
   }
@@ -310,74 +241,63 @@ export default function Flashcards({
   // Nothing to review right now
   if (cards.length === 0) {
     return (
-      <div className="p-6 md:p-8 max-w-lg mx-auto flex flex-col items-center text-center pt-16">
-        <CheckCircle size={40} className="mb-4" style={{ color: "#4ADE80" }} />
+      <div className="p-6 md:p-8 max-w-lg mx-auto flex flex-col items-center text-center pt-14">
+        <div className="animate-pop w-20 h-20 rounded-3xl flex items-center justify-center mb-5 bg-ok/10 border border-ok/25">
+          <CheckCircle size={38} className="text-ok" />
+        </div>
         <h2 className="text-2xl font-black text-white mb-2">You're all caught up</h2>
-        <p className="mb-8 text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
+        <p className="mb-8 text-sm text-white/45">
           {nextDue
-            ? `Next review: ${nextDue.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}`
+            ? `Next cards are due ${nextDue.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}`
             : "No card is due for this course."}
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
-          <button
-            onClick={() => startReview(selectedCourse, true)}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-[#7C5CFF] hover:bg-[#8B6BFF] transition-colors duration-200"
-          >
-            <RotateCcw size={14} />
+          <button onClick={() => startReview(selectedCourse, true)} className={primaryButton}>
+            <RotateCcw size={15} />
             Review all {allCards.length} cards anyway
           </button>
-          <button
-            onClick={() => setSelectedCourse(null)}
-            className="px-6 py-2.5 rounded-xl text-sm font-medium border border-white/[0.08] text-white/60 hover:bg-white/5 hover:text-white/90 transition-colors duration-200"
-          >
-            Choose another course
+          <button onClick={() => setSelectedCourse(null)} className={secondaryButton}>
+            Choose another deck
           </button>
         </div>
       </div>
     )
   }
 
-  // Done
   if (done) {
     const counts = { again: 0, hard: 0, good: 0, easy: 0 } as Record<FlashcardRating, number>
     history.forEach((r) => counts[r]++)
+    const known = counts.good + counts.easy
 
     return (
-      <div className="p-6 md:p-8 max-w-lg mx-auto flex flex-col items-center text-center pt-16">
-        <div className="text-5xl mb-4">🎉</div>
+      <div className="relative p-6 md:p-8 max-w-lg mx-auto flex flex-col items-center text-center pt-14">
+        <Confetti pieces={28} />
+        <div className="animate-pop w-20 h-20 rounded-3xl flex items-center justify-center mb-5 bg-spark/10 border border-spark/30 text-4xl">
+          <span aria-hidden="true">🎉</span>
+        </div>
         <h2 className="text-3xl font-black text-white mb-2">Deck complete!</h2>
-        <p className="mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>
-          You reviewed {new Set(cards.map((c) => c.id)).size} cards
+        <p className="mb-8 text-white/45">
+          {new Set(cards.map((c) => c.id)).size} cards reviewed · {known} you knew well
         </p>
 
         {saveFailed && <SaveWarning message="Some reviews could not be saved. Check your connection." />}
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 w-full max-w-xs mb-10">
+        <div className="grid grid-cols-4 gap-2 sm:gap-3 w-full max-w-sm mb-10">
           {ratings.map(({ r, label, color, bg, border }) => (
-            <div
-              key={r}
-              className="p-3 rounded-xl text-center"
-              style={{ background: bg, border: `1px solid ${border}` }}
-            >
+            <div key={r} className="p-3 rounded-2xl text-center" style={{ background: bg, border: `1px solid ${border}` }}>
               <p className="text-xl font-black" style={{ color }}>{counts[r]}</p>
-              <p className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.38)" }}>{label}</p>
+              <p className="text-[11px] mt-0.5 text-white/40">{label}</p>
             </div>
           ))}
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
-          <button
-            onClick={() => startReview(selectedCourse, true)}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 bg-[#7C5CFF] hover:bg-[#8B6BFF]"
-          >
-            <RotateCcw size={14} />
+          <button onClick={() => startReview(selectedCourse, true)} className={primaryButton}>
+            <RotateCcw size={15} />
             Review again
           </button>
-          <button
-            onClick={() => setSelectedCourse(null)}
-            className="px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 border border-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.6)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[rgba(255,255,255,0.9)]"
-          >
-            Choose another course
+          <button onClick={() => setSelectedCourse(null)} className={secondaryButton}>
+            Choose another deck
           </button>
         </div>
       </div>
@@ -386,94 +306,73 @@ export default function Flashcards({
 
   return (
     <div className="p-6 md:p-8 max-w-lg mx-auto">
-      <button
-        onClick={() => setSelectedCourse(null)}
-        className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150 text-[rgba(255,255,255,0.38)] hover:text-[rgba(255,255,255,0.8)]"
-      >
-        <ChevronLeft size={15} />
-        Back
-      </button>
+      <BackButton onClick={() => setSelectedCourse(null)} label="Exit" />
 
-      <div className="flex items-center justify-between mb-1.5">
-        <p className="text-[11px] font-semibold tracking-wider" style={{ color: "rgba(255,255,255,0.3)" }}>
-          {selectedCourse?.titre?.toUpperCase()} · FLASHCARDS
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[11px] font-semibold tracking-wider text-white/30 truncate">
+          {selectedCourse.titre.toUpperCase()}
         </p>
-        <span className="text-sm" style={{ color: "rgba(255,255,255,0.38)" }}>
-          {current + 1} / {total}
+        <span className="text-sm text-white/45">
+          <span className="font-bold text-white">{current + 1}</span> / {total}
         </span>
       </div>
 
-      <div
-        className="h-1.5 rounded-full overflow-hidden mb-8"
-        style={{ background: "rgba(255,255,255,0.07)" }}
-      >
+      <div className="h-1.5 rounded-full overflow-hidden mb-7 bg-white/[0.07]">
         <div
-          className="h-full rounded-full"
-          style={{
-            width: `${(current / total) * 100}%`,
-            background: "linear-gradient(90deg, #7C5CFF, #A78BFA)",
-            transition: "width 0.5s cubic-bezier(0.4,0,0.2,1)",
-          }}
+          className="h-full rounded-full bg-gradient-to-r from-brand to-spark"
+          style={{ width: `${(current / total) * 100}%`, transition: "width 0.5s cubic-bezier(0.4,0,0.2,1)" }}
         />
       </div>
 
       {saveFailed && <SaveWarning message="Some reviews could not be saved. Check your connection." />}
 
-      {/* Flashcard */}
+      {/* Flashcard: a 3D card that turns over */}
       <div
-        className="cursor-pointer mb-5 select-none w-full rounded-2xl p-8 sm:p-10 text-center transition-all duration-300"
-        style={{
-          background: flipped ? "rgba(124,92,255,0.06)" : "rgba(255,255,255,0.035)",
-          border: `1px solid ${flipped ? "rgba(124,92,255,0.22)" : "rgba(255,255,255,0.09)"}`,
-          minHeight: "270px",
-        }}
+        className="kz-flip cursor-pointer select-none mb-5 rounded-3xl"
         onClick={() => setFlipped((f) => !f)}
+        // Space / Enter flipping is handled by the page-level keyboard listener
         role="button"
         tabIndex={0}
         aria-label={flipped ? "Show the question" : "Show the answer"}
       >
-        {flipped ? (
-          <div className="flex flex-col items-center justify-center h-full">
-            <p className="text-[11px] font-semibold tracking-widest mb-5" style={{ color: "rgba(167,139,250,0.6)" }}>
-              ANSWER
-            </p>
-            <p className="text-base leading-relaxed" style={{ color: "rgba(255,255,255,0.8)" }}>
-              {card.verso}
-            </p>
+        {/* The appear animation sits on a wrapper: it would override the flip's transform */}
+        <div key={card.id} className="animate-rise">
+        <div className="kz-flip-inner min-h-[290px]" data-flipped={flipped}>
+          <div className="kz-face rounded-3xl p-8 flex flex-col items-center justify-center text-center bg-panel border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
+            <span className="absolute top-4 left-5 text-[11px] font-bold tracking-widest text-brand-soft/70">QUESTION</span>
+            <Layers size={18} className="absolute top-4 right-5 text-white/15" />
+            <p className="text-xl md:text-2xl font-bold text-white leading-snug">{card.recto}</p>
+            <p className="absolute bottom-5 text-xs text-white/25">Tap or press Space to flip</p>
           </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full">
-            <p className="text-[11px] font-semibold tracking-widest mb-5" style={{ color: "rgba(255,255,255,0.28)" }}>
-              QUESTION
-            </p>
-            <p className="text-xl md:text-2xl font-bold text-white leading-snug">
-              {card.recto}
-            </p>
-            <p className="text-xs mt-8" style={{ color: "rgba(255,255,255,0.22)" }}>
-              Tap to reveal answer
-            </p>
+          <div className="kz-face kz-face-back rounded-3xl p-8 flex flex-col items-center justify-center text-center bg-gradient-to-br from-brand/25 to-[#16161D] border border-brand/35 shadow-[0_20px_60px_rgba(124,92,255,0.18)]">
+            <span className="absolute top-4 left-5 text-[11px] font-bold tracking-widest text-spark">ANSWER</span>
+            <p className="text-base md:text-lg leading-relaxed text-white/90">{card.verso}</p>
           </div>
-        )}
+        </div>
+        </div>
       </div>
 
-      <p className="text-center text-xs mb-5" style={{ color: "rgba(255,255,255,0.28)" }}>
-        {flipped ? "How well did you know this? (keys 1-4)" : "Tap the card or press Space to reveal the answer"}
+      <p className="text-center text-xs mb-4 text-white/30">
+        {flipped ? "How well did you know it?" : "Think of the answer, then flip the card"}
       </p>
 
       {/* Rating buttons */}
       <div
         className="grid grid-cols-4 gap-2 transition-all duration-300"
-        style={{ opacity: flipped ? 1 : 0, pointerEvents: flipped ? "auto" : "none" }}
+        style={{ opacity: flipped ? 1 : 0, transform: flipped ? "none" : "translateY(6px)", pointerEvents: flipped ? "auto" : "none" }}
+        aria-hidden={!flipped}
       >
-        {ratings.map(({ r, label, color, bg, border }) => (
+        {ratings.map(({ r, label, color, bg, border }, i) => (
           <button
             key={r}
             onClick={() => handleRate(r)}
-            className="flex flex-col items-center gap-0.5 py-3 sm:py-4 rounded-xl transition-all duration-150 active:scale-95 min-h-[60px] hover:scale-[1.04]"
+            tabIndex={flipped ? 0 : -1}
+            className="relative flex flex-col items-center gap-0.5 py-3 sm:py-4 rounded-2xl transition-all duration-150 active:scale-95 min-h-[64px] hover:-translate-y-0.5"
             style={{ background: bg, border: `1px solid ${border}` }}
           >
+            <span className="hidden sm:block absolute top-1.5 right-2 text-[10px] font-bold text-white/25">{i + 1}</span>
             <span className="text-sm font-bold" style={{ color }}>{label}</span>
-            <span className="text-[11px]" style={{ color: color + "90" }}>
+            <span className="text-[11px]" style={{ color: color + "A0" }}>
               {formatInterval(nextIntervalDays(r, intervals[card.id] ?? 0))}
             </span>
           </button>
@@ -484,7 +383,7 @@ export default function Flashcards({
         <div className="flex justify-center mt-4">
           <button
             onClick={handlePrevious}
-            className="flex items-center gap-1 text-xs transition-colors duration-150 text-[rgba(255,255,255,0.25)] hover:text-[rgba(255,255,255,0.6)]"
+            className="inline-flex items-center gap-1 text-xs transition-colors duration-150 text-white/30 hover:text-white/65"
           >
             <ChevronLeft size={13} />
             Previous card

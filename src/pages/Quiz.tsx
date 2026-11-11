@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
-import { ChevronLeft, CheckCircle, XCircle, ArrowRight, RotateCcw, BookOpen, Loader2 } from "lucide-react"
+import { ChevronLeft, CheckCircle, XCircle, ArrowRight, RotateCcw, BookOpen, Brain, Target, Zap } from "lucide-react"
 import { useAuth } from "@/lib/supabase/auth"
 import {
   fetchCourses,
@@ -11,6 +11,10 @@ import {
 import { findCorrectIndex, prepareQuestions } from "@/lib/utils/quiz"
 import ErrorState from "@/components/ui/ErrorState"
 import SaveWarning from "@/components/ui/SaveWarning"
+import { BackButton, EmptyState, LoadingState, primaryButton, secondaryButton } from "@/components/ui/PageStates"
+import CoursePicker from "@/components/study/CoursePicker"
+import ScoreRing from "@/components/study/ScoreRing"
+import Confetti from "@/components/study/Confetti"
 import type { CourseSummary, QuizQuestion } from "@/lib/types"
 
 interface CourseWithCount extends CourseSummary {
@@ -18,6 +22,14 @@ interface CourseWithCount extends CourseSummary {
 }
 
 const SAVE_WARNING = "Your progress could not be saved. Check your connection."
+
+/** Answer letters, each with its game-show color */
+const LETTERS = [
+  { key: "A", color: "#A78BFA" },
+  { key: "B", color: "#22D3EE" },
+  { key: "C", color: "#FFC83D" },
+  { key: "D", color: "#F472B6" },
+]
 
 export default function Quiz({
   onBack,
@@ -151,131 +163,58 @@ export default function Quiz({
     return <ErrorState message={loadError} onRetry={loadCourses} />
   }
 
-  // Loading state
   if (loading) {
-    return (
-      <div className="p-6 md:p-8 max-w-2xl mx-auto flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <Loader2 size={24} className="animate-spin mx-auto mb-3" style={{ color: "#7C5CFF" }} />
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Loading courses...</p>
-        </div>
-      </div>
-    )
+    return <LoadingState label="Loading courses..." />
   }
 
-  // No courses state
   if (courses.length === 0) {
     return (
       <div className="p-6 md:p-8 max-w-2xl mx-auto">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150 text-[rgba(255,255,255,0.38)] hover:text-[rgba(255,255,255,0.8)]"
-        >
-          <ChevronLeft size={15} />
-          Back
-        </button>
-        <div
-          className="p-8 rounded-2xl text-center"
-          style={{
-            background: "rgba(124,92,255,0.05)",
-            border: "1px dashed rgba(124,92,255,0.25)",
-          }}
-        >
-          <BookOpen size={36} className="mx-auto mb-3" style={{ color: "rgba(124,92,255,0.5)" }} />
-          <p className="font-bold text-sm text-white mb-1">No courses yet</p>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
-            Upload a course first, then generate quiz questions from it.
-          </p>
-        </div>
+        <BackButton onClick={onBack} />
+        <EmptyState
+          icon={BookOpen}
+          title="No courses yet"
+          text="Upload a course first, then Kwizo writes a quiz from it."
+        />
       </div>
     )
   }
 
-  // Course selection
   if (!selectedCourse) {
     return (
       <div className="p-6 md:p-8 max-w-2xl mx-auto">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150 text-[rgba(255,255,255,0.38)] hover:text-[rgba(255,255,255,0.8)]"
-        >
-          <ChevronLeft size={15} />
-          Back
-        </button>
-
-        <h1 className="text-xl font-bold text-white mb-1">Select a course</h1>
-        <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.38)" }}>
-          Choose which course you want to quiz yourself on
-        </p>
-
-        <div className="space-y-3">
-          {courses.map((course) => (
-            <button
-              key={course.id}
-              onClick={() => startQuiz(course)}
-              className="w-full p-4 rounded-xl text-left transition-all duration-200 bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.07)] hover:bg-[rgba(255,255,255,0.06)] hover:border-[rgba(124,92,255,0.3)]"
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-sm text-white">{course.titre}</span>
-                <span
-                  className="text-xs px-2 py-1 rounded-lg"
-                  style={{
-                    background: course.quiz_count > 0 ? "rgba(34,197,94,0.1)" : "rgba(245,158,11,0.1)",
-                    color: course.quiz_count > 0 ? "#4ADE80" : "#FCD34D",
-                    border: `1px solid ${course.quiz_count > 0 ? "rgba(34,197,94,0.2)" : "rgba(245,158,11,0.2)"}`,
-                  }}
-                >
-                  {course.quiz_count} questions
-                </span>
-              </div>
-            </button>
-          ))}
-        </div>
+        <BackButton onClick={onBack} />
+        <CoursePicker
+          title="Pick a quiz"
+          subtitle="Which course do you want to be quizzed on?"
+          icon={Brain}
+          courses={courses}
+          count={(c) => c.quiz_count}
+          unit="question"
+          onPick={startQuiz}
+        />
       </div>
     )
   }
 
-  // Loading quiz
   if (loadingQuiz) {
-    return (
-      <div className="p-6 md:p-8 max-w-2xl mx-auto flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <Loader2 size={24} className="animate-spin mx-auto mb-3" style={{ color: "#7C5CFF" }} />
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Loading quiz...</p>
-        </div>
-      </div>
-    )
+    return <LoadingState label="Getting your quiz ready..." />
   }
 
-  // No questions for this course
   if (questions.length === 0) {
     return (
       <div className="p-6 md:p-8 max-w-2xl mx-auto">
-        <button
-          onClick={() => setSelectedCourse(null)}
-          className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150 text-[rgba(255,255,255,0.38)] hover:text-[rgba(255,255,255,0.8)]"
-        >
-          <ChevronLeft size={15} />
-          Back to courses
-        </button>
-        <div
-          className="p-8 rounded-2xl text-center"
-          style={{
-            background: "rgba(245,158,11,0.05)",
-            border: "1px dashed rgba(245,158,11,0.25)",
-          }}
-        >
-          <BookOpen size={20} className="mx-auto mb-3" style={{ color: "rgba(245,158,11,0.5)" }} />
-          <p className="font-bold text-sm text-white mb-1">No quiz questions yet</p>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.38)" }}>
-            Generate quiz questions from the Dashboard first.
-          </p>
-        </div>
+        <BackButton onClick={() => setSelectedCourse(null)} label="Back to courses" />
+        <EmptyState
+          icon={BookOpen}
+          tone="spark"
+          title="No quiz questions yet"
+          text="Generate the quiz for this course from the Dashboard first."
+        />
       </div>
     )
   }
 
-  // Finished
   if (finished) {
     const pct = Math.round((score / total) * 100)
     const mistakes = questions
@@ -283,64 +222,71 @@ export default function Quiz({
       .filter(({ question, picked }) => picked !== undefined && picked !== question.bonne_reponse)
     const grade =
       pct >= 80
-        ? { label: "Excellent!", color: "#22C55E", bg: "rgba(34,197,94,0.1)", border: "rgba(34,197,94,0.25)" }
+        ? { label: "Brilliant!", emoji: "🏆", color: "#4ADE80", line: "You know this course." }
         : pct >= 60
-        ? { label: "Good effort!", color: "#F59E0B", bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.25)" }
-        : { label: "Keep going!", color: "#EF4444", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.25)" }
+          ? { label: "Nice work!", emoji: "💪", color: "#FFC83D", line: "A few more rounds and it's yours." }
+          : { label: "Keep going!", emoji: "🌱", color: "#F87171", line: "Every miss is something you'll remember next time." }
 
     return (
-      <div className="p-6 md:p-8 max-w-2xl mx-auto flex flex-col items-center text-center pt-16">
-        <div
-          className="w-24 h-24 rounded-3xl flex items-center justify-center mb-6"
-          style={{ background: grade.bg, border: `1px solid ${grade.border}` }}
-        >
-          <span className="text-4xl font-black" style={{ color: grade.color }}>
-            {pct}%
-          </span>
+      <div className="relative p-6 md:p-8 max-w-2xl mx-auto flex flex-col items-center text-center pt-10 sm:pt-14">
+        {pct >= 80 && <Confetti />}
+
+        <div className="animate-pop mb-5">
+          <ScoreRing pct={pct} color={grade.color} />
         </div>
-        <h2 className="text-3xl font-black text-white mb-2">{grade.label}</h2>
-        <p className="mb-2" style={{ color: "rgba(255,255,255,0.38)" }}>
-          {score} correct out of {total} questions
-        </p>
-        <p className="text-sm mb-10" style={{ color: "rgba(255,255,255,0.28)" }}>
-          {selectedCourse?.titre} · Quiz complete
-        </p>
+        <h2 className="text-3xl font-black text-white mb-1">
+          {grade.label} <span aria-hidden="true">{grade.emoji}</span>
+        </h2>
+        <p className="text-white/45 mb-1">{grade.line}</p>
+        <p className="text-sm text-white/30 mb-8">{selectedCourse.titre}</p>
 
         {saveFailed && <SaveWarning message={SAVE_WARNING} />}
 
-        <div className="flex gap-3 sm:gap-4 mb-10">
-          <div
-            className="px-5 py-3 rounded-xl text-center"
-            style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)" }}
-          >
-            <p className="text-xl font-black" style={{ color: "#4ADE80" }}>{score}</p>
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.38)" }}>Correct</p>
+        <div className="grid grid-cols-2 gap-3 w-full max-w-xs mb-10">
+          <div className="p-3.5 rounded-2xl bg-ok/10 border border-ok/20">
+            <p className="text-2xl font-black text-ok">{score}</p>
+            <p className="text-xs text-white/40">Correct</p>
           </div>
-          <div
-            className="px-5 py-3 rounded-xl text-center"
-            style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)" }}
-          >
-            <p className="text-xl font-black" style={{ color: "#F87171" }}>{total - score}</p>
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.38)" }}>Incorrect</p>
+          <div className="p-3.5 rounded-2xl bg-ko/10 border border-ko/20">
+            <p className="text-2xl font-black text-ko">{total - score}</p>
+            <p className="text-xs text-white/40">Missed</p>
           </div>
         </div>
 
+        <div className="flex flex-col sm:flex-row gap-3 mb-10">
+          <button onClick={reset} className={primaryButton}>
+            <RotateCcw size={15} />
+            Play again
+          </button>
+          <button onClick={() => setSelectedCourse(null)} className={secondaryButton}>
+            Choose another course
+          </button>
+        </div>
+
         {mistakes.length > 0 && (
-          <div className="w-full text-left mb-10">
-            <h3 className="text-sm font-bold text-white mb-3">
-              Review your mistakes ({mistakes.length})
+          <div className="w-full text-left">
+            <h3 className="flex items-center gap-2 text-sm font-bold text-white mb-3">
+              <Target size={15} className="text-spark" />
+              Learn from your misses ({mistakes.length})
             </h3>
             <div className="space-y-3">
-              {mistakes.map(({ question, picked }) => (
+              {mistakes.map(({ question, picked }, i) => (
                 <div
                   key={question.id}
-                  className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08]"
+                  style={{ animationDelay: `${i * 60}ms` }}
+                  className="animate-rise p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08]"
                 >
-                  <p className="text-sm font-semibold text-white mb-2">{question.question}</p>
-                  <p className="text-xs mb-1 text-[#FCA5A5]">Your answer: {picked}</p>
-                  <p className="text-xs text-[#86EFAC]">Correct answer: {question.bonne_reponse}</p>
+                  <p className="text-sm font-semibold text-white mb-3">{question.question}</p>
+                  <p className="flex items-start gap-2 text-xs mb-1.5 text-[#FCA5A5]">
+                    <XCircle size={14} className="shrink-0 mt-px" />
+                    {picked}
+                  </p>
+                  <p className="flex items-start gap-2 text-xs text-[#86EFAC]">
+                    <CheckCircle size={14} className="shrink-0 mt-px" />
+                    {question.bonne_reponse}
+                  </p>
                   {question.explication && (
-                    <p className="text-xs mt-2 leading-relaxed text-white/50">
+                    <p className="text-xs mt-3 pt-3 leading-relaxed text-white/50 border-t border-white/[0.06]">
                       {question.explication}
                     </p>
                   )}
@@ -349,74 +295,58 @@ export default function Quiz({
             </div>
           </div>
         )}
-
-        <div className="flex flex-col sm:flex-row gap-3">
-          <button
-            onClick={reset}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 bg-[#7C5CFF] hover:bg-[#8B6BFF]"
-          >
-            <RotateCcw size={14} />
-            Retry quiz
-          </button>
-          <button
-            onClick={() => setSelectedCourse(null)}
-            className="px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 border border-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.6)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[rgba(255,255,255,0.9)]"
-          >
-            Choose another course
-          </button>
-        </div>
       </div>
     )
   }
 
+  const revealed = selected !== null
+  const gotIt = revealed && selected === correctIndex
+
   return (
     <div className="p-6 md:p-8 max-w-2xl mx-auto">
-      <button
-        onClick={() => setSelectedCourse(null)}
-        className="flex items-center gap-1.5 text-sm mb-6 transition-colors duration-150 text-[rgba(255,255,255,0.38)] hover:text-[rgba(255,255,255,0.8)]"
-      >
-        <ChevronLeft size={15} />
-        Exit quiz
-      </button>
-
-      <div className="flex items-center justify-between mb-1.5">
-        <div>
-          <p className="text-[11px] font-semibold tracking-wider" style={{ color: "rgba(255,255,255,0.3)" }}>
-            {selectedCourse?.titre?.toUpperCase()}
-          </p>
-          <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.5)" }}>
-            Question {current + 1} of {total}
-          </p>
-        </div>
-        <div
-          className="px-3 py-1 rounded-lg text-sm font-bold"
-          style={{
-            background: "rgba(124,92,255,0.12)",
-            border: "1px solid rgba(124,92,255,0.2)",
-            color: "#C4B5FD",
-          }}
+      <div className="flex items-center justify-between gap-3 mb-5">
+        <button
+          onClick={() => setSelectedCourse(null)}
+          className="inline-flex items-center gap-1.5 text-sm transition-colors duration-150 text-white/40 hover:text-white/85"
         >
-          {score} / {current + (selected !== null ? 1 : 0)} correct
+          <ChevronLeft size={15} />
+          Exit
+        </button>
+        <div
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold bg-spark/10 border border-spark/25 text-spark"
+          aria-label={`Score: ${score}`}
+        >
+          <Zap size={14} />
+          {score}
         </div>
       </div>
 
-      <div
-        className="h-1.5 rounded-full overflow-hidden mb-8"
-        style={{ background: "rgba(255,255,255,0.07)" }}
-      >
-        <div
-          className="h-full rounded-full"
-          style={{
-            width: `${(current / total) * 100}%`,
-            background: "linear-gradient(90deg, #7C5CFF, #A78BFA)",
-            transition: "width 0.5s cubic-bezier(0.4,0,0.2,1)",
-          }}
-        />
+      <p className="text-[11px] font-semibold tracking-wider text-white/30 truncate">
+        {selectedCourse.titre.toUpperCase()}
+      </p>
+      <p className="text-sm text-white/55 mb-3">
+        Question <span className="font-bold text-white">{current + 1}</span> of {total}
+      </p>
+
+      {/* One segment per question: green when right, red when missed */}
+      <div className="flex gap-1 mb-8" aria-hidden="true">
+        {questions.map((question, i) => {
+          const picked = answers[i]
+          const state =
+            picked === undefined
+              ? i === current
+                ? "bg-brand/60"
+                : "bg-white/[0.08]"
+              : picked === findCorrectIndex(question)
+                ? "bg-ok"
+                : "bg-ko"
+          return <div key={question.id} className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${state}`} />
+        })}
       </div>
 
       {saveFailed && <SaveWarning message={SAVE_WARNING} />}
 
-      <h2 className="text-xl md:text-2xl font-bold leading-snug text-white mb-7">
+      <h2 key={q.id} className="animate-rise text-xl md:text-2xl font-bold leading-snug text-white mb-7">
         {q.question}
       </h2>
 
@@ -424,25 +354,20 @@ export default function Quiz({
         {q.options.map((opt, idx) => {
           const isSelected = selected === idx
           const isCorrect = idx === correctIndex
-          const revealed = selected !== null
+          const letter = LETTERS[idx] ?? LETTERS[0]
 
-          let bg = "rgba(255,255,255,0.03)"
-          let border = "rgba(255,255,255,0.09)"
-          let color = "rgba(255,255,255,0.75)"
-
+          let tile = "bg-white/[0.03] border-white/[0.09] text-white/80 enabled:hover:bg-white/[0.06] enabled:hover:border-white/20 enabled:hover:-translate-y-0.5"
+          let badge: React.CSSProperties = { background: letter.color + "22", color: letter.color, borderColor: letter.color + "55" }
           if (revealed) {
             if (isCorrect) {
-              bg = "rgba(34,197,94,0.1)"
-              border = "rgba(34,197,94,0.4)"
-              color = "#86EFAC"
+              tile = `bg-ok/10 border-ok/45 text-[#BBF7D0] ${isSelected ? "animate-pop" : ""}`
+              badge = { background: "#22C55E", color: "#fff", borderColor: "#22C55E" }
             } else if (isSelected) {
-              bg = "rgba(239,68,68,0.1)"
-              border = "rgba(239,68,68,0.4)"
-              color = "#FCA5A5"
+              tile = "bg-ko/10 border-ko/45 text-[#FECACA] animate-shake"
+              badge = { background: "#EF4444", color: "#fff", borderColor: "#EF4444" }
             } else {
-              bg = "transparent"
-              border = "rgba(255,255,255,0.05)"
-              color = "rgba(255,255,255,0.28)"
+              tile = "bg-transparent border-white/[0.05] text-white/30"
+              badge = { color: "rgba(255,255,255,0.3)", borderColor: "rgba(255,255,255,0.1)" }
             }
           }
 
@@ -451,61 +376,44 @@ export default function Quiz({
               key={idx}
               onClick={() => handleSelect(idx)}
               disabled={revealed}
-              className="w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl text-left transition-all duration-200 enabled:hover:bg-[rgba(255,255,255,0.06)]! enabled:hover:border-[rgba(255,255,255,0.18)]!"
-              style={{
-                background: bg,
-                border: `1px solid ${border}`,
-                color,
-                cursor: revealed ? "default" : "pointer",
-              }}
+              className={`w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl border-2 text-left transition-all duration-200 ${tile}`}
             >
               <span
-                className="w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center shrink-0"
-                style={{
-                  border: `1px solid currentColor`,
-                  opacity: revealed && !isCorrect && !isSelected ? 0.4 : 1,
-                }}
+                className="w-9 h-9 rounded-xl border text-sm font-black flex items-center justify-center shrink-0 transition-colors"
+                style={badge}
               >
-                {String.fromCharCode(65 + idx)}
+                {letter.key}
               </span>
               <span className="font-medium flex-1">{opt}</span>
-              {revealed && isCorrect && (
-                <CheckCircle size={17} className="shrink-0" style={{ color: "#4ADE80" }} />
-              )}
-              {revealed && isSelected && !isCorrect && (
-                <XCircle size={17} className="shrink-0" style={{ color: "#F87171" }} />
-              )}
+              {revealed && isCorrect && <CheckCircle size={19} className="shrink-0 text-ok" />}
+              {revealed && isSelected && !isCorrect && <XCircle size={19} className="shrink-0 text-ko" />}
             </button>
           )
         })}
       </div>
 
-      {selected !== null && q.explication && (
+      {revealed && (
         <div
-          className="p-4 rounded-xl mb-6"
-          style={{
-            background: "rgba(255,255,255,0.03)",
-            border: "1px solid rgba(255,255,255,0.08)",
-          }}
+          className={`animate-rise p-4 rounded-2xl mb-5 border ${gotIt ? "bg-ok/[0.07] border-ok/25" : "bg-ko/[0.07] border-ko/25"}`}
+          role="status"
         >
-          <p className="text-[11px] font-semibold mb-1.5 tracking-wider" style={{ color: "rgba(255,255,255,0.35)" }}>
-            EXPLANATION
+          <p className={`text-sm font-bold mb-1 ${gotIt ? "text-ok" : "text-ko"}`}>
+            {gotIt ? "Correct! +1" : `Not quite. The answer is ${LETTERS[correctIndex]?.key ?? "?"}.`}
           </p>
-          <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
-            {q.explication}
-          </p>
+          {q.explication && <p className="text-sm leading-relaxed text-white/65">{q.explication}</p>}
         </div>
       )}
 
-      {selected !== null && (
-        <button
-          onClick={handleNext}
-          className="group w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-white transition-all duration-200 bg-[#7C5CFF] hover:bg-[#8B6BFF] hover:shadow-[0_0_24px_rgba(124,92,255,0.35)]"
-        >
-          {current + 1 >= total ? "See results" : "Next question"}
+      {revealed ? (
+        <button onClick={handleNext} className={`group w-full ${primaryButton} py-3.5`}>
+          {current + 1 >= total ? "See my score" : "Next question"}
           <span className="hidden sm:inline text-xs font-normal text-white/60">(Enter)</span>
           <ArrowRight size={17} className="group-hover:translate-x-0.5 transition-transform" />
         </button>
+      ) : (
+        <p className="hidden sm:block text-center text-xs text-white/25">
+          Press 1-4 or A-D to answer
+        </p>
       )}
     </div>
   )

@@ -1,21 +1,25 @@
 import { useState, useRef, useCallback, useEffect } from "react"
 import {
   Upload as UploadIcon,
-  FileText,
   Sparkles,
   CheckCircle,
   ChevronLeft,
   AlertCircle,
   Brain,
-  CreditCard,
+  Layers,
+  Play,
+  ArrowRight,
 } from "lucide-react"
 import { callGenerateFunction, uploadCourseFile } from "@/lib/supabase/functions"
 import { fetchMyPlan, fetchRecentCourses } from "@/lib/api"
 import type { CourseSummary, PlanLimits } from "@/lib/types"
+import type { Navigate } from "@/App"
+import CourseBadge from "@/components/study/CourseBadge"
+import { primaryButton, secondaryButton } from "@/components/ui/PageStates"
 
 type UploadState = "idle" | "dragover" | "processing" | "generating" | "done" | "error"
 
-export default function Upload({ onBack }: { onBack: () => void }) {
+export default function Upload({ onBack, onNavigate }: { onBack: () => void; onNavigate: Navigate }) {
   const [state, setState] = useState<UploadState>("idle")
   const [progress, setProgress] = useState(0)
   const [filename, setFilename] = useState("")
@@ -27,6 +31,8 @@ export default function Upload({ onBack }: { onBack: () => void }) {
   const [quizError, setQuizError] = useState<string | null>(null)
   const [flashcardError, setFlashcardError] = useState<string | null>(null)
   const [retryingMsg, setRetryingMsg] = useState<string | null>(null)
+  // Course created by the last upload, to open its quiz right away
+  const [newCourseId, setNewCourseId] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const maxFileMb = plan?.max_file_mb ?? 20
@@ -42,6 +48,7 @@ export default function Upload({ onBack }: { onBack: () => void }) {
   }, [loadRecentCourses])
 
   const generateContent = useCallback(async (courseId: string) => {
+    setNewCourseId(courseId)
     setState("generating")
     setQuizError(null)
     setFlashcardError(null)
@@ -137,10 +144,10 @@ export default function Upload({ onBack }: { onBack: () => void }) {
       </button>
 
       <h1 className="text-2xl md:text-3xl font-black text-white mb-1.5">
-        Upload Course Material
+        New quiz from your notes
       </h1>
       <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.38)" }}>
-        Our AI generates quizzes and flashcards automatically from your notes
+        Upload a course and Kwizo writes a quiz and a flashcard deck from it
       </p>
 
       {(state === "idle" || state === "dragover") && (
@@ -262,15 +269,12 @@ export default function Upload({ onBack }: { onBack: () => void }) {
                 RECENT COURSES
               </p>
               {recentCourses.map((course) => (
-                <div
+                <button
                   key={course.id}
-                  className="flex items-center gap-3 p-3 rounded-xl transition-colors duration-150 cursor-pointer text-[rgba(255,255,255,0.7)] hover:bg-[rgba(255,255,255,0.03)]"
+                  onClick={() => onNavigate("quiz", course.id)}
+                  className="group w-full text-left flex items-center gap-3 p-3 rounded-xl transition-colors duration-150 text-white/70 hover:bg-white/[0.04]"
                 >
-                  <FileText
-                    size={15}
-                    className="shrink-0"
-                    style={{ color: "rgba(255,255,255,0.3)" }}
-                  />
+                  <CourseBadge id={course.id} title={course.titre} size={34} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{course.titre}</p>
                     <p
@@ -280,13 +284,11 @@ export default function Upload({ onBack }: { onBack: () => void }) {
                       {new Date(course.created_at).toLocaleDateString()}
                     </p>
                   </div>
-                  <span
-                    className="text-xs font-semibold shrink-0"
-                    style={{ color: "#4ADE80" }}
-                  >
-                    Ready
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold shrink-0 text-ok group-hover:text-white transition-colors">
+                    Play
+                    <ArrowRight size={13} />
                   </span>
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -424,7 +426,7 @@ export default function Upload({ onBack }: { onBack: () => void }) {
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <CreditCard size={16} style={{ color: "#F59E0B" }} className="animate-pulse" />
+              <Layers size={16} style={{ color: "#FFC83D" }} className="animate-pulse" />
               <span className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>
                 Generating flashcards...
               </span>
@@ -477,20 +479,30 @@ export default function Upload({ onBack }: { onBack: () => void }) {
               </span>
             </div>
             <div className="flex items-center justify-center gap-2">
-              <CreditCard size={14} style={{ color: flashcardError ? "#F87171" : "#4ADE80" }} />
+              <Layers size={14} style={{ color: flashcardError ? "#F87171" : "#4ADE80" }} />
               <span className="text-xs" style={{ color: flashcardError ? "#FCA5A5" : "#86EFAC" }}>
                 {flashcardError ? `Flashcards: ${flashcardError}` : "Flashcards generated"}
               </span>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <button
-              onClick={onBack}
-              className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 bg-[#7C5CFF] hover:bg-[#8B6BFF]"
-            >
-              Back to Dashboard
-            </button>
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 justify-center">
+            {newCourseId && !quizError ? (
+              <button onClick={() => onNavigate("quiz", newCourseId)} className={primaryButton}>
+                <Play size={15} className="fill-current" />
+                Play the quiz now
+              </button>
+            ) : (
+              <button onClick={onBack} className={primaryButton}>
+                Back to Dashboard
+              </button>
+            )}
+            {newCourseId && !flashcardError && (
+              <button onClick={() => onNavigate("flashcards", newCourseId)} className={secondaryButton}>
+                <Layers size={15} />
+                Flashcards
+              </button>
+            )}
             <button
               onClick={() => {
                 setState("idle")
@@ -500,8 +512,9 @@ export default function Upload({ onBack }: { onBack: () => void }) {
                 setQuizError(null)
                 setFlashcardError(null)
                 setRetryingMsg(null)
+                setNewCourseId(null)
               }}
-              className="px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 border border-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.6)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[rgba(255,255,255,0.9)]"
+              className={secondaryButton}
             >
               Upload another
             </button>

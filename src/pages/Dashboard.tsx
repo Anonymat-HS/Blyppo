@@ -1,4 +1,4 @@
-import { Upload, Brain, CreditCard, Flame, ArrowRight, Quote, BookOpen, AlertCircle, RefreshCw, Trash2, Search } from "lucide-react"
+import { Upload, Brain, Layers, Flame, Quote, BookOpen, AlertCircle, Sparkles, Trash2, Search, Play, Library } from "lucide-react"
 import { getRandomQuote } from "@/lib/utils/quotes"
 import type { Navigate, Screen } from "@/App"
 import { useState, useEffect } from "react"
@@ -6,6 +6,9 @@ import { useAuth } from "@/lib/supabase/auth"
 import { callGenerateFunction } from "@/lib/supabase/functions"
 import { fetchCourses, fetchQuizCountsByCourses, fetchFlashcardCountsByCourses, deleteCourse } from "@/lib/api"
 import ErrorState from "@/components/ui/ErrorState"
+import { EmptyState, LoadingState, primaryButton } from "@/components/ui/PageStates"
+import CourseBadge from "@/components/study/CourseBadge"
+import { useStreak } from "@/hooks/useStreak"
 import type { CourseWithCounts } from "@/lib/types"
 
 export default function Dashboard({
@@ -14,6 +17,7 @@ export default function Dashboard({
   onNavigate: Navigate
 }) {
   const { user } = useAuth()
+  const streak = useStreak(user?.id)
   const [quote] = useState(() => getRandomQuote())
   const [courses, setCourses] = useState<CourseWithCounts[]>([])
   const [loading, setLoading] = useState(true)
@@ -103,6 +107,11 @@ export default function Dashboard({
   const totalQuizzes = courses.reduce((s, c) => s + c.quiz_count, 0)
   const totalFlashcards = courses.reduce((s, c) => s + c.flashcard_count, 0)
 
+  // Most recent course that has a quiz
+  const playable = [...courses]
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .find((c) => c.quiz_count > 0)
+
   const greeting = (() => {
     const h = new Date().getHours()
     if (h < 12) return "Good morning"
@@ -122,14 +131,7 @@ export default function Dashboard({
   }
 
   if (loading) {
-    return (
-      <div className="p-6 md:p-8 max-w-5xl mx-auto flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-3" style={{ borderColor: "#7C5CFF", borderTopColor: "transparent" }} />
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Loading your dashboard...</p>
-        </div>
-      </div>
-    )
+    return <LoadingState label="Loading your dashboard..." />
   }
 
   return (
@@ -144,72 +146,81 @@ export default function Dashboard({
             {today}
           </p>
         </div>
-        {totalQuizzes > 0 && (
-          <div
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-bold"
-            style={{
-              background: "rgba(245,158,11,0.1)",
-              border: "1px solid rgba(245,158,11,0.22)",
-              color: "#FCD34D",
-            }}
-          >
+        {streak !== null && streak > 0 && (
+          <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-bold bg-spark/10 border border-spark/25 text-spark">
             <Flame size={15} />
-            {courses.length} course{courses.length !== 1 ? "s" : ""}
+            {streak}-day streak
           </div>
         )}
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
-        {[
-          { label: "Courses", value: courses.length.toString(), color: "#7C5CFF" },
-          { label: "Quiz questions", value: totalQuizzes.toString(), color: "#00D9FF" },
-          { label: "Flashcards", value: totalFlashcards.toString(), color: "#F59E0B" },
-        ].map(({ label, value, color }) => (
-          <div
-            key={label}
-            className="p-4 rounded-2xl"
-            style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.07)",
-            }}
-          >
-            <p
-              className="text-[11px] font-semibold mb-1.5 uppercase tracking-wider"
-              style={{ color: "rgba(255,255,255,0.35)" }}
-            >
-              {label}
-            </p>
-            <p className="text-2xl font-black" style={{ color }}>
-              {value}
-            </p>
+      {/* Quick play */}
+      {playable && (
+        <div className="relative overflow-hidden mb-8 p-5 sm:p-6 rounded-3xl border border-brand/30 bg-gradient-to-br from-brand/25 via-brand/10 to-transparent">
+          <div aria-hidden="true" className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-spark/10 blur-2xl" />
+          <div className="relative flex items-center gap-4 flex-wrap">
+            <CourseBadge id={playable.id} title={playable.titre} size={52} />
+            <div className="flex-1 min-w-[10rem]">
+              <p className="text-[11px] font-bold tracking-wider text-spark">QUICK PLAY</p>
+              <p className="text-lg font-black text-white leading-tight truncate">{playable.titre}</p>
+              <p className="text-xs text-white/45 mt-0.5">
+                {playable.quiz_count} questions · about {Math.max(1, Math.round(playable.quiz_count / 2))} min
+              </p>
+            </div>
+            <button onClick={() => onNavigate("quiz", playable.id)} className={primaryButton}>
+              <Play size={15} className="fill-current" />
+              Play quiz
+            </button>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
+
+      {/* Stats (hidden until there is something to count) */}
+      {courses.length > 0 && (
+        <div className="grid grid-cols-3 gap-2.5 sm:gap-3 mb-8">
+          {[
+            { label: "Courses", value: courses.length, color: "#A78BFA", icon: Library },
+            { label: "Questions", value: totalQuizzes, color: "#22D3EE", icon: Brain },
+            { label: "Flashcards", value: totalFlashcards, color: "#FFC83D", icon: Layers },
+          ].map(({ label, value, color, icon: Icon }) => (
+            <div key={label} className="p-3 sm:p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-3 bg-white/[0.03] border border-white/[0.07]">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: color + "1A", color }}
+              >
+                <Icon size={18} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-2xl font-black leading-none text-white">{value}</p>
+                <p className="text-[10px] sm:text-[11px] font-semibold mt-1 uppercase tracking-wider text-white/35 truncate">{label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Actions */}
-      <div className="flex flex-wrap gap-2.5 mb-8">
-        <button
-          onClick={() => onNavigate("upload")}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 bg-[#7C5CFF] hover:bg-[#8B6BFF] hover:shadow-[0_0_20px_rgba(124,92,255,0.35)]"
-        >
-          <Upload size={15} />
-          Upload new course
-        </button>
-        {courses.length > 0 && [
-          { screen: "quiz" as Screen, icon: Brain, label: "Start a quiz" },
-          { screen: "flashcards" as Screen, icon: CreditCard, label: "Review flashcards" },
-        ].map(({ screen, icon: Icon, label }) => (
-          <button
-            key={screen}
-            onClick={() => onNavigate(screen)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 border border-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.6)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[rgba(255,255,255,0.9)] hover:border-[rgba(255,255,255,0.15)]"
-          >
-            <Icon size={15} />
-            {label}
+      {courses.length > 0 && (
+        <div className="flex flex-wrap gap-2.5 mb-8">
+          <button onClick={() => onNavigate("upload")} className={`${primaryButton} px-4 py-2.5`}>
+            <Upload size={15} />
+            Upload new course
           </button>
-        ))}
-      </div>
+          {courses.length > 0 && [
+            { screen: "quiz" as Screen, icon: Brain, label: "Start a quiz" },
+            { screen: "flashcards" as Screen, icon: Layers, label: "Review flashcards" },
+          ].map(({ screen, icon: Icon, label }) => (
+            <button
+              key={screen}
+              onClick={() => onNavigate(screen)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 border border-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.6)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[rgba(255,255,255,0.9)] hover:border-[rgba(255,255,255,0.15)]"
+            >
+              <Icon size={15} />
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Retry error banner */}
       {retryError && (
@@ -228,27 +239,17 @@ export default function Dashboard({
 
       {/* Empty state */}
       {courses.length === 0 ? (
-        <div
-          className="p-8 rounded-2xl text-center"
-          style={{
-            background: "rgba(124,92,255,0.05)",
-            border: "1px dashed rgba(124,92,255,0.25)",
-          }}
-        >
-          <BookOpen size={36} className="mx-auto mb-3" style={{ color: "rgba(124,92,255,0.5)" }} />
-          <p className="font-bold text-sm text-white mb-1">No courses yet</p>
-          <p className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.4)" }}>
-            Upload your first course to start generating quizzes and flashcards.
-          </p>
-          <button
-            onClick={() => onNavigate("upload")}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white"
-            style={{ background: "#7C5CFF" }}
-          >
-            <Upload size={14} />
-            Upload a course
-          </button>
-        </div>
+        <EmptyState
+          icon={BookOpen}
+          title="Your first quiz is one upload away"
+          text="Upload a course (PDF, TXT or Markdown) and Kwizo writes a quiz and a flashcard deck from it."
+          action={
+            <button onClick={() => onNavigate("upload")} className={primaryButton}>
+              <Upload size={15} />
+              Upload a course
+            </button>
+          }
+        />
       ) : (
         <>
           {/* Recent courses */}
@@ -299,15 +300,7 @@ export default function Dashboard({
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div
-                          className="w-10 h-10 rounded-xl text-lg flex items-center justify-center shrink-0"
-                          style={{
-                            background: "rgba(124,92,255,0.1)",
-                            border: "1px solid rgba(124,92,255,0.2)",
-                          }}
-                        >
-                          📄
-                        </div>
+                        <CourseBadge id={course.id} title={course.titre} />
                         <div>
                           <h3 className="font-bold text-sm leading-tight text-white">
                             {course.titre}
@@ -363,10 +356,10 @@ export default function Dashboard({
                       {needsQuiz && !isRetryingQuiz ? (
                         <button
                           onClick={() => handleRetry(course.id, "quiz")}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all bg-[rgba(239,68,68,0.1)] border border-[rgba(239,68,68,0.2)] text-[#FCA5A5] hover:bg-[rgba(239,68,68,0.18)]"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all bg-spark/10 border border-spark/25 text-spark hover:bg-spark/20"
                         >
-                          <RefreshCw size={11} />
-                          Retry quiz
+                          <Sparkles size={11} />
+                          Generate quiz
                         </button>
                       ) : isRetryingQuiz ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ background: "rgba(124,92,255,0.12)", color: "#A78BFA" }}>
@@ -384,10 +377,10 @@ export default function Dashboard({
                       {needsFlashcard && !isRetryingFlashcard ? (
                         <button
                           onClick={() => handleRetry(course.id, "flashcard")}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all bg-[rgba(239,68,68,0.1)] border border-[rgba(239,68,68,0.2)] text-[#FCA5A5] hover:bg-[rgba(239,68,68,0.18)]"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all bg-spark/10 border border-spark/25 text-spark hover:bg-spark/20"
                         >
-                          <RefreshCw size={11} />
-                          Retry flashcards
+                          <Sparkles size={11} />
+                          Generate flashcards
                         </button>
                       ) : isRetryingFlashcard ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ background: "rgba(124,92,255,0.12)", color: "#A78BFA" }}>
@@ -406,10 +399,10 @@ export default function Dashboard({
                         {!needsQuiz && (
                           <button
                             onClick={() => onNavigate("quiz", course.id)}
-                            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#C4B5FD] bg-[#7C5CFF]/15 border border-[#7C5CFF]/25 hover:bg-[#7C5CFF]/25 transition-colors"
+                            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white bg-brand hover:bg-brand-hover transition-colors"
                           >
-                            <Brain size={13} />
-                            Quiz
+                            <Play size={12} className="fill-current" />
+                            Play quiz
                           </button>
                         )}
                         {!needsFlashcard && (
@@ -417,7 +410,7 @@ export default function Dashboard({
                             onClick={() => onNavigate("flashcards", course.id)}
                             className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-white/70 border border-white/10 hover:bg-white/5 transition-colors"
                           >
-                            <CreditCard size={13} />
+                            <Layers size={13} />
                             Flashcards
                           </button>
                         )}
@@ -429,30 +422,6 @@ export default function Dashboard({
             </div>
           </div>
 
-          {/* Continue studying banner */}
-          {courses.some((c) => c.quiz_count > 0) && (
-            <div
-              className="mt-6 p-4 sm:p-5 rounded-2xl flex items-center justify-between gap-3 sm:gap-4"
-              style={{
-                background: "rgba(124,92,255,0.07)",
-                border: "1px solid rgba(124,92,255,0.18)",
-              }}
-            >
-              <div className="min-w-0">
-                <p className="font-bold text-sm">Continue where you left off</p>
-                <p className="text-xs mt-0.5 truncate" style={{ color: "rgba(255,255,255,0.4)" }}>
-                  {courses.find((c) => c.quiz_count > 0)?.titre ?? "No courses yet"}
-                </p>
-              </div>
-              <button
-                onClick={() => onNavigate("quiz", courses.find((c) => c.quiz_count > 0)?.id)}
-                className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-200 bg-[rgba(124,92,255,0.2)] border border-[rgba(124,92,255,0.3)] text-[#C4B5FD] hover:bg-[rgba(124,92,255,0.3)]"
-              >
-                Resume
-                <ArrowRight size={13} />
-              </button>
-            </div>
-          )}
         </>
       )}
 
@@ -460,17 +429,17 @@ export default function Dashboard({
       <div
         className="mt-6 p-5 rounded-2xl"
         style={{
-          background: "rgba(0,217,255,0.04)",
-          border: "1px solid rgba(0,217,255,0.12)",
+          background: "rgba(255,200,61,0.04)",
+          border: "1px solid rgba(255,200,61,0.14)",
         }}
       >
         <div className="flex items-start gap-3">
-          <Quote size={16} className="shrink-0 mt-0.5" style={{ color: "#00D9FF" }} />
+          <Quote size={16} className="shrink-0 mt-0.5 text-spark" />
           <div>
             <p className="text-sm italic" style={{ color: "rgba(255,255,255,0.7)" }}>
               "{quote.text}"
             </p>
-            <p className="text-xs mt-2 font-medium" style={{ color: "rgba(0,217,255,0.6)" }}>
+            <p className="text-xs mt-2 font-medium text-spark/70">
               — {quote.author}
             </p>
           </div>
