@@ -45,7 +45,7 @@ serve((req) =>
     }
 
     const bytes = new Uint8Array(await file.arrayBuffer())
-    let texteExtrait = ""
+    let texteExtrait: string
     if (isPdf) {
       try {
         const pdf = await getDocumentProxy(bytes)

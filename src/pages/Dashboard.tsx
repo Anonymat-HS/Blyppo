@@ -55,6 +55,8 @@ export default function Dashboard({
 
   useEffect(() => {
     loadDashboard()
+    // loadDashboard is recreated on every render; it only reads state setters
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleRetry = async (courseId: string, type: "quiz" | "flashcard") => {
