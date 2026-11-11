@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
-import { ChevronLeft, RotateCcw, BookOpen, CheckCircle, Layers } from "lucide-react"
+import { ChevronLeft, RotateCcw, BookOpen, CheckCircle, Layers, Sparkles, Loader2 } from "lucide-react"
 import { useAuth } from "@/lib/supabase/auth"
 import {
   fetchCourses,
@@ -9,6 +9,8 @@ import {
   recordFlashcardRating,
 } from "@/lib/api"
 import { formatInterval, nextIntervalDays, type FlashcardRating } from "@/lib/utils/srs"
+import { shuffled } from "@/lib/utils/quiz"
+import { callGenerateFunction } from "@/lib/supabase/functions"
 import ErrorState from "@/components/ui/ErrorState"
 import SaveWarning from "@/components/ui/SaveWarning"
 import { BackButton, EmptyState, LoadingState, primaryButton, secondaryButton } from "@/components/ui/PageStates"
@@ -61,6 +63,10 @@ export default function Flashcards({
   const [flipped, setFlipped] = useState(false)
   const [done, setDone] = useState(false)
   const [history, setHistory] = useState<FlashcardRating[]>([])
+  // "More cards": generation in progress and its error
+  const [generating, setGenerating] = useState(false)
+  const [generateMsg, setGenerateMsg] = useState<string | null>(null)
+  const [moreError, setMoreError] = useState<string | null>(null)
 
   const loadCourses = useCallback(async () => {
     setLoading(true)
@@ -115,7 +121,9 @@ export default function Flashcards({
       for (const c of data) savedIntervals[c.id] = progress[c.id]?.intervalle_jours ?? 0
 
       setAllCards(data)
-      setCards(includeAll ? data : [...overdue, ...fresh])
+      setCourses((list) => list.map((c) => (c.id === course.id ? { ...c, flashcard_count: data.length } : c)))
+      // A full review is shuffled, so it never plays in the same order twice
+      setCards(includeAll ? shuffled(data) : [...overdue, ...fresh])
       setIntervals(savedIntervals)
       setNextDue(upcoming.length ? new Date(Math.min(...upcoming)) : null)
     } catch (err) {
@@ -132,6 +140,64 @@ export default function Flashcards({
 
   const card = cards[current]
   const total = cards.length
+
+  /** Asks Kwizo for a new set of cards, then reviews the new ones (they are due). */
+  const generateMore = async () => {
+    if (!selectedCourse) return
+    setGenerating(true)
+    setMoreError(null)
+    try {
+      await callGenerateFunction(
+        "generate-flashcards",
+        selectedCourse.id,
+        "numberOfCards",
+        15,
+        setGenerateMsg,
+        { more: true }
+      )
+      await startReview(selectedCourse)
+    } catch (err) {
+      setMoreError((err as Error).message)
+    } finally {
+      setGenerating(false)
+      setGenerateMsg(null)
+    }
+  }
+
+  const moreCardsPanel = (
+    <div className="w-full mt-8 p-5 rounded-2xl text-left border border-spark/25 bg-spark/[0.06]">
+      <div className="flex items-start gap-3 flex-wrap">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-spark/15 text-spark">
+          <Sparkles size={18} />
+        </div>
+        <div className="flex-1 min-w-[11rem]">
+          <p className="font-bold text-white text-sm">Want more cards?</p>
+          <p className="text-xs text-white/50 mt-0.5">
+            {allCards.length} card{allCards.length !== 1 ? "s" : ""} in this deck. Kwizo can add 15 new ones,
+            different from these.
+          </p>
+        </div>
+        <button
+          onClick={generateMore}
+          disabled={generating}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all bg-spark text-[#16161D] hover:bg-spark-soft disabled:opacity-60"
+        >
+          {generating ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
+          {generating ? "Writing new cards..." : "More cards"}
+        </button>
+      </div>
+      {generating && (
+        <p className="text-xs text-white/40 mt-3" role="status">
+          {generateMsg ?? "This takes about 10 to 20 seconds."}
+        </p>
+      )}
+      {moreError && (
+        <p className="text-xs text-[#FCA5A5] mt-3" role="alert">
+          {moreError}
+        </p>
+      )}
+    </div>
+  )
 
   const handleRate = (r: FlashcardRating) => {
     if (!card) return
@@ -260,6 +326,7 @@ export default function Flashcards({
             Choose another deck
           </button>
         </div>
+        {moreCardsPanel}
       </div>
     )
   }
@@ -300,6 +367,7 @@ export default function Flashcards({
             Choose another deck
           </button>
         </div>
+        {moreCardsPanel}
       </div>
     )
   }

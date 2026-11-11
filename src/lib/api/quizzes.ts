@@ -35,6 +35,24 @@ export async function fetchQuizIdsByCourseIds(
   )
 }
 
+/** The user's latest answer to each of the given questions: true = right, false = wrong. */
+export async function fetchLastAnswers(
+  userId: string,
+  quizIds: string[]
+): Promise<Record<string, boolean>> {
+  if (!quizIds.length) return {}
+  const rows = await retryQuery<{ quiz_id: string; correct: boolean | null }>(
+    supabase
+      .from("user_progress")
+      .select("quiz_id, correct")
+      .eq("user_id", userId)
+      .in("quiz_id", quizIds)
+  )
+  const last: Record<string, boolean> = {}
+  for (const r of rows) if (r.correct !== null) last[r.quiz_id] = r.correct
+  return last
+}
+
 /**
  * Saves the latest answer to a question (one row per user and question)
  * and logs the activity. Throws if the answer could not be saved.

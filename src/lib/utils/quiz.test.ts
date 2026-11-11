@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { findCorrectIndex, prepareQuestions } from "./quiz"
+import { findCorrectIndex, pickSession, prepareQuestions } from "./quiz"
 import type { QuizQuestion } from "@/lib/types"
 
 function question(options: string[], bonne_reponse: string): QuizQuestion {
@@ -63,5 +63,40 @@ describe("prepareQuestions", () => {
 
   it("returns an empty list for an empty input", () => {
     expect(prepareQuestions([])).toEqual([])
+  })
+})
+
+describe("pickSession", () => {
+  const pool = Array.from({ length: 30 }, (_, i) => ({ id: `q${i}` }))
+  const ids = (qs: { id: string }[]) => qs.map((q) => q.id).sort()
+
+  it("returns at most the session size, without duplicates", () => {
+    const picked = pickSession(pool, {}, 10)
+    expect(picked).toHaveLength(10)
+    expect(new Set(ids(picked)).size).toBe(10)
+  })
+
+  it("returns every question when the course has fewer than the session size", () => {
+    expect(ids(pickSession(pool.slice(0, 4), {}, 10))).toEqual(["q0", "q1", "q2", "q3"])
+  })
+
+  it("prefers never-answered questions", () => {
+    // q0..q19 answered, q20..q29 never seen
+    const seen = Object.fromEntries(pool.slice(0, 20).map((q) => [q.id, true]))
+    expect(ids(pickSession(pool, seen, 10))).toEqual(ids(pool.slice(20)))
+  })
+
+  it("then the missed ones, before the known ones", () => {
+    const last: Record<string, boolean> = {}
+    pool.forEach((q, i) => (last[q.id] = i >= 25)) // q0..q24 missed, q25..q29 known
+    const picked = ids(pickSession(pool.slice(20), last, 5)) // q20..q24 missed, q25..q29 known
+    expect(picked).toEqual(["q20", "q21", "q22", "q23", "q24"])
+  })
+
+  it("does not always return the same order", () => {
+    const orders = new Set(
+      Array.from({ length: 20 }, () => pickSession(pool.slice(0, 6), {}, 6).map((q) => q.id).join())
+    )
+    expect(orders.size).toBeGreaterThan(1)
   })
 })

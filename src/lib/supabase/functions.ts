@@ -37,7 +37,9 @@ export async function callGenerateFunction(
   courseId: string,
   countKey: "numberOfQuestions" | "numberOfCards",
   countValue: number,
-  setRetrying: (msg: string | null) => void
+  setRetrying: (msg: string | null) => void,
+  /** `more: true` generates a new set, different from what the course already has */
+  options: { more?: boolean } = {}
 ): Promise<unknown> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error("Not authenticated")
@@ -52,7 +54,7 @@ export async function callGenerateFunction(
         apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ courseId, [countKey]: countValue }),
+      body: JSON.stringify({ courseId, [countKey]: countValue, ...(options.more ? { more: true } : {}) }),
     },
     functionName === "generate-quiz" ? "Quiz" : "Flashcards",
     setRetrying

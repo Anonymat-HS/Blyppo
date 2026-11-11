@@ -21,6 +21,8 @@ create table quizzes (
   options jsonb not null,
   bonne_reponse text not null,
   explication text,
+  -- Generation round that created it (1 at upload, +1 per "new questions")
+  round int not null default 1 check (round > 0),
   created_at timestamptz default now()
 );
 
@@ -29,6 +31,7 @@ create table flashcards (
   course_id uuid not null references courses on delete cascade,
   recto text not null,
   verso text not null,
+  round int not null default 1 check (round > 0),
   created_at timestamptz default now()
 );
 
@@ -69,8 +72,9 @@ create table quiz_attempts (
 create table course_generations (
   course_id uuid not null references courses on delete cascade,
   kind text not null check (kind in ('quiz', 'flashcards')),
+  round int not null default 1 check (round > 0),
   created_at timestamptz not null default now(),
-  primary key (course_id, kind)
+  primary key (course_id, kind, round)
 );
 
 -- Append-only activity log (streak + activity grid)
@@ -88,14 +92,16 @@ create table plans (
   max_file_mb int not null check (max_file_mb > 0),
   daily_courses int not null check (daily_courses > 0),
   max_questions int not null check (max_questions > 0),
-  max_cards int not null check (max_cards > 0)
+  max_cards int not null check (max_cards > 0),
+  -- Generation rounds per course and per kind (quiz / flashcards)
+  max_rounds int not null default 3 check (max_rounds > 0)
 );
 
-insert into plans (id, max_file_mb, daily_courses, max_questions, max_cards) values
-  ('free',      20,  10, 20, 30),
-  ('premium',   50,  50, 30, 60),
-  ('business', 100, 200, 40, 80),
-  ('bold',     200, 500, 50, 100);
+insert into plans (id, max_file_mb, daily_courses, max_questions, max_cards, max_rounds) values
+  ('free',      20,  10, 20, 30,  3),
+  ('premium',   50,  50, 30, 60, 10),
+  ('business', 100, 200, 40, 80, 25),
+  ('bold',     200, 500, 50, 100, 50);
 
 -- No row means the free plan. Written by the service role only.
 create table user_plans (
